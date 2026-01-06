@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "name": "berta-moda-oficial",
+  "builds": [
+    {
+      "src": "nextjs-app/package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "nextjs-app/$1"
+    }
+  ],
+  "env": {
+    "NEXT_PUBLIC_SITE_NAME": "Urban Indumentaria"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_SITE_NAME": "Urban Indumentaria"
+    }
+  },
+  "regions": ["gru1"],
+  "framework": "nextjs"
+}

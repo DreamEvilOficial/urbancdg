@@ -1,0 +1,329 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { productosAPI, categoriasAPI, etiquetasAPI, supabase, type Producto } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
+import { Menu, X } from 'lucide-react'
+
+// Componentes
+import AdminSidebar from './components/AdminSidebar'
+import ProductList from './components/ProductList'
+import ProductForm from './components/ProductForm'
+import CategoryManagement from './components/CategoryManagement'
+import SpecialFiltersManagement from './components/SpecialFiltersManagement'
+import OrderManagement from './components/OrderManagement'
+import ConfigurationPanel from './components/ConfigurationPanel'
+import UserProfile from './components/UserProfile'
+import OperatorManagement from './components/OperatorManagement'
+import HomepageManagement from './components/HomepageManagement'
+import DebtManagement from './components/DebtManagement'
+import ReviewsManagement from './components/ReviewsManagement'
+
+export default function AdminPage() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<any>(null)
+  const [activeTab, setActiveTab] = useState('productos')
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  
+  // Data State
+  const [productos, setProductos] = useState<Producto[]>([])
+  const [categorias, setCategorias] = useState<any[]>([])
+  const [etiquetas, setEtiquetas] = useState<any[]>([])
+  
+  // UI State
+  const [showProductForm, setShowProductForm] = useState(false)
+  const [editingProduct, setEditingProduct] = useState<Producto | null>(null)
+  
+  // Config State
+  const [storeName, setStoreName] = useState('URBAN')
+
+  useEffect(() => {
+    checkAuthAndLoadData()
+  }, [])
+  async function checkAuthAndLoadData() {
+    try {
+      const res = await fetch('/api/auth/session')
+      
+      if (!res.ok) {
+        console.warn('Redirecting to login: Session check failed with status', res.status)
+        router.push('/admin/login')
+        return
+      }
+
+      const data = await res.json()
+      console.log('Session verified in dashboard:', data)
+      setUser(data.user)
+      await cargarDatos()
+    } catch (error: any) {
+      console.error('Critical auth check error:', error)
+      toast.error(`Error de Dashboard: ${error.message || 'Error desconocido'}`)
+      // Comentamos el push para ver el error en pantalla si carga algo
+      // router.push('/admin/login')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function cargarDatos() {
+    try {
+      // Usar obtenerTodosAdmin para ver incluso los pausados
+      const prodsPromise = productosAPI.obtenerTodosAdmin()
+      const catsPromise = categoriasAPI.obtenerTodas()
+      const tagsPromise = etiquetasAPI.obtenerTodas()
+      const configPromise = fetch('/api/config').then(res => {
+        if (!res.ok) throw new Error('Error configs')
+        return res.json()
+      })
+
+      // Usar allSettled para que si falla uno no falle todo
+      const [prodsRes, catsRes, tagsRes, configRes] = await Promise.allSettled([
+        prodsPromise,
+        catsPromise,
+        tagsPromise,
+        configPromise
+      ])
+
+      if (prodsRes.status === 'fulfilled') {
+        setProductos(prodsRes.value)
+      } else {
+        console.error('Error productos:', prodsRes.reason)
+        toast.error('Error al cargar productos')
+      }
+
+      if (catsRes.status === 'fulfilled') {
+        const cats = catsRes.value; // API returns directly array
+        setCategorias(cats)
+      } else {
+         // Fallback or empty
+         setCategorias([])
+      }
+
+      if (tagsRes.status === 'fulfilled') {
+        const tags = tagsRes.value; // API returns directly array
+        setEtiquetas(tags)
+      }
+      
+      if (configRes.status === 'fulfilled') {
+        const raw = String(configRes.value?.nombre_tienda || '').trim()
+        if (raw && !/berta/i.test(raw)) setStoreName(raw)
+      }
+      
+    } catch (error) {
+      console.error('Error loading data:', error)
+      toast.error('Error crítico al cargar datos')
+    }
+  }
+
+  async function handleSaveProduct(data: any) {
+    try {
+      // Calcular stock total
+      const totalStock = data.variantes.reduce((sum: number, v: any) => sum + (v.stock || 0), 0)
+      const slug = data.nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+
+      // Resolver categoría y subcategoría a IDs/SLUGs fiables
+      let categoria_id = data.categoria_id || null
+      let subcategoria_id = data.subcategoria_id || null
+
+      try {
+        const cats = await categoriasAPI.obtenerTodas();
+
+        if (cats && (data.categoria || data.categoria_slug || data.categoria_id)) {
+          const targetCat = cats.find((c: any) => 
+            (data.categoria_slug && c.slug === data.categoria_slug) ||
+            (data.categoria && (c.slug === data.categoria || c.nombre === data.categoria)) ||
+            (data.categoria_id && String(c.id) === String(data.categoria_id))
+          )
+          if (targetCat) {
+            categoria_id = targetCat.id
+            if (Array.isArray(targetCat.subcategorias) && (data.subcategoria || data.subcategoria_slug || data.subcategoria_id)) {
+              const targetSub = targetCat.subcategorias.find((s: any) => 
+                (data.subcategoria_slug && s.slug === data.subcategoria_slug) ||
+                (data.subcategoria && (s.slug === data.subcategoria || s.nombre === data.subcategoria)) ||
+                (data.subcategoria_id && String(s.id) === String(data.subcategoria_id))
+              )
+              if (targetSub) {
+                subcategoria_id = targetSub.id
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('No se pudo resolver categoría/subcategoría:', e)
+      }
+
+      const productoData = {
+        nombre: data.nombre,
+        descripcion: data.descripcion,
+        precio: Number(data.precio),
+        precio_original: data.precio_original ? Number(data.precio_original) : undefined,
+        descuento_porcentaje: data.descuento_porcentaje ? Number(data.descuento_porcentaje) : 0,
+        categoria_id,
+        subcategoria_id,
+        destacado: data.destacado || false,
+        top: data.top || false,
+        proximo_lanzamiento: data.proximo_lanzamiento || false,
+        nuevo_lanzamiento: data.nuevo_lanzamiento || false,
+        imagen_url: data.imagen_url || '',
+        imagenes: data.imagenes || [],
+        variantes: data.variantes || [],
+        sku: data.sku || null,
+        slug,
+        stock_actual: totalStock,
+        activo: true
+      }
+
+      if (editingProduct) {
+        await productosAPI.actualizar(editingProduct.id, productoData)
+        toast.success('Producto actualizado')
+      } else {
+        await productosAPI.crear(productoData)
+        toast.success('Producto creado')
+      }
+
+      setShowProductForm(false)
+      setEditingProduct(null)
+      cargarDatos() // Recargar lista
+    } catch (error: any) {
+      console.error(error)
+      toast.error('Error al guardar: ' + error.message)
+    }
+  }
+
+  async function handleDeleteProduct(id: string) {
+    if (!confirm('¿Estás seguro de eliminar este producto?')) return
+
+    try {
+      await productosAPI.eliminar(id)
+      setProductos(productos.filter(p => p.id !== id))
+      toast.success('Producto eliminado')
+    } catch (error) {
+      toast.error('Error al eliminar producto')
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-transparent">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white/20 border-t-accent"></div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex h-screen bg-transparent overflow-hidden">
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          input[type="text"],
+          input[type="password"],
+          input[type="email"],
+          input[type="number"],
+          input[type="url"],
+          textarea,
+          select {
+            color: #F4F6FB !important;
+          }
+          input::placeholder,
+          textarea::placeholder {
+            color: rgba(244, 246, 251, 0.35) !important;
+          }
+        `
+      }} />
+      <AdminSidebar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        sidebarOpen={sidebarOpen}
+        storeName={storeName}
+        onNavigate={() => {
+          // Cerrar sidebar en móvil tras seleccionar
+          setSidebarOpen(false)
+        }}
+      />
+
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Mobile Header */}
+        <header className="lg:hidden bg-[#05060a]/70 backdrop-blur-2xl border-b border-white/10 p-4 flex items-center justify-between">
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-white/70 hover:text-white transition-colors">
+            {sidebarOpen ? <X /> : <Menu />}
+          </button>
+          <span className="font-display tracking-[0.08em] uppercase text-white">{storeName}</span>
+        </header>
+        {/* Overlay para cerrar al tocar afuera */}
+        {sidebarOpen && (
+          <div
+            className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8" style={{ maxHeight: '100vh' }}>
+          {activeTab === 'productos' && (
+            showProductForm ? (
+              <ProductForm 
+                producto={editingProduct}
+                categorias={categorias}
+                etiquetas={etiquetas}
+                onSave={handleSaveProduct}
+                onCancel={() => {
+                  setShowProductForm(false)
+                  setEditingProduct(null)
+                }}
+              />
+            ) : (
+              <ProductList 
+                productos={productos}
+                categorias={categorias}
+                onEdit={(p) => {
+                  setEditingProduct(p)
+                  setShowProductForm(true)
+                }}
+                onDelete={handleDeleteProduct}
+                onNew={() => {
+                  setEditingProduct(null)
+                  setShowProductForm(true)
+                }}
+              />
+            )
+          )}
+
+          {activeTab === 'categorias' && (
+            <CategoryManagement />
+          )}
+
+          {activeTab === 'filtros' && (
+            <SpecialFiltersManagement />
+          )}
+
+          {activeTab === 'home' && (
+            <HomepageManagement />
+          )}
+
+          {activeTab === 'ventas' && (
+            <OrderManagement />
+          )}
+
+          {activeTab === 'perfil' && (
+            <UserProfile user={user} />
+          )}
+
+          {activeTab === 'operadores' && (
+            <OperatorManagement />
+          )}
+
+          {activeTab === 'deudas' && (
+            <DebtManagement />
+          )}
+
+          {activeTab === 'resenas' && (
+            <ReviewsManagement />
+          )}
+
+          {activeTab === 'configuracion' && (
+            <ConfigurationPanel />
+          )}
+        </main>
+      </div>
+    </div>
+  )
+}

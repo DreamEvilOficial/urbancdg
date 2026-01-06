@@ -1,0 +1,239 @@
+'use client'
+
+import { useEffect, useState, useMemo } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { productosAPI, supabase, type Producto } from '@/lib/supabase'
+import { useCartStore } from '@/store/cartStore'
+import { ShoppingBag, ChevronLeft, ChevronRight, Minus, Plus, ShieldCheck, CreditCard, Banknote, ArrowLeft } from 'lucide-react'
+import Image from 'next/image'
+import toast from 'react-hot-toast'
+import ProductCard from '@/components/ProductCard'
+import dynamic from 'next/dynamic'
+
+const ProductReviews = dynamic(() => import('@/components/ProductReviews'), {
+  ssr: false,
+  loading: () => <div className="text-gray-500 text-[10px] font-black uppercase tracking-widest text-center py-10 opacity-30">Cargando experiencias...</div>
+})
+
+interface Etiqueta { id: string; nombre: string; tipo: string; color: string; icono: string }
+
+export default function ProductDetailPage() {
+  const params = useParams()
+  const router = useRouter()
+  const productSlug = decodeURIComponent(params.id as string)
+  
+  const [producto, setProducto] = useState<(Producto & { etiquetas?: Etiqueta[] }) | null>(null)
+  const [productosRelacionados, setProductosRelacionados] = useState<Producto[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedImage, setSelectedImage] = useState(0)
+  const [selectedTalle, setSelectedTalle] = useState('')
+  const [selectedColor, setSelectedColor] = useState('')
+  const [cantidad, setCantidad] = useState(1)
+  
+  const addItem = useCartStore((state) => state.addItem)
+
+  useEffect(() => { 
+    window.scrollTo(0, 0)
+    cargarProducto() 
+  }, [productSlug])
+
+  async function cargarProducto() {
+    try {
+      setLoading(true)
+      let data: Producto | undefined
+      
+      // Intentar por slug primero (no numérico)
+      const numericId = Number(productSlug)
+      if (Number.isNaN(numericId)) {
+        data = await productosAPI.obtenerPorSlug(productSlug)
+      }
+      
+      // Fallback por id numérico
+      if (!data && !Number.isNaN(numericId)) {
+        data = await productosAPI.obtenerPorId(String(numericId))
+      }
+      
+      if (!data || !data.activo) {
+        setProducto(null)
+        return
+      }
+      
+      setProducto(data)
+      
+      if (data && data.categoria_id) {
+        const d = data as Producto
+        const todos = await productosAPI.obtenerTodos()
+        setProductosRelacionados(todos.filter(p => p.categoria_id === d.categoria_id && p.id !== d.id).slice(0, 4))
+      }
+    } catch {
+      toast.error('Falla al cargar')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const variantes = producto?.variantes || []
+  const hasVariants = variantes.length > 0
+  const availableSizes = useMemo(() => Array.from(new Set(variantes.map(v => v.talle))).filter(Boolean), [variantes])
+  const availableColors = useMemo(() => {
+    if (selectedTalle) return Array.from(new Set(variantes.filter(v => v.talle === selectedTalle).map(v => v.color))).filter(Boolean)
+    return Array.from(new Set(variantes.map(v => v.color))).filter(Boolean)
+  }, [variantes, selectedTalle])
+
+  const stockDisponible = useMemo(() => {
+    if (!hasVariants) return producto?.stock_actual || 0
+    if (selectedTalle && selectedColor) return variantes.find(v => v.talle === selectedTalle && v.color === selectedColor)?.stock || 0
+    return variantes.reduce((acc, v) => acc + v.stock, 0)
+  }, [hasVariants, producto, variantes, selectedTalle, selectedColor])
+
+  const imagenes = producto?.imagenes?.length ? producto.imagenes : (producto?.imagen_url ? [producto.imagen_url] : [])
+
+  const { precioTransferencia, precioCuotas } = useMemo(() => ({
+    precioTransferencia: producto ? Math.round(producto.precio * 0.9) : 0,
+    precioCuotas: producto ? Math.round(producto.precio / 6) : 0
+  }), [producto?.precio])
+
+  if (loading) return <div className="min-h-screen bg-transparent flex items-center justify-center"><div className="w-8 h-8 border-2 border-white/10 border-t-white rounded-full animate-spin" /></div>
+  if (!producto) return <div className="min-h-screen bg-transparent flex items-center justify-center text-xs font-black uppercase tracking-widest text-white/60">Producto no hallado</div>
+
+  return (
+    <div className="min-h-screen bg-transparent text-white selection:bg-white selection:text-black pb-20 overflow-x-hidden relative z-10">
+      <div className="max-w-5xl mx-auto px-4 md:px-6 relative z-10 scale-[0.95] origin-top transition-all pt-10">
+        
+        {/* Navigation - Compacted */}
+        <div className="pb-6 flex items-center justify-between">
+          <button onClick={() => router.back()} className="group flex items-center gap-2 text-white/50 hover:text-white transition-all text-[9px] font-black uppercase tracking-[0.2em]">
+            <ArrowLeft className="w-3 h-3 group-hover:-translate-x-1 transition-transform" />
+            <span>Volver</span>
+          </button>
+          <div className="bg-white/5 px-3 py-1 rounded-xl border border-white/10">
+            <span className="text-[8px] font-black uppercase text-white/55 tracking-widest">Drop Select</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Images Section - Shrunken by 10% visually via col-span and padding */}
+          <div className="lg:col-span-6 space-y-4 px-4">
+            <div className="relative aspect-[4/5] bg-white/[0.02] border border-white/5 rounded-[35px] overflow-hidden group">
+               <Image src={imagenes[selectedImage]} alt={producto.nombre} fill className="object-cover group-hover:scale-105 transition-transform duration-1000 ease-out" priority />
+               <div className="absolute inset-x-0 bottom-4 px-4 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                 <button onClick={(e) => { e.stopPropagation(); setSelectedImage(prev => (prev - 1 + imagenes.length) % imagenes.length) }} className="w-10 h-10 bg-white text-black rounded-xl flex items-center justify-center shadow-2xl"><ChevronLeft className="w-5 h-5" /></button>
+                 <button onClick={(e) => { e.stopPropagation(); setSelectedImage(prev => (prev + 1) % imagenes.length) }} className="w-10 h-10 bg-white text-black rounded-xl flex items-center justify-center shadow-2xl"><ChevronRight className="w-5 h-5" /></button>
+               </div>
+            </div>
+            {imagenes.length > 1 && (
+               <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                  {imagenes.map((img, i) => (
+                    <button key={i} onClick={() => setSelectedImage(i)} className={`w-14 h-18 rounded-xl overflow-hidden border transition-all shrink-0 ${selectedImage === i ? 'border-white' : 'border-white/5 opacity-30 hover:opacity-100'}`}>
+                      <Image src={img} alt="" width={60} height={80} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+               </div>
+            )}
+          </div>
+
+          {/* Details Section - Compacted and Shrunken by 20% */}
+          <div className="lg:col-span-5 lg:col-offset-1 space-y-6">
+            <div className="space-y-2">
+              <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase italic leading-none">{producto.nombre}</h1>
+              <p className="text-white/45 text-[10px] font-bold uppercase tracking-widest">REF: {producto.slug?.toUpperCase()}</p>
+            </div>
+
+            {/* Compact Price Panel */}
+            <section className="bg-white/[0.03] border border-white/10 p-6 rounded-[35px] shadow-2xl relative overflow-hidden scale-[0.95] origin-left backdrop-blur-xl">
+               <div className="absolute top-0 right-0 p-4 opacity-10 text-accent"><TicketIcon className="w-24 h-24 rotate-12" /></div>
+               <div className="space-y-4">
+                  <div>
+                    <span className="text-[8px] font-black text-white/45 uppercase tracking-widest block mb-1">Precio Online</span>
+                    <span className="text-3xl font-black tracking-tighter leading-none text-white">${producto.precio.toLocaleString()}</span>
+                  </div>
+                  <div className="space-y-3 pt-4 border-t border-white/10">
+                    <div className="flex items-center justify-between">
+                       <p className="text-[10px] font-black uppercase text-accent tracking-tight">Efectivo / Transf.</p>
+                       <span className="text-xl font-black text-accent">${precioTransferencia.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                       <p className="text-[10px] font-black uppercase text-accent2 tracking-tight">6 cuotas fijas de</p>
+                       <span className="text-lg font-black text-accent2">${precioCuotas.toLocaleString()}</span>
+                    </div>
+                  </div>
+               </div>
+            </section>
+
+            {/* Compact Selection Area */}
+            <div className="space-y-6 bg-white/[0.03] border border-white/10 p-6 rounded-[35px] scale-[0.9] origin-top backdrop-blur-xl">
+              {availableSizes.length > 0 && (
+                <div className="space-y-3">
+                  <label className="text-[9px] font-black text-white/55 uppercase tracking-[0.2em]">Talle Disponible</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {availableSizes.map(t => (
+                      <button key={t} onClick={() => { setSelectedTalle(t); setSelectedColor('') }} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${selectedTalle === t ? 'bg-accent text-ink shadow-lg shadow-accent/10' : 'bg-white/5 text-white/55 hover:text-white border border-transparent hover:border-white/10'}`}>
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {availableColors.length > 0 && (
+                <div className="space-y-3">
+                  <label className="text-[9px] font-black text-white/55 uppercase tracking-[0.2em]">Color</label>
+                  <div className="flex flex-wrap gap-2">
+                    {availableColors.map(c => (
+                      <button key={c} onClick={() => setSelectedColor(c)} className={`w-8 h-8 rounded-full border-2 transition-all p-0.5 ${selectedColor === c ? 'border-accent scale-105 shadow-lg shadow-accent/10' : 'border-white/10 opacity-50 hover:opacity-100'}`}>
+                        <div className="w-full h-full rounded-full" style={{ backgroundColor: c }} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-2 flex items-center justify-between">
+                <div className="flex items-center gap-3 bg-white/5 p-1.5 rounded-xl border border-white/10">
+                   <button type="button" onClick={() => setCantidad(Math.max(1, cantidad - 1))} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 text-white/55 hover:text-white transition-all"><Minus className="w-3 h-3" /></button>
+                   <span className="text-sm font-black w-6 text-center">{cantidad}</span>
+                   <button type="button" onClick={() => setCantidad(Math.min(stockDisponible, cantidad + 1))} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 text-white/55 hover:text-white transition-all"><Plus className="w-3 h-3" /></button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (hasVariants && (!selectedTalle || !selectedColor)) return toast.error('Elige opciones')
+                    if (cantidad > stockDisponible) return toast.error('Sin stock')
+                    addItem({ id: String(producto.id), nombre: producto.nombre, precio: producto.precio, cantidad, imagen_url: producto.imagen_url, ...(hasVariants && { talle: selectedTalle, color: selectedColor }) })
+                    toast.success('Agregado')
+                  }}
+                  disabled={stockDisponible <= 0}
+                  className="flex-1 ml-4 bg-accent text-ink py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:brightness-95 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group disabled:opacity-30"
+                >
+                  <ShoppingBag className="w-4 h-4 group-hover:-rotate-12 transition-transform" />
+                  {stockDisponible <= 0 ? 'Sin Stock' : 'Sumar a la bolsa'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="mt-10">
+          <ProductReviews productId={String(producto.id)} productName={producto.nombre} />
+        </div>
+
+        {/* Minimal Related Section */}
+        {productosRelacionados.length > 0 && (
+          <div className="mt-20 opacity-80">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/45 text-center mb-10">MÁS PARA TU FIT</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {productosRelacionados.map((p) => <ProductCard key={p.id} producto={p} />)}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function TicketIcon(props: any) {
+  return (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
+  )
+}
