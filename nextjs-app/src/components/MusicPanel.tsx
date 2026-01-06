@@ -81,7 +81,7 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
         '*',
       )
       iframeRef.current?.contentWindow?.postMessage(
-        JSON.stringify({ event: 'command', func: 'setVolume', args: [80] }),
+        JSON.stringify({ event: 'command', func: 'setVolume', args: [10] }),
         '*',
       )
       document.removeEventListener('pointerdown', handler)
@@ -120,7 +120,7 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
 
   const currentId = getYouTubeId(tracks[currentIndex]?.url || '')
   const src = currentId
-    ? `https://www.youtube.com/embed/${currentId}?autoplay=1&mute=1&enablejsapi=1&origin=${encodeURIComponent(
+    ? `https://www.youtube.com/embed/${currentId}?autoplay=1&enablejsapi=1&origin=${encodeURIComponent(
         typeof window !== 'undefined' ? window.location.origin : '',
       )}`
     : ''

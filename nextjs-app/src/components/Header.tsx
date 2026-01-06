@@ -183,7 +183,7 @@ export default function Header({ theme, toggleTheme }: HeaderProps) {
 
         {/* 2. Main Navbar - Liquid Glass */}
         <nav className="w-full border-b border-white/5 bg-black/60 backdrop-blur-xl supports-[backdrop-filter]:bg-black/30">
-          <div className="mx-auto flex h-[77px] md:h-[96px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="relative mx-auto flex h-[77px] md:h-[96px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
             
             {/* Left Side: Logo & Navigation */}
             <div className="flex items-center gap-8 md:gap-12">
@@ -205,8 +205,10 @@ export default function Header({ theme, toggleTheme }: HeaderProps) {
                 </div>
               </Link>
 
-              {/* Desktop Navigation Links */}
-              <div className="hidden md:flex items-center gap-6">
+            </div>
+
+            {/* Desktop Navigation Links (Centered) */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center gap-6">
                 <Link href="/" className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/70 hover:text-white transition-colors">
                   Inicio
                 </Link>
@@ -315,7 +317,6 @@ export default function Header({ theme, toggleTheme }: HeaderProps) {
                   )
                 })}
               </div>
-            </div>
 
             {/* Right Side: Icons */}
             <div className="flex items-center gap-1 md:gap-2">

@@ -1,0 +1,88 @@
+import db from '@/lib/db';
+import { Producto, Categoria } from '@/lib/supabase';
+
+function safeParse(str: string, fallback: any) {
+  if (!str) return fallback;
+  try { return JSON.parse(str); } catch { return fallback; }
+}
+
+function mapProduct(p: any): Producto {
+  return {
+    ...p,
+    activo: !!p.activo,
+    destacado: !!p.destacado,
+    top: !!p.top,
+    imagenes: safeParse(p.imagenes, []),
+    variantes: safeParse(p.variantes, []),
+    dimensiones: safeParse(p.dimensiones, null),
+    metadata: safeParse(p.metadata, null),
+  };
+}
+
+export async function getSections() {
+  try {
+    const sections = await db.all('SELECT * FROM homepage_sections ORDER BY orden ASC');
+    return sections;
+  } catch (error) {
+    console.error('Error fetching sections:', error);
+    return [];
+  }
+}
+
+export async function getProducts(options: {
+  active?: boolean;
+  destacado?: boolean;
+  top?: boolean;
+  limit?: number;
+  category_slug?: string;
+  slug?: string;
+} = {}) {
+  let query = 'SELECT * FROM productos WHERE 1=1';
+  let params: any[] = [];
+
+  if (options.active) {
+    query += ' AND activo = 1';
+  }
+  
+  if (options.destacado) {
+    query += ' AND destacado = 1';
+  }
+
+  if (options.top) {
+    query += ' AND top = 1';
+  }
+  
+  if (options.slug) {
+    query += ' AND slug = ?';
+    params.push(options.slug);
+  }
+
+  if (options.category_slug) {
+     const category = await db.get('SELECT id FROM categorias WHERE slug = ?', [options.category_slug]) as any;
+     if (category) {
+         query += ' AND categoria_id = ?';
+         params.push(category.id);
+     } else {
+         return [];
+     }
+  }
+
+  query += ' ORDER BY created_at DESC';
+
+  if (options.limit) {
+    query += ' LIMIT ?';
+    params.push(options.limit);
+  }
+
+  try {
+    const products = await db.all(query, params);
+    return products.map(mapProduct);
+  } catch (err) {
+    console.error('Error fetching products:', err);
+    return [];
+  }
+}
+
+export async function getAllProducts() {
+    return getProducts({ active: true });
+}

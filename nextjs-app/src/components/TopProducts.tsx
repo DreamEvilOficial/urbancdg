@@ -1,27 +1,13 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { productosAPI, type Producto } from '@/lib/supabase'
+import { type Producto } from '@/lib/supabase'
 import { Star } from 'lucide-react'
 import ProductCard from './ProductCard'
 
-export default function TopProducts() {
-  const [productos, setProductos] = useState<Producto[]>([])
+interface TopProductsProps {
+  products: Producto[]
+}
 
-  useEffect(() => {
-    cargarProductosTOP()
-  }, [])
-
-  async function cargarProductosTOP() {
-    try {
-      const data = await productosAPI.obtenerTOP()
-      setProductos(data)
-    } catch (error) {
-      console.error('Error cargando productos TOP:', error)
-    }
-  }
-
-  if (productos.length === 0) return null
+export default function TopProducts({ products }: TopProductsProps) {
+  if (!products || products.length === 0) return null
 
   return (
     <section className="max-w-7xl mx-auto px-4 py-20">
@@ -37,7 +23,7 @@ export default function TopProducts() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6 w-full px-1 md:px-0">
-        {productos.map((producto, idx) => (
+        {products.map((producto, idx) => (
           <div key={producto.id} className={`reveal reveal-delay-${(idx % 5) + 1}`}>
             <ProductCard 
               producto={{...producto, isTopProduct: true}} 

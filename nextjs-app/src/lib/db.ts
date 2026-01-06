@@ -17,6 +17,47 @@ class Database {
         console.log('Connected to database at', dbPath);
         this.db.run('PRAGMA journal_mode = WAL'); // Better concurrency
         this.db.run('PRAGMA foreign_keys = ON'); // Enforce FK
+        // Ensure required columns exist for resenas table
+        this.db.all(`PRAGMA table_info('resenas')`, [], (e, rows: any[]) => {
+          if (e) {
+            console.warn('PRAGMA table_info resenas failed', e);
+            return;
+          }
+          const names = new Set<string>((rows || []).map((r: any) => String(r.name)));
+          if (!names.has('usuario_nombre')) {
+            this.db.run(`ALTER TABLE resenas ADD COLUMN usuario_nombre TEXT`, [], (ae) => {
+              if (ae) console.warn('ALTER TABLE add usuario_nombre failed', ae);
+              else console.log('Added column resenas.usuario_nombre');
+            });
+          }
+          if (!names.has('rating')) {
+            this.db.run(`ALTER TABLE resenas ADD COLUMN rating INTEGER DEFAULT 5`, [], (ae) => {
+              if (ae) console.warn('ALTER TABLE add rating failed', ae);
+              else console.log('Added column resenas.rating');
+            });
+          }
+          if (!names.has('activo')) {
+            this.db.run(`ALTER TABLE resenas ADD COLUMN activo INTEGER DEFAULT 1`, [], (ae) => {
+              if (ae) console.warn('ALTER TABLE add activo failed', ae);
+              else console.log('Added column resenas.activo');
+            });
+          }
+        });
+
+        // Create Indexes for Performance
+        const indexes = [
+            'CREATE INDEX IF NOT EXISTS idx_productos_activo_destacado ON productos(activo, destacado)',
+            'CREATE INDEX IF NOT EXISTS idx_productos_categoria_id ON productos(categoria_id)',
+            'CREATE INDEX IF NOT EXISTS idx_productos_created_at ON productos(created_at)',
+            'CREATE INDEX IF NOT EXISTS idx_resenas_producto_id ON resenas(producto_id)',
+            'CREATE INDEX IF NOT EXISTS idx_resenas_created_at ON resenas(created_at)'
+        ];
+
+        indexes.forEach(idx => {
+            this.db.run(idx, [], (err) => {
+                if (err) console.warn('Index creation failed', err);
+            });
+        });
       }
     });
   }

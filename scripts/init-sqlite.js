@@ -151,6 +151,20 @@ const initSchema = async () => {
         )
       `);
 
+      // RESENAS
+      await run(`
+        CREATE TABLE IF NOT EXISTS resenas (
+          id TEXT PRIMARY KEY,
+          producto_id TEXT NOT NULL,
+          usuario_nombre TEXT,
+          comentario TEXT,
+          rating INTEGER DEFAULT 5,
+          activo INTEGER DEFAULT 1,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(producto_id) REFERENCES productos(id) ON DELETE CASCADE
+        )
+      `);
+
       // ETIQUETAS
       await run(`
         CREATE TABLE IF NOT EXISTS etiquetas (
