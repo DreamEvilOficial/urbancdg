@@ -10,8 +10,7 @@ export async function middleware(req: NextRequest) {
 
   // Protected routes pattern
   const isProtectedRoute = req.nextUrl.pathname.startsWith('/admin') || 
-                          req.nextUrl.pathname.startsWith('/profile') ||
-                          req.nextUrl.pathname.startsWith('/checkout')
+                          req.nextUrl.pathname.startsWith('/profile')
 
   // Allow login page in admin
   if (req.nextUrl.pathname.startsWith('/admin/login')) {
@@ -43,5 +42,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/profile/:path*', '/checkout/:path*'],
+  matcher: ['/admin/:path*', '/profile/:path*'],
 }

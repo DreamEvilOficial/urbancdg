@@ -38,7 +38,7 @@ export default function Cart({ onClose }: CartProps) {
   }, [items])
 
   const handleCheckout = () => {
-    router.push('/cart')
+    router.push('/checkout')
     onClose()
   }
 
