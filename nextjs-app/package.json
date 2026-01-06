@@ -26,6 +26,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.89.0",
     "@types/canvas-confetti": "^1.9.0",
+    "@types/node-cron": "^3.0.11",
     "@types/uuid": "^9.0.2",
     "bcryptjs": "^2.4.3",
     "canvas-confetti": "^1.9.4",
@@ -35,9 +36,11 @@
     "lucide-react": "^0.555.0",
     "mercadopago": "^2.0.0",
     "next": "14.0.4",
+    "node-cron": "^4.2.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-hot-toast": "^2.4.1",
+    "simple-git": "^3.30.0",
     "sqlite3": "^5.1.7",
     "uuid": "^9.0.1",
     "zustand": "^4.4.7"

@@ -187,7 +187,7 @@ export default function SavedProducts({ onClose }: SavedProductsProps) {
                     </h3>
                     
                     <div className="flex items-center justify-between mt-2">
-                      <p className="text-white font-black text-sm">${item.precio.toLocaleString()}</p>
+                      <p className="text-white font-black text-sm">$<span suppressHydrationWarning>{item.precio.toLocaleString()}</span></p>
                       
                       <button
                         onClick={(e) => handleAddToCart(item, e)}

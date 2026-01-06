@@ -188,6 +188,22 @@ const initSchema = async () => {
         )
       `);
 
+      // DEUDAS
+      await run(`
+        CREATE TABLE IF NOT EXISTS deudas (
+          id TEXT PRIMARY KEY,
+          cliente_nombre TEXT,
+          cliente_apellido TEXT,
+          cliente_dni TEXT,
+          cliente_celular TEXT,
+          cliente_direccion TEXT,
+          total_deuda REAL DEFAULT 0,
+          historial TEXT, -- JSON array
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
       console.log('Tables created successfully.');
   } catch (err) {
       console.error('Schema Error:', err);

@@ -235,7 +235,7 @@ export default function Cart({ onClose }: CartProps) {
           <div className="p-6 border-t border-white/10 bg-[#07080d]/70 flex-shrink-0">
             <div className="flex justify-between items-end mb-6">
               <span className="text-white/55 text-sm font-medium">Subtotal</span>
-              <span className="text-3xl font-black text-white tracking-tighter">${total().toLocaleString()}</span>
+              <span className="text-3xl font-black text-white tracking-tighter">$<span suppressHydrationWarning>{total().toLocaleString()}</span></span>
             </div>
             
             <div className="space-y-3">

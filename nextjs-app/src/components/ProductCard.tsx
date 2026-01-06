@@ -208,11 +208,11 @@ function ProductCard({ producto }: ProductCardProps) {
             
             <div className="flex items-baseline gap-2 mb-1">
               <p className="text-xl md:text-2xl font-bold text-white">
-                $ {formattedPrice}
+                $ <span suppressHydrationWarning>{formattedPrice}</span>
               </p>
               {formattedOriginalPrice && hasDiscount ? (
                 <p className="text-sm md:text-base font-medium text-gray-500 line-through">
-                  $ {formattedOriginalPrice}
+                  $ <span suppressHydrationWarning>{formattedOriginalPrice}</span>
                 </p>
               ) : (
                 <div className="h-[1.5em]" /> /* Espacio reservado para mantener la alineación */
@@ -225,7 +225,7 @@ function ProductCard({ producto }: ProductCardProps) {
                 TRANSF.
               </span>
               <span className="font-medium text-white/90">
-                $ {transferPrice}
+                $ <span suppressHydrationWarning>{transferPrice}</span>
               </span>
             </div>
 
@@ -236,10 +236,10 @@ function ProductCard({ producto }: ProductCardProps) {
             <div className="flex items-center gap-1 text-gray-400 text-[10px] md:text-xs whitespace-nowrap">
               <span className="opacity-80">6 cuotas sin interés de</span>
               <span className="font-bold text-white/90 underline decoration-gray-700 underline-offset-2">
-                ${(productPrice / 6).toLocaleString(undefined, { 
+                $<span suppressHydrationWarning>{(productPrice / 6).toLocaleString(undefined, { 
                   minimumFractionDigits: 2, 
                   maximumFractionDigits: 2 
-                })}
+                })}</span>
               </span>
             </div>
             

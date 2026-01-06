@@ -145,16 +145,16 @@ export default function ProductDetailPage() {
                <div className="space-y-4">
                   <div>
                     <span className="text-[8px] font-black text-white/45 uppercase tracking-widest block mb-1">Precio Online</span>
-                    <span className="text-3xl font-black tracking-tighter leading-none text-white">${producto.precio.toLocaleString()}</span>
+                    <span className="text-3xl font-black tracking-tighter leading-none text-white">$<span suppressHydrationWarning>{producto.precio.toLocaleString()}</span></span>
                   </div>
                   <div className="space-y-3 pt-4 border-t border-white/10">
                     <div className="flex items-center justify-between">
                        <p className="text-[10px] font-black uppercase text-accent tracking-tight">Efectivo / Transf.</p>
-                       <span className="text-xl font-black text-accent">${precioTransferencia.toLocaleString()}</span>
+                       <span className="text-xl font-black text-accent">$<span suppressHydrationWarning>{precioTransferencia.toLocaleString()}</span></span>
                     </div>
                     <div className="flex items-center justify-between">
                        <p className="text-[10px] font-black uppercase text-accent2 tracking-tight">6 cuotas fijas de</p>
-                       <span className="text-lg font-black text-accent2">${precioCuotas.toLocaleString()}</span>
+                       <span className="text-lg font-black text-accent2">$<span suppressHydrationWarning>{precioCuotas.toLocaleString()}</span></span>
                     </div>
                   </div>
                </div>

@@ -29,7 +29,7 @@ export default function NavigationLoader() {
       setTimeout(() => {
         setIsLoading(false);
         setProgress(0);
-      }, 300);
+      }, 50);
 
       if (progressInterval) {
         clearInterval(progressInterval);
@@ -40,7 +40,7 @@ export default function NavigationLoader() {
     const originalPush = window.history.pushState;
     window.history.pushState = function (...args) {
       handleStart();
-      setTimeout(handleComplete, 150); // Simular tiempo de navegación
+      setTimeout(handleComplete, 10); // Simular tiempo de navegación
       return originalPush.apply(window.history, args);
     };
 

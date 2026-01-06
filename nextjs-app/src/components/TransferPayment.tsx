@@ -174,7 +174,7 @@ ${config.mensaje_transferencia || ''}
             <div className="pt-2">
               <div className="flex justify-between font-bold">
                 <span className="text-white">Total:</span>
-                <span className="text-white">${orderTotal.toLocaleString()}</span>
+                <span className="text-white">$<span suppressHydrationWarning>{orderTotal.toLocaleString()}</span></span>
               </div>
             </div>
           </div>

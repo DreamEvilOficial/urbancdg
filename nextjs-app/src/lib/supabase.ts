@@ -78,6 +78,8 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
   // Aseguramos que la URL sea relativa o completa
   const url = endpoint.startsWith('/') ? `/api${endpoint}` : `/api/${endpoint}`;
   
+  console.log(`[apiFetch] Requesting: ${url}`, options);
+
   const res = await fetch(url, {
     ...options,
     headers: {
@@ -87,8 +89,14 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
   });
 
   if (!res.ok) {
-     const error = await res.json().catch(() => ({ error: 'Error desconocido' }));
-     throw new Error(error.error || error.message || 'Error en la petición');
+     const errorText = await res.text();
+     console.error(`[apiFetch] Error ${res.status}:`, errorText);
+     try {
+        const error = JSON.parse(errorText);
+        throw new Error(error.error || error.message || 'Error en la petición');
+     } catch (e) {
+        throw new Error(`Error ${res.status}: ${errorText}`);
+     }
   }
   
   return res.json();
@@ -223,6 +231,32 @@ export const etiquetasAPI = {
 
   async obtenerPorProducto(productoId: string) {
     return [] as string[]; // TODO
+  }
+}
+
+export const deudasAPI = {
+  async obtenerTodas() {
+    return apiFetch('/debts');
+  },
+  
+  async crear(cliente: any) {
+    return apiFetch('/debts', {
+      method: 'POST',
+      body: JSON.stringify(cliente)
+    });
+  },
+  
+  async agregarMovimiento(data: { id: string, monto: number, descripcion: string, tipo: 'deuda' | 'pago' }) {
+    return apiFetch('/debts', {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  },
+  
+  async eliminar(id: string) {
+    return apiFetch(`/debts?id=${id}`, {
+      method: 'DELETE'
+    });
   }
 }
 

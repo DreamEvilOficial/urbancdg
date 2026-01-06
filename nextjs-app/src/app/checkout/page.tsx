@@ -162,12 +162,12 @@ export default function CheckoutPage() {
                   <div className="flex justify-between text-[9px] font-bold uppercase opacity-40">
                     <span>Envío</span>
                     <span className="text-green-600">
-                      {calculatingShipping ? '...' : (shippingCost === 0 ? 'GRATIS' : `$${shippingCost.toLocaleString()}`)}
+                      {calculatingShipping ? '...' : (shippingCost === 0 ? 'GRATIS' : <>$<span suppressHydrationWarning>{shippingCost.toLocaleString()}</span></>)}
                     </span>
                   </div>
                   <div className="flex justify-between items-end pt-1">
                     <span className="font-black uppercase tracking-tighter text-[10px]">Total</span>
-                    <span className="text-3xl font-black tracking-tighter leading-none">${(total() + shippingCost).toLocaleString()}</span>
+                    <span className="text-3xl font-black tracking-tighter leading-none">$<span suppressHydrationWarning>{(total() + shippingCost).toLocaleString()}</span></span>
                   </div>
                 </div>
              </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, deudasAPI } from '@/lib/supabase'
 import { Plus, Search, DollarSign, Calendar, RefreshCcw, User, Trash2, Eye, ChevronDown, ChevronUp } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { v4 as uuidv4 } from 'uuid'
@@ -48,8 +48,7 @@ export default function DebtManagement() {
 
   async function fetchDeudas() {
     try {
-      const { data, error } = await supabase.from('deudas').select('*').order('created_at', { ascending: false })
-      if (error) throw error
+      const data = await deudasAPI.obtenerTodas()
       setDeudas(data || [])
     } catch (error) {
       console.error('Error:', error)
@@ -62,19 +61,15 @@ export default function DebtManagement() {
   async function handleCreateClient(e: React.FormEvent) {
     e.preventDefault()
     try {
-      const { data, error } = await supabase.from('deudas').insert([{
-        ...formData,
-        total_deuda: 0,
-        historial: []
-      }]).select().single()
+      const data = await deudasAPI.crear(formData)
 
-      if (error) throw error
       setDeudas([data, ...deudas])
       setShowForm(false)
       setFormData({ cliente_nombre: '', cliente_apellido: '', cliente_dni: '', cliente_celular: '', cliente_direccion: '' })
       toast.success('Cliente registrado')
-    } catch (error) {
-      toast.error('Error al crear cliente')
+    } catch (error: any) {
+      console.error('Error creating client:', error)
+      toast.error(`Error al crear cliente: ${error.message || 'Error desconocido'}`)
     }
   }
 
@@ -85,31 +80,15 @@ export default function DebtManagement() {
     const amount = Number(transactionData.monto)
     if (isNaN(amount) || amount <= 0) return toast.error('Monto inválido')
 
-    const newHistoryItem = {
-      id: uuidv4(),
-      tipo: transactionData.tipo,
-      monto: amount,
-      descripcion: transactionData.descripcion,
-      fecha: new Date().toISOString()
-    }
-
-    const newTotal = transactionData.tipo === 'deuda' 
-      ? selectedClient.total_deuda + amount 
-      : selectedClient.total_deuda - amount
-
     try {
-      const { error } = await supabase.from('deudas').update({
-        total_deuda: newTotal,
-        historial: [newHistoryItem, ...(selectedClient.historial || [])]
-      }).eq('id', selectedClient.id)
+      const updatedDebt = await deudasAPI.agregarMovimiento({
+         id: selectedClient.id,
+         monto: amount,
+         descripcion: transactionData.descripcion,
+         tipo: transactionData.tipo as 'deuda' | 'pago'
+      })
 
-      if (error) throw error
-
-      setDeudas(deudas.map(d => d.id === selectedClient.id ? { 
-        ...d, 
-        total_deuda: newTotal, 
-        historial: [newHistoryItem, ...(d.historial || [])] 
-      } : d))
+      setDeudas(deudas.map(d => d.id === selectedClient.id ? updatedDebt : d))
 
       setSelectedClient(null)
       setTransactionData({ monto: '', descripcion: '', tipo: 'deuda' })
@@ -122,7 +101,7 @@ export default function DebtManagement() {
   async function handleDelete(id: string) {
     if (!confirm('¿Borrar este historial de deuda permanentemente?')) return
     try {
-      await supabase.from('deudas').delete().eq('id', id)
+      await deudasAPI.eliminar(id)
       setDeudas(deudas.filter(d => d.id !== id))
       toast.success('Eliminado')
     } catch (e) {

@@ -124,7 +124,7 @@ export default function CartPage() {
                     <div className="h-[1px] bg-white/10 my-4" />
                     <div className="flex justify-between items-end">
                       <span className="font-black uppercase tracking-tighter text-xl leading-none">Total</span>
-                      <span className="text-5xl font-black tracking-tighter leading-none">${total().toLocaleString()}</span>
+                      <span className="text-5xl font-black tracking-tighter leading-none">$<span suppressHydrationWarning>{total().toLocaleString()}</span></span>
                     </div>
                   </div>
 

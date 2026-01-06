@@ -18,6 +18,7 @@ interface ConfigData {
   banner_urls: Array<{ url: string; link: string }>
   envio_gratis_umbral?: number
   envio_gratis_forzado?: boolean
+  autobackup_enabled?: boolean
   music_tracks?: Array<{ url: string; title?: string }>
 }
 
@@ -41,6 +42,7 @@ export default function ConfigurationPanel() {
     banner_urls: [],
     envio_gratis_umbral: 50000,
     envio_gratis_forzado: false,
+    autobackup_enabled: false,
     music_tracks: []
   })
 
@@ -96,6 +98,7 @@ export default function ConfigurationPanel() {
         banner_urls: parsedBannerUrls,
         envio_gratis_umbral: Number(data.envio_gratis_umbral ?? 50000),
         envio_gratis_forzado: data.envio_gratis_forzado === true || data.envio_gratis_forzado === 'true',
+        autobackup_enabled: data.autobackup_enabled === true || data.autobackup_enabled === 'true',
         music_tracks: (() => {
           try {
             if (Array.isArray(data.music_tracks)) return data.music_tracks
@@ -663,6 +666,22 @@ export default function ConfigurationPanel() {
             />
             <p className="text-xs text-white/40 mt-2 font-bold">Tiempo que tarda una vuelta completa. Menores segundos = más rápido. Recomendado: 60.</p>
           </div>
+        </div>
+      </div>
+      {/* Sistema */}
+      <div className="bg-[#06070c]/70 backdrop-blur-2xl rounded-[28px] shadow-[0_30px_120px_-90px_rgba(0,0,0,0.9)] border border-white/10 p-6">
+        <h2 className="font-display text-xl tracking-[0.08em] uppercase text-white mb-4">Sistema</h2>
+        <div className="flex items-center justify-between bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-3">
+          <div>
+            <label className="text-[10px] font-black text-white/55 uppercase tracking-[0.28em]">Auto Backup 24hs</label>
+            <p className="text-[10px] text-white/30 font-bold mt-1">Realiza un backup diario a las 00:00hs y lo sube a GitHub</p>
+          </div>
+          <button 
+            onClick={() => setConfig({ ...config, autobackup_enabled: !config.autobackup_enabled })}
+            className={`w-12 h-6 rounded-full relative transition-colors ${config.autobackup_enabled ? 'bg-green-500' : 'bg-white/10'}`}
+          >
+            <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${config.autobackup_enabled ? 'left-7' : 'left-1'}`} />
+          </button>
         </div>
       </div>
     </div>
