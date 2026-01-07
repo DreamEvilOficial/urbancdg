@@ -1,10 +1,8 @@
 
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
-
-const supabase = createSupabaseClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabase = (url && key) ? createSupabaseClient(url, key) : (undefined as any)
 
 export interface Producto {
   id: string

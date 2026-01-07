@@ -28,16 +28,33 @@ export default function ReviewForm({ productId, productName, orderId, onSubmitte
 
     setSubmitting(true)
     try {
-      // Insertar reseña
-      const { error } = await supabase.from('resenas').insert({
-        producto_id: productId,
-        nombre_cliente: name || 'Anónimo', // Opcional: podrías pedir nombre
-        calificacion: rating,
-        comentario: comment,
-        aprobado: false // Requiere moderación
-      })
-
-      if (error) throw error
+      const canUseClient = !!(supabase as any)?.from
+      if (canUseClient) {
+        const { error } = await supabase.from('resenas').insert({
+          producto_id: productId,
+          nombre_cliente: name || 'Anónimo',
+          calificacion: rating,
+          comentario: comment,
+          aprobado: false
+        })
+        if (error) throw error
+      } else {
+        const res = await fetch('/api/reviews/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productoId: productId,
+            numeroOrden: orderId || '',
+            nombre: name || 'Anónimo',
+            comentario: comment,
+            rating
+          })
+        })
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}))
+          throw new Error(data?.error || 'Error al enviar reseña')
+        }
+      }
 
       toast.success('¡Gracias por tu reseña!')
       onSubmitted()
