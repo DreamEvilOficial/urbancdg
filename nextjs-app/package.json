@@ -21,7 +21,8 @@
     "security-fix": "npm audit fix",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf .next node_modules",
-    "reinstall": "npm run clean && npm install"
+    "reinstall": "npm run clean && npm install",
+    "setup:supabase": "node scripts/setup-supabase.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.89.0",
