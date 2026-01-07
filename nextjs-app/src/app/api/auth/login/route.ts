@@ -4,11 +4,14 @@ import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
-// Supabase client (server-side)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !key) {
+    throw new Error('Supabase no configurado en el servidor')
+  }
+  return createClient(url, key)
+}
 
 // Función para firmar datos (HMAC-SHA256)
 async function signData(data: string, secret: string) {
@@ -36,6 +39,7 @@ export async function POST(request: Request) {
     console.log('Intento de login para:', username)
 
     // Autenticación real contra Supabase
+    const supabase = getSupabase()
     const { data, error } = await supabase.rpc('auth_login', {
       p_username: username,
       p_password: password,

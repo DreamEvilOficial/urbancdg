@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { supabase, type Producto } from '@/lib/supabase'
+import { type Producto } from '@/lib/supabase'
 import ProductCard from '@/components/ProductCard'
 import DynamicTitle from '@/components/DynamicTitle'
 import { SlidersHorizontal, X, ArrowUpDown, ChevronDown, Check, Tag } from 'lucide-react'

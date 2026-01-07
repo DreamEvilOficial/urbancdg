@@ -1,46 +1,39 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { jwtVerify } from 'jose'
 
-const SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET || 'secret-key-urban-cdg');
+export async function middleware(request: NextRequest) {
+  const response = NextResponse.next()
+  const pathname = request.nextUrl.pathname
 
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
-  const sessionToken = req.cookies.get('session')?.value
-
-  // Protected routes pattern
-  const isProtectedRoute = req.nextUrl.pathname.startsWith('/admin') || 
-                          req.nextUrl.pathname.startsWith('/profile')
-
-  // Allow login page in admin
-  if (req.nextUrl.pathname.startsWith('/admin/login')) {
-      return res;
+  if (pathname.startsWith('/admin/login')) {
+    return response
   }
 
-  if (isProtectedRoute) {
-      if (!sessionToken) {
-          const redirectUrl = new URL('/admin/login', req.url)
-          redirectUrl.searchParams.set('redirect', req.nextUrl.pathname)
-          // Adjust redirect for non-admin routes if needed, but keeping simple for now
-          if (!req.nextUrl.pathname.startsWith('/admin')) {
-             // redirectUrl.pathname = '/login'; // If we had a general login
-          }
-          return NextResponse.redirect(redirectUrl)
-      }
+  if (pathname.startsWith('/admin')) {
+    const adminAuth = request.cookies.get('admin-auth')?.value === '1'
+    const adminSession = request.cookies.get('admin-session')?.value
 
+    if (!adminAuth && !adminSession) {
+      return NextResponse.redirect(new URL('/admin/login', request.url))
+    }
+
+    if (adminSession) {
       try {
-          await jwtVerify(sessionToken, SECRET_KEY)
-          // Valid session
-      } catch (error) {
-          // Invalid token
-          const redirectUrl = new URL('/admin/login', req.url)
-          return NextResponse.redirect(redirectUrl) 
+        const payload = adminSession.split('.')[0] || ''
+        const json = atob(payload)
+        const session = JSON.parse(json)
+        if (!session?.expiresAt || Number(session.expiresAt) < Date.now()) {
+          return NextResponse.redirect(new URL('/admin/login', request.url))
+        }
+      } catch {
+        return NextResponse.redirect(new URL('/admin/login', request.url))
       }
+    }
   }
 
-  return res
+  return response
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/profile/:path*'],
+  matcher: ['/admin/:path*'],
 }

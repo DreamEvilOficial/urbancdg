@@ -5,8 +5,14 @@ import { v4 as uuidv4 } from 'uuid';
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const email = searchParams.get('email');
+    const id = searchParams.get('id');
 
     try {
+        if (id) {
+            const order = await db.get('SELECT * FROM ordenes WHERE id = ?', [id]);
+            return NextResponse.json(order || null);
+        }
+        
         let query = 'SELECT * FROM ordenes WHERE 1=1';
         let params: any[] = [];
 

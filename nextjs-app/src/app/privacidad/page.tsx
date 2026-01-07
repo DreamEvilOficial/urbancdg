@@ -140,7 +140,7 @@ export default function PrivacidadPage() {
           <ul className="list-disc list-inside space-y-1 ml-4">
             <li>Te enviaremos ofertas, descuentos y novedades</li>
             <li>Podés darte de baja en cualquier momento</li>
-            <li>Cada email incluye un link de "Cancelar suscripción"</li>
+            <li>Cada email incluye un link de &quot;Cancelar suscripción&quot;</li>
             <li>No compartimos tu email con otras empresas</li>
           </ul>
         </section>
@@ -173,7 +173,7 @@ export default function PrivacidadPage() {
           </p>
           <ul className="list-disc list-inside space-y-1 ml-4">
             <li>Publicación de la nueva política en esta página</li>
-            <li>Actualización de la fecha de "Última modificación"</li>
+            <li>Actualización de la fecha de &quot;Última modificación&quot;</li>
             <li>Email a los usuarios registrados (cambios importantes)</li>
           </ul>
         </section>

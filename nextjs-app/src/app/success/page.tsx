@@ -25,14 +25,21 @@ export default function SuccessPage() {
 
     const fetchOrder = async () => {
       try {
-        const { data, error } = await supabase
-          .from('ordenes')
-          .select('*')
-          .eq('id', ordenId)
-          .single()
-
-        if (error) throw error
-        setOrder(data)
+        const canUseClient = !!(supabase as any)?.from
+        if (canUseClient) {
+          const { data, error } = await supabase
+            .from('ordenes')
+            .select('*')
+            .eq('id', ordenId)
+            .single()
+          if (error) throw error
+          setOrder(data)
+        } else {
+          const res = await fetch(`/api/orders?id=${encodeURIComponent(ordenId)}`)
+          if (!res.ok) throw new Error('Error cargando orden')
+          const data = await res.json()
+          setOrder(data)
+        }
         
         // Disparar confetti
         confetti({

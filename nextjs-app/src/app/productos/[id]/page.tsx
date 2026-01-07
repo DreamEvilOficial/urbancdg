@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { productosAPI, supabase, type Producto } from '@/lib/supabase'
+import { productosAPI, type Producto } from '@/lib/supabase'
 import { useCartStore } from '@/store/cartStore'
 import { ShoppingBag, ChevronLeft, ChevronRight, Minus, Plus, ShieldCheck, CreditCard, Banknote, ArrowLeft } from 'lucide-react'
 import Image from 'next/image'
