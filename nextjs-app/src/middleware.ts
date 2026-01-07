@@ -9,6 +9,10 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
+  if (pathname === '/admin') {
+    return response
+  }
+
   if (pathname.startsWith('/admin')) {
     const adminAuth = request.cookies.get('admin-auth')?.value === '1'
     const adminSession = request.cookies.get('admin-session')?.value

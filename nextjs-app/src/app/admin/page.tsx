@@ -26,6 +26,9 @@ export default function AdminPage() {
   const [user, setUser] = useState<any>(null)
   const [activeTab, setActiveTab] = useState('productos')
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [requireLogin, setRequireLogin] = useState(false)
+  const [loginLoading, setLoginLoading] = useState(false)
+  const [loginData, setLoginData] = useState({ username: '', password: '' })
   
   // Data State
   const [productos, setProductos] = useState<Producto[]>([])
@@ -47,8 +50,7 @@ export default function AdminPage() {
       const res = await fetch('/api/auth/session')
       
       if (!res.ok) {
-        console.warn('Redirecting to login: Session check failed with status', res.status)
-        router.push('/admin/login')
+        setRequireLogin(true)
         return
       }
 
@@ -59,8 +61,7 @@ export default function AdminPage() {
     } catch (error: any) {
       console.error('Critical auth check error:', error)
       toast.error(`Error de Dashboard: ${error.message || 'Error desconocido'}`)
-      // Comentamos el push para ver el error en pantalla si carga algo
-      // router.push('/admin/login')
+      setRequireLogin(true)
     } finally {
       setLoading(false)
     }
@@ -207,6 +208,90 @@ export default function AdminPage() {
     return (
       <div className="flex justify-center items-center min-h-screen bg-transparent">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white/20 border-t-accent"></div>
+      </div>
+    )
+  }
+
+  if (requireLogin) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 selection:bg-white selection:text-black">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-[25%] -left-[10%] w-[50%] h-[50%] bg-white/5 rounded-full blur-[120px]" />
+          <div className="absolute -bottom-[25%] -right-[10%] w-[50%] h-[50%] bg-white/5 rounded-full blur-[120px]" />
+        </div>
+        <div className="w-full max-w-md relative">
+          <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+            <div className="flex flex-col items-center mb-10">
+              <div className="w-14 h-14 bg-white text-black rounded-2xl flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-transform group-hover:scale-110 duration-500">
+                <Menu className="w-7 h-7" />
+              </div>
+              <h1 className="text-2xl font-bold text-white tracking-tight">Acceso Privado</h1>
+              <p className="text-gray-500 text-sm mt-2">URBAN • Gestión de Tienda</p>
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault()
+                if (loginLoading) return
+                setLoginLoading(true)
+                try {
+                  const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(loginData)
+                  })
+                  const data = await res.json()
+                  if (res.ok) {
+                    toast.success('Acceso concedido')
+                    setRequireLogin(false)
+                    checkAuthAndLoadData()
+                  } else {
+                    toast.error(data.error || 'Credenciales incorrectas')
+                  }
+                } catch {
+                  toast.error('Error de conexión con el servidor')
+                } finally {
+                  setLoginLoading(false)
+                }
+              }}
+              className="space-y-5"
+            >
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest ml-1">Usuario</label>
+                <div className="relative group/input">
+                  <input
+                    type="text"
+                    placeholder="Usuario"
+                    className="w-full bg-white/5 border border-white/5 text-white pl-4 pr-4 py-3.5 rounded-2xl outline-none focus:border-white/20 focus:bg-white/[0.08] transition-all text-sm"
+                    required
+                    value={loginData.username}
+                    onChange={e => setLoginData({ ...loginData, username: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest ml-1">Contraseña</label>
+                <div className="relative group/input">
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    className="w-full bg-white/5 border border-white/5 text-white pl-4 pr-4 py-3.5 rounded-2xl outline-none focus:border-white/20 focus:bg-white/[0.08] transition-all text-sm"
+                    required
+                    value={loginData.password}
+                    onChange={e => setLoginData({ ...loginData, password: e.target.value })}
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={loginLoading}
+                className="w-full mt-4 bg-white text-black font-bold py-4 rounded-2xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-all shadow-[0_10px_20px_rgba(255,255,255,0.1)]"
+              >
+                {loginLoading ? 'Cargando...' : 'Entrar al Panel'}
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
     )
   }
