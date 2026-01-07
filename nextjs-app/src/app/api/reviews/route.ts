@@ -6,47 +6,16 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const limit = parseInt(searchParams.get('limit') || '10');
 
-    const cols = await db.all<any>(`PRAGMA table_info('resenas')`);
-    const names = new Set<string>((cols || []).map((c: any) => String(c.name)));
-
-    const usernameExpr =
-      names.has('usuario_nombre') ? 'usuario_nombre' :
-      names.has('nombre_usuario') ? 'nombre_usuario' :
-      names.has('usuario') ? 'usuario' :
-      names.has('nombre') ? 'nombre' : `'Cliente'`;
-
-    const ratingExpr =
-      names.has('rating') ? 'rating' :
-      names.has('puntuacion') ? 'puntuacion' :
-      names.has('calificacion') ? 'calificacion' : '0';
-
-    const comentarioExpr =
-      names.has('comentario') ? 'comentario' :
-      names.has('comentarios') ? 'comentarios' :
-      names.has('texto') ? 'texto' : `''`;
-
-    const createdExpr =
-      names.has('created_at') ? 'created_at' :
-      names.has('fecha_creacion') ? 'fecha_creacion' :
-      names.has('fecha') ? 'fecha' : `datetime('now')`;
-
-    const productoExpr =
-      names.has('producto_id') ? 'producto_id' :
-      names.has('product_id') ? 'product_id' :
-      names.has('producto') ? 'producto' : 'NULL';
-
-    const whereActivo = names.has('activo') ? 'WHERE activo = 1' : '';
-
     const sql = `
       SELECT 
-        id, 
-        ${ratingExpr} AS rating, 
-        ${comentarioExpr} AS comentario, 
-        ${createdExpr} AS created_at, 
-        ${productoExpr} AS producto_id, 
-        ${usernameExpr} AS usuario_nombre
+        id,
+        calificacion AS rating,
+        comentario,
+        created_at,
+        producto_id,
+        cliente_nombre AS usuario_nombre
       FROM resenas
-      ${whereActivo}
+      WHERE aprobado = TRUE
       ORDER BY created_at DESC
       LIMIT ?
     `;
