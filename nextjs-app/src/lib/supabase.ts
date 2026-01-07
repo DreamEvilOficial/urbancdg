@@ -1,5 +1,10 @@
 
-// Cliente API Local (reemplaza a Supabase)
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+
+const supabase = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 export interface Producto {
   id: string
@@ -260,22 +265,4 @@ export const deudasAPI = {
   }
 }
 
-// Dummy export proxy for direct supabase usage (legacy support)
-// This will likely break specific usage, but we should find/replace those.
-export const supabase = {
-    auth: {
-        getUser: authAPI.getUser,
-        signInWithPassword: ({email, password}: any) => authAPI.signIn(email, password),
-        signOut: authAPI.signOut
-    },
-    from: () => {
-        console.error("Direct Supabase query not supported in local mode. Use API adapters.");
-        return {
-            select: () => ({ data: [], error: null }),
-            insert: () => ({ data: [], error: null }),
-            update: () => ({ data: [], error: null }),
-            delete: () => ({ data: [], error: null }),
-            eq: () => ({ data: [], error: null, select: () => ({ data: [], error: null }) }),
-        }
-    }
-} as any;
+export { supabase }

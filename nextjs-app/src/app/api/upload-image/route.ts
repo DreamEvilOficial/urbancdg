@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase-server'
 import { sanitizeFilename } from '@/lib/security'
 
 // Tamaño máximo de archivo: 5MB
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
-    // Subir a Supabase Storage
+    const supabase = createClient()
     const { data, error } = await supabase.storage
       .from('productos')
       .upload(fileName, buffer, {
