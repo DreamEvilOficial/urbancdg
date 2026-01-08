@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useCartStore } from '@/store/cartStore'
 import { ArrowLeft, Plus, Minus, Trash2, ArrowRight, ShoppingBag, Info } from 'lucide-react'
 import toast from 'react-hot-toast'
+import NextImage from 'next/image'
 
 export default function CartPage() {
   const router = useRouter()
@@ -73,7 +74,7 @@ export default function CartPage() {
                 {items.map((item) => (
                   <div key={item.id} className="group relative flex items-center gap-6 p-4 rounded-3xl hover:bg-white/[0.02] transition-colors">
                     <div className="w-24 h-24 bg-white/5 rounded-2xl overflow-hidden shrink-0 border border-white/10 relative">
-                      <Image 
+                      <NextImage 
                         src={item.imagen_url || '/placeholder.png'} 
                         alt={item.nombre}
                         fill

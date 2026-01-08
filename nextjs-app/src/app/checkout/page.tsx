@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import NextImage from 'next/image'
 import { useCartStore } from '@/store/cartStore'
 import { Truck, Store, MapPin, ArrowRight, ArrowLeft, ShieldCheck, ChevronRight } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -152,7 +153,7 @@ export default function CheckoutPage() {
                    {items.map((item, i) => (
                      <div key={i} className="flex items-center gap-2">
                         <div className="w-8 h-8 bg-black/5 rounded overflow-hidden shrink-0 relative">
-                          <Image 
+                          <NextImage 
                             src={item.imagen_url || '/placeholder.png'} 
                             alt={item.nombre}
                             fill
