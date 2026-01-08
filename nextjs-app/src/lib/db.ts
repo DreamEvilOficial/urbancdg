@@ -1,5 +1,7 @@
 import { Pool } from 'pg';
-import { supabase } from './supabase';
+import { supabase, supabaseAdmin } from './supabase';
+
+const client = supabaseAdmin || supabase;
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -89,11 +91,11 @@ class Database {
       const result = await pool.query(mapSql(sql), params);
       return (result.rows[0] as T) || undefined;
     }
-    if (!supabase) return undefined as T | undefined;
+    if (!client) return undefined as T | undefined;
     const selectMatch = sql.match(/FROM\s+(\w+)/i);
     const table = selectMatch?.[1];
     if (!table) return undefined as T | undefined;
-    let query = supabase.from(table).select('*');
+    let query = client.from(table).select('*');
     const whereMatch = sql.match(/WHERE\s+([\s\S]+?)(?:\s+ORDER BY|\s+LIMIT|$)/i);
     const whereClause = whereMatch?.[1] || '';
     if (whereClause && !/1\s*=\s*1/.test(whereClause)) {
