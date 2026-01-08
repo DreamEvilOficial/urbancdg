@@ -38,11 +38,11 @@ class Database {
       const result = await pool.query(mapSql(sql), params);
       return result.rows as T[];
     }
-    if (!supabase) return [] as T[];
+    if (!client) return [] as T[];
     const selectMatch = sql.match(/FROM\s+(\w+)/i);
     const table = selectMatch?.[1];
     if (!table) return [] as T[];
-    let query = supabase.from(table).select('*');
+    let query = client.from(table).select('*');
     const whereMatch = sql.match(/WHERE\s+([\s\S]+?)(?:\s+ORDER BY|\s+LIMIT|$)/i);
     const whereClause = whereMatch?.[1] || '';
     if (whereClause && !/1\s*=\s*1/.test(whereClause)) {
@@ -122,7 +122,7 @@ class Database {
       const changes = typeof result.rowCount === 'number' ? result.rowCount : 0;
       return { id, changes };
     }
-    if (!supabase) return { id: null, changes: 0 };
+    if (!client) return { id: null, changes: 0 };
     const insertMatch = sql.match(/INSERT\s+INTO\s+(\w+)\s*\(([\s\S]+?)\)\s*VALUES\s*\(([\s\S]+?)\)/i);
     if (insertMatch) {
       const table = insertMatch[1];
@@ -132,7 +132,7 @@ class Database {
         const v = params[i];
         obj[c] = (c === 'activo' || c === 'destacado' || c === 'top') ? (v === 1 || v === true) : v;
       });
-      const { data, error } = await supabase.from(table).insert(obj).select('id');
+      const { data, error } = await client.from(table).insert(obj).select('id');
       if (error) return { id: null, changes: 0 };
       const id = Array.isArray(data) ? (data[0]?.id ?? null) : null;
       const changes = Array.isArray(data) ? data.length : (data ? 1 : 0);
@@ -151,7 +151,7 @@ class Database {
         const value = params[0];
         const idVal = params[1];
         const setValue = (setCol === 'activo' || setCol === 'destacado' || setCol === 'top') ? (value === 1 || value === true) : value;
-        const { data, error } = await supabase.from(table).update({ [setCol]: setValue }).eq(whereCol, idVal).select('id');
+        const { data, error } = await client.from(table).update({ [setCol]: setValue }).eq(whereCol, idVal).select('id');
         if (error) return { id: null, changes: 0 };
         const changes = Array.isArray(data) ? data.length : (data ? 1 : 0);
         const id = Array.isArray(data) ? (data[0]?.id ?? null) : null;

@@ -1,8 +1,21 @@
 
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL
 const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-const supabase = (url && key) ? createSupabaseClient(url, key) : (undefined as any)
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+export const supabase = (url && key) ? createSupabaseClient(url, key) : (undefined as any)
+
+// Cliente con permisos de admin (Service Role) para usar SOLO en el servidor
+export const supabaseAdmin = (url && serviceKey) 
+  ? createSupabaseClient(url, serviceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }) 
+  : undefined
 
 export interface Producto {
   id: string
