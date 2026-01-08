@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
+import { createClient } from '@supabase/supabase-js';
 
 export async function GET() {
   try {
@@ -24,7 +25,30 @@ export async function POST(req: Request) {
     );
 
     if (!result || result.changes === 0) {
-      return NextResponse.json({ error: 'No se pudo insertar la sección' }, { status: 500 });
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (supabaseUrl && supabaseServiceKey) {
+        const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+          auth: { autoRefreshToken: false, persistSession: false }
+        });
+        const { data, error } = await supabaseAdmin
+          .from('homepage_sections')
+          .insert({
+            id,
+            tipo,
+            referencia_id,
+            titulo,
+            subtitulo,
+            orden: typeof orden === 'number' ? orden : 0,
+            activo: !!activo
+          })
+          .select('id');
+        if (error) {
+          return NextResponse.json({ error: 'Error al insertar sección', details: error.message }, { status: 500 });
+        }
+      } else {
+        return NextResponse.json({ error: 'No se pudo insertar la sección' }, { status: 500 });
+      }
     }
 
     // Si existe gif_url y la columna está disponible, intentar actualizarla (no crítico)
