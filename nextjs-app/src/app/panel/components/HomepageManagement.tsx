@@ -61,7 +61,14 @@ export default function HomepageManagement() {
            orden: sections.length
         })
       })
-      if (!res.ok) throw new Error('Error al guardar')
+      if (!res.ok) {
+        try {
+          const data = await res.json()
+          throw new Error(data?.details || data?.error || 'Error al guardar')
+        } catch {
+          throw new Error('Error al guardar')
+        }
+      }
       
       toast.success('Sección añadida')
       setIsAdding(false)

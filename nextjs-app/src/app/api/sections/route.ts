@@ -18,6 +18,8 @@ export async function POST(req: Request) {
     const id = uuidv4();
     const { tipo, referencia_id, titulo, subtitulo, gif_url, orden, activo } = body;
 
+    console.log('[sections:POST] Intentando crear sección', { id, tipo, referencia_id, titulo, orden, activo });
+
     // Insert robusto: evitar columnas opcionales que puedan no existir aún (ej: gif_url)
     const result = await db.run(
       'INSERT INTO homepage_sections (id, tipo, referencia_id, titulo, subtitulo, orden, activo) VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -25,6 +27,7 @@ export async function POST(req: Request) {
     );
 
     if (!result || result.changes === 0) {
+      console.warn('[sections:POST] Insert con db.run no aplicó cambios, probando fallback admin');
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
       const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
       if (supabaseUrl && supabaseServiceKey) {
@@ -44,9 +47,11 @@ export async function POST(req: Request) {
           })
           .select('id');
         if (error) {
+          console.error('[sections:POST] Fallback admin insert error:', error.message);
           return NextResponse.json({ error: 'Error al insertar sección', details: error.message }, { status: 500 });
         }
       } else {
+        console.error('[sections:POST] Fallback admin no disponible (URL o Service Key ausentes)');
         return NextResponse.json({ error: 'No se pudo insertar la sección' }, { status: 500 });
       }
     }
@@ -58,6 +63,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, id });
   } catch (error: any) {
+    console.error('[sections:POST] Error inesperado:', error?.message || error);
     return NextResponse.json({ error: 'Database error', details: error?.message }, { status: 500 });
   }
 }
