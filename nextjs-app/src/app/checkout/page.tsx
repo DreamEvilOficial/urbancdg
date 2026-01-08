@@ -151,7 +151,15 @@ export default function CheckoutPage() {
                 <div className="space-y-2 mb-4">
                    {items.map((item, i) => (
                      <div key={i} className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-black/5 rounded overflow-hidden shrink-0"><img src={item.imagen_url} className="w-full h-full object-cover" alt="" /></div>
+                        <div className="w-8 h-8 bg-black/5 rounded overflow-hidden shrink-0 relative">
+                          <Image 
+                            src={item.imagen_url || '/placeholder.png'} 
+                            alt={item.nombre}
+                            fill
+                            className="object-cover"
+                            sizes="32px"
+                          />
+                        </div>
                         <div className="flex-1 truncate"><p className="text-[9px] font-black uppercase truncate">{item.nombre}</p></div>
                         <p className="text-[10px] font-black tracking-tight">${(item.precio * item.cantidad).toLocaleString()}</p>
                      </div>

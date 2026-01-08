@@ -72,8 +72,14 @@ export default function CartPage() {
               <div className="space-y-6">
                 {items.map((item) => (
                   <div key={item.id} className="group relative flex items-center gap-6 p-4 rounded-3xl hover:bg-white/[0.02] transition-colors">
-                    <div className="w-24 h-24 bg-white/5 rounded-2xl overflow-hidden shrink-0 border border-white/10">
-                      <img src={item.imagen_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
+                    <div className="w-24 h-24 bg-white/5 rounded-2xl overflow-hidden shrink-0 border border-white/10 relative">
+                      <Image 
+                        src={item.imagen_url || '/placeholder.png'} 
+                        alt={item.nombre}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-700"
+                        sizes="96px"
+                      />
                     </div>
                     
                     <div className="flex-1 min-w-0">

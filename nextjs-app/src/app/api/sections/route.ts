@@ -17,14 +17,20 @@ export async function POST(req: Request) {
     const id = uuidv4();
     const { tipo, referencia_id, titulo, subtitulo, gif_url, orden, activo } = body;
 
+    // Insert robusto: evitar columnas opcionales que puedan no existir aún (ej: gif_url)
     await db.run(
-      'INSERT INTO homepage_sections (id, tipo, referencia_id, titulo, subtitulo, gif_url, orden, activo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, tipo, referencia_id, titulo, subtitulo, gif_url, orden, activo ? 1 : 0]
+      'INSERT INTO homepage_sections (id, tipo, referencia_id, titulo, subtitulo, orden, activo) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [id, tipo, referencia_id, titulo, subtitulo, orden ?? 0, activo ? 1 : 0]
     );
 
+    // Si existe gif_url y la columna está disponible, intentar actualizarla (no crítico)
+    if (gif_url) {
+      await db.run('UPDATE homepage_sections SET gif_url = ? WHERE id = ?', [gif_url, id]);
+    }
+
     return NextResponse.json({ success: true, id });
-  } catch (error) {
-    return NextResponse.json({ error: 'Database error' }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ error: 'Database error', details: error?.message }, { status: 500 });
   }
 }
 
