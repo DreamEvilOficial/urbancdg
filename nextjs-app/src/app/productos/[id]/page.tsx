@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { productosAPI, type Producto } from '@/lib/supabase'
 import { useCartStore } from '@/store/cartStore'
@@ -32,12 +32,7 @@ export default function ProductDetailPage() {
   
   const addItem = useCartStore((state) => state.addItem)
 
-  useEffect(() => { 
-    window.scrollTo(0, 0)
-    cargarProducto() 
-  }, [productSlug])
-
-  async function cargarProducto() {
+  const cargarProducto = useCallback(async () => {
     try {
       setLoading(true)
       let data: Producto | undefined
@@ -70,7 +65,12 @@ export default function ProductDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [productSlug])
+
+  useEffect(() => { 
+    window.scrollTo(0, 0)
+    cargarProducto() 
+  }, [productSlug, cargarProducto])
 
   const variantes = producto?.variantes || []
   const hasVariants = variantes.length > 0

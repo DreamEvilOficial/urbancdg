@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { MessageCircle } from 'lucide-react'
+import Image from 'next/image'
 
 export default function WhatsAppButton() {
   const [phone, setPhone] = useState('')

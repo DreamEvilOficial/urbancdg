@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Star, MessageSquare, CheckCircle2, ShoppingBag, Send, UserCircle2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -25,11 +25,7 @@ export default function ProductReviews({ productId, productName }: { productId: 
   const [hoverRating, setHoverRating] = useState(0)
   const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => {
-    fetchReviews()
-  }, [productId])
-
-  async function fetchReviews() {
+  const fetchReviews = useCallback(async () => {
     try {
       const res = await fetch(`/api/reviews/list?producto=${encodeURIComponent(productId)}`)
       if (!res.ok) throw new Error('No se pudieron cargar reseñas')
@@ -41,7 +37,11 @@ export default function ProductReviews({ productId, productName }: { productId: 
     } finally {
       setLoading(false)
     }
-  }
+  }, [productId])
+
+  useEffect(() => {
+    fetchReviews()
+  }, [productId, fetchReviews])
 
   async function submitReview(e: React.FormEvent) {
     e.preventDefault()

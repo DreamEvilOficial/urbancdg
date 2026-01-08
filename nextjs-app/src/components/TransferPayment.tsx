@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Copy, Check, Send } from 'lucide-react'
 import toast from 'react-hot-toast'
+import Image from 'next/image'
 
 interface TransferPaymentProps {
   orderTotal: number

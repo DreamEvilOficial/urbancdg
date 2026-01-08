@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCartStore } from '@/store/cartStore'
 import { Truck, Store, MapPin, ArrowRight, ArrowLeft, ShieldCheck, ChevronRight } from 'lucide-react'
@@ -39,16 +39,7 @@ export default function CheckoutPage() {
     return () => window.removeEventListener('config-updated', loadConfig)
   }, [])
 
-  useEffect(() => {
-    const threshold = Number(config?.envio_gratis_umbral ?? 50000)
-    const forceFree = config?.envio_gratis_forzado === true || config?.envio_gratis_forzado === 'true'
-    const isFree = deliveryMethod === 'pickup' || forceFree || total() >= threshold
-    if (isFree) { setShippingCost(0); return; }
-    if (formData.codigoPostal.length >= 4) calculateShipping()
-    else setShippingCost(0)
-  }, [formData.codigoPostal, deliveryMethod, shippingOption, config, items.length])
-
-  const calculateShipping = async () => {
+  const calculateShipping = useCallback(async () => {
     setCalculatingShipping(true)
     setTimeout(() => {
       const isCaba = formData.codigoPostal.startsWith('1')
@@ -56,7 +47,16 @@ export default function CheckoutPage() {
       setShippingCost(baseCost)
       setCalculatingShipping(false)
     }, 500)
-  }
+  }, [formData.codigoPostal, shippingOption])
+
+  useEffect(() => {
+    const threshold = Number(config?.envio_gratis_umbral ?? 50000)
+    const forceFree = config?.envio_gratis_forzado === true || config?.envio_gratis_forzado === 'true'
+    const isFree = deliveryMethod === 'pickup' || forceFree || total() >= threshold
+    if (isFree) { setShippingCost(0); return; }
+    if (formData.codigoPostal.length >= 4) calculateShipping()
+    else setShippingCost(0)
+  }, [formData.codigoPostal, deliveryMethod, shippingOption, config, items.length, total, calculateShipping])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
