@@ -5,14 +5,17 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL
 const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-  console.error('❌ ERROR CRÍTICO: NEXT_PUBLIC_SUPABASE_URL no está definida')
-}
+// Solo verificar variables críticas en el servidor para evitar ruido en la consola del navegador
+if (typeof window === 'undefined') {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    console.error('❌ ERROR CRÍTICO: NEXT_PUBLIC_SUPABASE_URL no está definida en el servidor')
+  }
 
-if (!serviceKey) {
-  console.warn('⚠️ ADVERTENCIA: SUPABASE_SERVICE_ROLE_KEY no está definida. Las operaciones de escritura administrativa fallarán.')
-} else {
-  console.log('✅ SUPABASE_SERVICE_ROLE_KEY detectada. Modo Admin habilitado.')
+  if (!serviceKey) {
+    console.warn('⚠️ ADVERTENCIA: SUPABASE_SERVICE_ROLE_KEY no está definida en el servidor. Las operaciones de escritura administrativa fallarán.')
+  } else {
+    console.log('✅ SUPABASE_SERVICE_ROLE_KEY detectada. Modo Admin habilitado.')
+  }
 }
 
 export const supabase = (url && key) ? createSupabaseClient(url, key) : (undefined as any)
