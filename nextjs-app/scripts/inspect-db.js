@@ -45,7 +45,46 @@ async function inspect() {
     `);
     console.log('Políticas en usuarios:', resPolicies.rows);
 
-  } catch (error) {
+     // Check categorias table
+     console.log('\n--- INSPECCIONANDO CATEGORIAS ---');
+     const resCatColumns = await client.query(`
+       SELECT column_name, data_type 
+       FROM information_schema.columns 
+       WHERE table_name = 'categorias'
+     `);
+     console.log('Columnas de categorias:', resCatColumns.rows.map(c => `- ${c.column_name} (${c.data_type})`).join('\n '));
+
+     const resCatRLS = await client.query(`
+        SELECT relname, relrowsecurity 
+        FROM pg_class 
+        WHERE relname = 'categorias'
+      `);
+      if (resCatRLS.rows.length > 0) {
+        console.log('RLS habilitado en categorias:', resCatRLS.rows[0].relrowsecurity);
+      }
+    
+      const resCatPolicies = await client.query(`
+        SELECT * FROM pg_policies WHERE tablename = 'categorias'
+      `);
+      console.log('Políticas en categorias:', resCatPolicies.rows);
+
+      // Check subcategorias table
+      console.log('\n--- INSPECCIONANDO SUBCATEGORIAS ---');
+      const resSubRLS = await client.query(`
+         SELECT relname, relrowsecurity 
+         FROM pg_class 
+         WHERE relname = 'subcategorias'
+       `);
+       if (resSubRLS.rows.length > 0) {
+         console.log('RLS habilitado en subcategorias:', resSubRLS.rows[0].relrowsecurity);
+       }
+     
+       const resSubPolicies = await client.query(`
+         SELECT * FROM pg_policies WHERE tablename = 'subcategorias'
+       `);
+       console.log('Políticas en subcategorias:', resSubPolicies.rows);
+
+   } catch (error) {
     console.error('Error:', error);
   } finally {
     client.release();
