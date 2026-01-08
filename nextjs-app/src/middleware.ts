@@ -6,7 +6,7 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   if (pathname.startsWith('/admin/login')) {
-    return response
+    return NextResponse.redirect(new URL('/admin', request.url))
   }
 
   if (pathname === '/admin') {
