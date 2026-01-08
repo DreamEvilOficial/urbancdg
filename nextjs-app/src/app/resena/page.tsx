@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Star } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-export default function ResenaPage() {
+function ResenaContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const ordenId = searchParams.get('orden')
@@ -151,5 +151,13 @@ export default function ResenaPage() {
         </form>
       </div>
     </div>
+  )
+}
+
+export default function ResenaPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div></div>}>
+      <ResenaContent />
+    </Suspense>
   )
 }

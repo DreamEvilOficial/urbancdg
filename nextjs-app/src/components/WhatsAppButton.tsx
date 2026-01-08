@@ -30,7 +30,7 @@ export default function WhatsAppButton() {
       aria-label="Contactar por WhatsApp"
     >
       <div className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20 group-hover:hidden"></div>
-      <img src="/whatsapp.png" alt="WhatsApp" className="w-8 h-8 object-contain" />
+      <Image src="/whatsapp.png" alt="WhatsApp" width={32} height={32} className="object-contain" unoptimized />
     </a>
   )
 }

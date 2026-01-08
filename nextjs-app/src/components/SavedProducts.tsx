@@ -7,6 +7,7 @@ import { productosAPI } from '@/lib/supabase'
 import { useCartStore } from '@/store/cartStore'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
+import Image from 'next/image'
 import { sanitizeLocalStorage } from '@/lib/security'
 
 interface SavedProductsProps {
@@ -171,10 +172,12 @@ export default function SavedProducts({ onClose }: SavedProductsProps) {
                   {/* Foto cuadrada */}
                   <div className="w-20 h-20 flex-shrink-0 bg-white/[0.02] rounded-2xl overflow-hidden border border-white/10 group-hover:border-white/20 transition-colors relative">
                     {item.imagen_url ? (
-                      <img 
+                      <Image 
                         src={item.imagen_url} 
                         alt={item.nombre}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        unoptimized
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-white/20">📦</div>

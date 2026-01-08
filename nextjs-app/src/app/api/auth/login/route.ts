@@ -1,17 +1,9 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import db from '@/lib/db'
+import bcrypt from 'bcryptjs'
 
 export const dynamic = 'force-dynamic'
-
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!url || !key) {
-    throw new Error('Supabase no configurado en el servidor')
-  }
-  return createClient(url, key)
-}
 
 // Función para firmar datos (HMAC-SHA256)
 async function signData(data: string, secret: string) {
@@ -38,34 +30,39 @@ export async function POST(request: Request) {
 
     console.log('Intento de login para:', username)
 
-    // Autenticación real contra Supabase
-    const supabase = getSupabase()
-    const { data, error } = await supabase.rpc('auth_login', {
-      p_username: username,
-      p_password: password,
-    })
+    // Autenticación usando lib/db (con fallback)
+    const user = await db.get('SELECT * FROM usuarios WHERE usuario = ? OR email = ?', [username, username]) as any
 
-    const user = Array.isArray(data) ? data[0] : data
+    if (!user) {
+      console.warn('❌ User not found:', username)
+      return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 401 })
+    }
+
+    // Verificar contraseña (bcrypt o texto plano legacy)
+    let validPassword = false
+    if (user.password_hash) {
+      validPassword = bcrypt.compareSync(password, user.password_hash)
+    } else if (user.contrasena) {
+      validPassword = (password === user.contrasena)
+    }
+
+    if (!validPassword) {
+      console.warn('❌ Invalid password for:', username)
+      return NextResponse.json({ error: 'Contraseña incorrecta' }, { status: 401 })
+    }
     
-    if (error || !user || user.error) {
-      console.warn('❌ Auth failed:', username, error || user?.error)
-      const details = error ? error.message : (user?.error || 'Credenciales inválidas')
-      return NextResponse.json({ error: details }, { status: 401 })
+    // Mapear usuario para sesión
+    const sessionUser = {
+      id: user.id,
+      email: user.email,
+      usuario: user.usuario,
+      nombre: user.nombre,
+      rol: user.rol,
+      admin: user.rol === 'admin' || user.rol === 'superadmin' || !!user.admin,
     }
     
     const sessionPayload = {
-      user: {
-        id: user.id,
-        email: user.email,
-        usuario: user.usuario,
-        nombre: user.nombre,
-        rol: user.rol,
-        admin: !!user.admin,
-        // Add any other fields you want to include in the session
-        // For example, if your auth_login RPC returns more user details:
-        // lastLogin: user.last_login,
-        // organizationId: user.organization_id,
-      },
+      user: sessionUser,
       expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000
     }
 
@@ -76,7 +73,7 @@ export async function POST(request: Request) {
     const payloadB64 = Buffer.from(sessionString).toString('base64');
     const cookieValue = payloadB64 + '.' + signature
 
-    const response = NextResponse.json({ success: true, user: user })
+    const response = NextResponse.json({ success: true, user: sessionUser })
     
     response.cookies.set({
       name: 'admin-session',

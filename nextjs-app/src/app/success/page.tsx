@@ -1,14 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { CheckCircle, Home, ShoppingBag, ArrowRight } from 'lucide-react'
+import { CheckCircle, Home, ShoppingBag } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import ReviewForm from '@/components/ReviewForm'
 import confetti from 'canvas-confetti'
+import Image from 'next/image'
 
-export default function SuccessPage() {
+function SuccessContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const ordenId = searchParams.get('orden')
@@ -152,10 +153,13 @@ export default function SuccessPage() {
                 <div key={`${item.id}-${index}`} className="flex flex-col gap-4">
                   {/* Product Preview */}
                   <div className="flex items-center gap-4 p-4 bg-gray-900/50 rounded-xl border border-gray-800">
-                    <img 
+                    <Image 
                       src={item.imagen_url || '/placeholder.png'} 
                       alt={item.nombre} 
-                      className="w-16 h-16 object-cover rounded-lg"
+                      width={64}
+                      height={64}
+                      className="object-cover rounded-lg"
+                      unoptimized
                     />
                     <div>
                       <h4 className="font-semibold">{item.nombre}</h4>
@@ -187,5 +191,13 @@ export default function SuccessPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div></div>}>
+      <SuccessContent />
+    </Suspense>
   )
 }

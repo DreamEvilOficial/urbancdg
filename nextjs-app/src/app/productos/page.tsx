@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useState, useEffect, useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { type Producto } from '@/lib/supabase'
 import ProductCard from '@/components/ProductCard'
 import DynamicTitle from '@/components/DynamicTitle'
-import { SlidersHorizontal, X, ArrowUpDown, ChevronDown, Check, Tag } from 'lucide-react'
+import { SlidersHorizontal, X, Tag } from 'lucide-react'
 
-export default function ProductosPage() {
+function ProductosContent() {
   const [allProductos, setAllProductos] = useState<Producto[]>([])
   const [loading, setLoading] = useState(true)
   const [categoriaNombre, setCategoriaNombre] = useState('')
@@ -67,12 +67,8 @@ export default function ProductosPage() {
            
            // Load category info
            const resCat = await fetch(`/api/categories?slug=${categoriaSlug}`)
-           // The API might return an array if searching by slug or we filter client side if the API is generic
-           // Assuming /api/categories returns all, we filter client side for now to be safe, or if api supports filtering
            if (resCat.ok) {
              const allCats = await resCat.json()
-             // Find the specific category
-             // Note: API /api/categories returns nested structure
              const cat = allCats.find((c: any) => c.slug === categoriaSlug)
              
              if (cat) {
@@ -95,9 +91,7 @@ export default function ProductosPage() {
 
     // 1. Category/Subcategory filtering
     if (categoriaSlug) {
-      // Note: This assumes we should only show products if the DB query matches, 
-      // but client-side we can filter if we have IDs or slugs in the products.
-      // For now, simplify filtering based on what's fetched.
+      // Simplistic check. Ideally backend filters.
     }
 
     // 2. Special URL Filters
@@ -134,7 +128,7 @@ export default function ProductosPage() {
     }
 
     return result
-  }, [allProductos, filter, onlyOffers, priceRange, selectedSizes, selectedColors, searchQuery])
+  }, [allProductos, filter, onlyOffers, priceRange, selectedSizes, selectedColors, searchQuery, categoriaSlug])
 
   const titulo = searchQuery ? `Búsqueda: "${searchQuery}"` : (filter === 'descuentos' ? 'Descuentos' : (filter === 'nuevos' ? 'Nuevos' : (subcategoriaNombre || categoriaNombre || 'Colección')))
 
@@ -327,5 +321,13 @@ export default function ProductosPage() {
       )}
 
     </div>
+  )
+}
+
+export default function ProductosPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div></div>}>
+      <ProductosContent />
+    </Suspense>
   )
 }

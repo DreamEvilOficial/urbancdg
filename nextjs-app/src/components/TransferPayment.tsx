@@ -154,10 +154,13 @@ ${config.mensaje_transferencia || ''}
             <div className="space-y-2 mb-2">
               {orderItems.map((item, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <img 
+                  <Image 
                     src={item.imagen_url || '/placeholder.png'} 
                     alt={item.nombre}
-                    className="w-12 h-12 object-cover rounded-md"
+                    width={48}
+                    height={48}
+                    className="object-cover rounded-md"
+                    unoptimized
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-medium text-sm truncate">{item.nombre}</p>
