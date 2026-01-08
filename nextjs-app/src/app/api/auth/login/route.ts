@@ -31,10 +31,43 @@ export async function POST(request: Request) {
     console.log('Intento de login para:', username)
 
     // Autenticación usando lib/db (con fallback)
-    const user = await db.get('SELECT * FROM usuarios WHERE usuario = ? OR email = ?', [username, username]) as any
+    // NOTA: El orden 'email = ? OR usuario = ?' es importante para el fallback de db.ts
+    let user = await db.get('SELECT * FROM usuarios WHERE email = ? OR usuario = ?', [username, username]) as any
+
+    // Fallback robusto: Si db.get falla (por RLS o conexión), usar Service Role
+    if (!user) {
+      console.warn('⚠️ User not found via db.get, trying Service Role fallback...', username)
+      
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+      if (supabaseUrl && supabaseServiceKey) {
+        const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        })
+
+        const { data, error } = await supabaseAdmin
+          .from('usuarios')
+          .select('*')
+          .or(`email.eq.${username},usuario.eq.${username}`)
+          .single()
+
+        if (data && !error) {
+          console.log('✅ User found via Service Role fallback')
+          user = data
+        } else if (error) {
+          console.error('❌ Service Role fallback error:', error.message)
+        }
+      }
+    }
 
     if (!user) {
-      console.warn('❌ User not found:', username)
+      console.warn('❌ User not found (final):', username)
+      // Debug: verificar si existe conexión a DB
+      if (!process.env.DATABASE_URL) console.warn('⚠️ DATABASE_URL no está definido en el entorno')
       return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 401 })
     }
 
