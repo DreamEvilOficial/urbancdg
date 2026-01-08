@@ -21,7 +21,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const [bypassMaintenance, setBypassMaintenance] = useState(false)
 
   const pathname = usePathname()
-  const isAdmin = pathname?.startsWith('/admin')
+  const isAdmin = pathname?.startsWith('/panel')
   const isCheckout = pathname === '/checkout'
   const isPayment = pathname === '/payment'
   const isCart = pathname === '/cart'
