@@ -5,6 +5,7 @@ import { useCartStore } from '@/store/cartStore'
 import { ShoppingCart, ChevronDown, ChevronRight, Home, MessageCircle, Music2 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import Cart from './Cart'
 import MusicPanel from './MusicPanel'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -413,11 +414,11 @@ export default function Navbar() {
                 {filtrosEspeciales.map((filtro) => {
                   let iconElement = null
                   if (filtro.clave === 'descuentos') {
-                    iconElement = <img src="/Discount Icon.gif" alt="Descuento" className="w-5 h-5" />
+                    iconElement = <Image src="/Discount Icon.gif" alt="Descuento" width={20} height={20} className="w-5 h-5" unoptimized />
                   } else if (filtro.clave === 'nuevos') {
-                    iconElement = <img src="/New label.gif" alt="Nuevo" className="w-5 h-5" />
+                    iconElement = <Image src="/New label.gif" alt="Nuevo" width={20} height={20} className="w-5 h-5" unoptimized />
                   } else if (filtro.clave === 'proximamente') {
-                    iconElement = <img src="/Fire.gif" alt="Próximamente" className="w-5 h-5" />
+                    iconElement = <Image src="/Fire.gif" alt="Próximamente" width={20} height={20} className="w-5 h-5" unoptimized />
                   } else {
                     iconElement = <span className="text-base">{filtro.icono}</span>
                   }

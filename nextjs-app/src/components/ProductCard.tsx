@@ -66,20 +66,20 @@ function ProductCard({ producto }: ProductCardProps) {
   const isTopProduct = (producto as any).isTopProduct || false
 
   // Variantes del producto (o array vacío si no hay)
-  const variantes = producto.variantes || []
+  const variantes = useMemo(() => producto.variantes || [], [producto.variantes])
   const hasVariants = variantes.length > 0
 
   // Obtener talles únicos disponibles
   const availableSizes = useMemo(() => {
     if (!hasVariants) return []
     return Array.from(new Set(variantes.map(v => v.talle))).filter(Boolean)
-  }, [variantes])
+  }, [variantes, hasVariants])
 
   // Obtener todos los colores únicos
   const allColors = useMemo(() => {
     if (!hasVariants) return []
     return Array.from(new Set(variantes.map(v => v.color))).filter(Boolean)
-  }, [variantes])
+  }, [variantes, hasVariants])
 
 
   const productId = useMemo(() => String(producto.id), [producto.id])

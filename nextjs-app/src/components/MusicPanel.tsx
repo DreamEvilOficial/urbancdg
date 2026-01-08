@@ -54,7 +54,7 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
     const id = getYouTubeId(tracks[currentIndex]?.url || '')
     if (!id || !iframeRef.current) return
     if (!initialized) setInitialized(true)
-  }, [tracks, currentIndex])
+  }, [tracks, currentIndex, initialized])
 
   useEffect(() => {
     if (!initialized) return
