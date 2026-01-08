@@ -42,7 +42,7 @@ export async function POST(req: Request) {
                 nombre: body.nombre, 
                 slug: body.slug, 
                 orden: body.orden || 0, 
-                activo: body.activo
+                activo: body.activo ? true : false
              });
              
              if (error) {

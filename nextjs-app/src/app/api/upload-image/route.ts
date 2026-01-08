@@ -50,7 +50,22 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
-    const supabase = createClient()
+    // Usar Service Role si está disponible para bypass policies
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    
+    let supabase;
+    
+    if (supabaseServiceKey) {
+        const { createClient } = await import('@supabase/supabase-js')
+        supabase = createClient(supabaseUrl, supabaseServiceKey, {
+          auth: { autoRefreshToken: false, persistSession: false }
+        })
+    } else {
+        const { createClient } = await import('@/lib/supabase-server')
+        supabase = createClient()
+    }
+
     const { data, error } = await supabase.storage
       .from('productos')
       .upload(fileName, buffer, {
