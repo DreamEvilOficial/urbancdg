@@ -18,7 +18,7 @@ export async function middleware(request: NextRequest) {
     const adminSession = request.cookies.get('admin-session')?.value
 
     if (!adminAuth && !adminSession) {
-      return NextResponse.redirect(new URL('/admin/login', request.url))
+      return NextResponse.redirect(new URL('/admin', request.url))
     }
 
     if (adminSession) {
@@ -27,10 +27,10 @@ export async function middleware(request: NextRequest) {
         const json = atob(payload)
         const session = JSON.parse(json)
         if (!session?.expiresAt || Number(session.expiresAt) < Date.now()) {
-          return NextResponse.redirect(new URL('/admin/login', request.url))
+          return NextResponse.redirect(new URL('/admin', request.url))
         }
       } catch {
-        return NextResponse.redirect(new URL('/admin/login', request.url))
+        return NextResponse.redirect(new URL('/admin', request.url))
       }
     }
   }
