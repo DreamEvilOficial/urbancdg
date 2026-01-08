@@ -82,7 +82,10 @@ class Database {
       if (!Number.isNaN(n)) query = query.limit(n);
     }
     const { data, error } = await query;
-    if (error) return [] as T[];
+    if (error) {
+      console.error(`❌ DB Select Error (${table}):`, error.message);
+      return [] as T[];
+    }
     return (data as T[]) || ([] as T[]);
   }
 
@@ -106,6 +109,10 @@ class Database {
       if (/slug\s*=\s*\?/i.test(whereClause)) {
         const val = params[0];
         if (val !== undefined) query = query.eq('slug', val);
+      }
+      if (/email\s*=\s*\?(\s+|$)/i.test(whereClause) && !/OR/i.test(whereClause)) {
+        const val = params[0];
+        if (val !== undefined) query = query.eq('email', val);
       }
       if (/email\s*=\s*\?\s+OR\s+usuario\s*=\s*\?/i.test(whereClause) && params.length >= 2) {
         query = query.or(`email.eq.${params[0]},usuario.eq.${params[1]}`);
