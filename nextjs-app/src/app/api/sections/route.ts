@@ -18,10 +18,14 @@ export async function POST(req: Request) {
     const { tipo, referencia_id, titulo, subtitulo, gif_url, orden, activo } = body;
 
     // Insert robusto: evitar columnas opcionales que puedan no existir aún (ej: gif_url)
-    await db.run(
+    const result = await db.run(
       'INSERT INTO homepage_sections (id, tipo, referencia_id, titulo, subtitulo, orden, activo) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [id, tipo, referencia_id, titulo, subtitulo, orden ?? 0, activo ? 1 : 0]
     );
+
+    if (!result || result.changes === 0) {
+      return NextResponse.json({ error: 'No se pudo insertar la sección' }, { status: 500 });
+    }
 
     // Si existe gif_url y la columna está disponible, intentar actualizarla (no crítico)
     if (gif_url) {
