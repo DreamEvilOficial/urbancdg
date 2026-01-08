@@ -6,15 +6,6 @@ try {
 } catch {}
 
 const nextConfig = {
-  async redirects() {
-    return [
-      {
-        source: '/admin',
-        destination: '/admin/login',
-        permanent: false,
-      },
-    ]
-  },
   images: {
     remotePatterns: supabaseHost ? [
       {
