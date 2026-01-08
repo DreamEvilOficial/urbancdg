@@ -276,4 +276,3 @@ export const deudasAPI = {
   }
 }
 
-export { supabase }
