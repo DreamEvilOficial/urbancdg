@@ -57,8 +57,11 @@ export async function POST(req: Request) {
         }
 
         return NextResponse.json({ ...body, id });
-    } catch(err) {
+    } catch(err: any) {
         console.error('Error creating category:', err);
-        return NextResponse.json({ error: 'Error creating category' }, { status: 500 });
+        return NextResponse.json({ 
+            error: 'Error creating category', 
+            details: err.message || JSON.stringify(err) 
+        }, { status: 500 });
     }
 }

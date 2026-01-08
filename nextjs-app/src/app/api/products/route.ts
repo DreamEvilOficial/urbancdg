@@ -123,8 +123,11 @@ export async function POST(req: Request) {
     ]);
 
     return NextResponse.json({ ...body, id });
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
+  } catch (err: any) {
+    console.error('Failed to create product:', err);
+    return NextResponse.json({ 
+        error: 'Failed to create product', 
+        details: err.message || JSON.stringify(err) 
+    }, { status: 500 });
   }
 }

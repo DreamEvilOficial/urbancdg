@@ -88,10 +88,10 @@ export async function POST(request: NextRequest) {
       url: publicUrlData.publicUrl,
       fileName: fileName
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in upload:', error)
     return NextResponse.json(
-      { error: 'Error uploading file' },
+      { error: 'Error uploading file', details: error.message || JSON.stringify(error) },
       { status: 500 }
     )
   }
