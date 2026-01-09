@@ -69,27 +69,23 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
      values.push(id);
 
      // Ejecutar con manejo de error detallado
-     try {
-       const { changes } = await db.run(`UPDATE productos SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, values);
-       
-       if (changes === 0) {
-          return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-       }
-     } catch (dbErr: any) {
-       console.error('Database Update Error:', dbErr.message);
-       // Si falla por columna inexistente, devolvemos un error más claro
-       return NextResponse.json({ 
-         error: 'Error de base de datos', 
-         details: dbErr.message 
-       }, { status: 500 });
-     }
+    try {
+      const result = await db.run(`UPDATE productos SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, values);
+      
+      if (result.changes === 0) {
+         return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      }
+    } catch (dbErr: any) {
+      console.error('Database Update Error:', dbErr.message);
+      // Si falla por columna inexistente, devolvemos un error más claro
+      return NextResponse.json({ 
+        error: 'Error de base de datos', 
+        details: dbErr.message 
+      }, { status: 500 });
+    }
 
-     if (changes === 0) {
-        return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-     }
-
-     // fetch updated
-     const updated = await db.get('SELECT * FROM productos WHERE id = ?', [id]);
+    // fetch updated
+    const updated = await db.get('SELECT * FROM productos WHERE id = ?', [id]);
      return NextResponse.json(updated);
 
   } catch (err) {
