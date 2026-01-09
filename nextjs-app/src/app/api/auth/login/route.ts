@@ -31,57 +31,27 @@ export async function POST(request: Request) {
 
     console.log('Intento de login para:', username)
 
-    // Autenticación usando lib/db (con fallback)
-    // NOTA: El orden 'email = ? OR usuario = ?' es importante para el fallback de db.ts
-    let user = await db.get('SELECT * FROM usuarios WHERE email = ? OR usuario = ?', [username, username]) as any
-
-    // Fallback robusto: Si db.get falla (por RLS o conexión), usar Service Role
-    if (!user) {
-      console.warn('⚠️ User not found via db.get, trying Service Role fallback...', username)
-      
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-      if (supabaseUrl && supabaseServiceKey) {
-        const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        })
-
-        const { data, error } = await supabaseAdmin
-          .from('usuarios')
-          .select('*')
-          .or(`email.eq.${username},usuario.eq.${username}`)
-          .single()
-
-        if (data && !error) {
-          console.log('✅ User found via Service Role fallback')
-          user = data
-        } else if (error) {
-          console.error('❌ Service Role fallback error:', error.message)
-        }
-      }
-    }
+    // Autenticación usando lib/db (con pool de PostgreSQL)
+    const user = await db.get('SELECT * FROM usuarios WHERE (email = ? OR usuario = ?) AND activo = TRUE', [username, username]) as any
 
     if (!user) {
-      console.warn('❌ User not found (final):', username)
-      // Debug: verificar si existe conexión a DB
-      if (!process.env.DATABASE_URL) console.warn('⚠️ DATABASE_URL no está definido en el entorno')
+      console.warn('❌ Usuario no encontrado o inactivo:', username)
       return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 401 })
     }
 
-    // Verificar contraseña (bcrypt o texto plano legacy)
+    // Verificar contraseña (bcrypt o texto plano legacy para migración)
     let validPassword = false
-    if (user.password_hash) {
-      validPassword = bcrypt.compareSync(password, user.password_hash)
-    } else if (user.contrasena) {
-      validPassword = (password === user.contrasena)
+    if (user.contrasena) {
+      if (user.contrasena.startsWith('$2a$') || user.contrasena.startsWith('$2b$')) {
+        validPassword = bcrypt.compareSync(password, user.contrasena)
+      } else {
+        // Texto plano (solo para desarrollo/migración inicial, se recomienda hashear después)
+        validPassword = (password === user.contrasena)
+      }
     }
 
     if (!validPassword) {
-      console.warn('❌ Invalid password for:', username)
+      console.warn('❌ Contraseña inválida para:', username)
       return NextResponse.json({ error: 'Contraseña incorrecta' }, { status: 401 })
     }
     
