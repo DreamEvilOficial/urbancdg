@@ -13,9 +13,9 @@ export async function GET() {
 
     const filters = await db.all('SELECT * FROM filtros_especiales ORDER BY orden ASC');
     return NextResponse.json(filters);
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error getting filters:', err);
-    return NextResponse.json({ error: 'Database error' }, { status: 500 });
+    return NextResponse.json({ error: err.message || 'Database error' }, { status: 500 });
   }
 }
 
@@ -35,7 +35,10 @@ export async function POST(req: Request) {
             activo: activo ? true : false,
             orden: orden || 0
         });
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase Admin Insert Error:', error);
+            throw error;
+        }
         return NextResponse.json({ success: true, id });
     }
 
@@ -45,9 +48,9 @@ export async function POST(req: Request) {
     );
 
     return NextResponse.json({ success: true, id });
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error creating filter:', err);
-    return NextResponse.json({ error: 'Database error' }, { status: 500 });
+    return NextResponse.json({ error: err.message || 'Database error', details: err }, { status: 500 });
   }
 }
 

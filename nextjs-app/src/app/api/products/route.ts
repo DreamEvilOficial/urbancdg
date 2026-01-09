@@ -32,6 +32,8 @@ export async function GET(req: Request) {
             throw error;
         }
         
+        console.log(`[products:GET] Admin client fetched ${data?.length || 0} products`);
+        
         const parsedProducts = (data || []).map((p: any) => ({
             ...p,
             activo: !!p.activo,
