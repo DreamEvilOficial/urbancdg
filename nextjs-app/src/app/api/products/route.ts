@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { supabaseAdmin } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 import { createClient } from '@supabase/supabase-js';
 
@@ -12,6 +13,40 @@ export async function GET(req: Request) {
     const top = searchParams.get('top');
     const search = searchParams.get('q');
     
+    // Use Admin Client directly to bypass RLS and avoid regex parsing issues
+    if (supabaseAdmin) {
+        let query = supabaseAdmin.from('productos').select('*');
+        
+        if (categoryId) query = query.eq('categoria_id', categoryId);
+        if (subcategoryId) query = query.eq('subcategoria_id', subcategoryId);
+        if (featured === 'true') query = query.eq('destacado', true);
+        if (top === 'true') query = query.eq('top', true);
+        if (search) query = query.or(`nombre.ilike.%${search}%,descripcion.ilike.%${search}%,sku.ilike.%${search}%`);
+        
+        query = query.order('created_at', { ascending: false });
+        
+        const { data, error } = await query;
+        
+        if (error) {
+            console.error('Supabase Admin GET error:', error);
+            throw error;
+        }
+        
+        const parsedProducts = (data || []).map((p: any) => ({
+            ...p,
+            activo: !!p.activo,
+            destacado: !!p.destacado,
+            top: !!p.top,
+            imagenes: typeof p.imagenes === 'string' ? JSON.parse(p.imagenes || '[]') : (p.imagenes || []),
+            variantes: typeof p.variantes === 'string' ? JSON.parse(p.variantes || '[]') : (p.variantes || []),
+            dimensiones: typeof p.dimensiones === 'string' ? JSON.parse(p.dimensiones || '{}') : (p.dimensiones || {}),
+            metadata: typeof p.metadata === 'string' ? JSON.parse(p.metadata || '{}') : (p.metadata || {})
+        }));
+        
+        return NextResponse.json(parsedProducts);
+    }
+
+    // Fallback to db.all if admin client not available (local/legacy)
     let query = 'SELECT * FROM productos WHERE 1=1';
     const params: any[] = [];
     
