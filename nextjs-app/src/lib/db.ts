@@ -3,9 +3,12 @@ import { supabase, supabaseAdmin } from './supabase';
 
 /**
  * CAPA DE ACCESO A DATOS (DAL) OPTIMIZADA
- * Proporciona una interfaz unificada para PostgreSQL (vía Pool) 
- * con fallback a Supabase PostgREST.
  */
+
+// FORZAR A NODE.JS A ACEPTAR CERTIFICADOS AUTOFIRMADOS (Común en Supabase/Vercel)
+if (process.env.NODE_ENV === 'production') {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
 
 const client = supabaseAdmin || supabase;
 const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
@@ -13,31 +16,24 @@ const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 let pool: Pool | null = null;
 
 if (connectionString) {
-  // Configuración de SSL ultra-compatible para Vercel + Supabase/Neon
-  const poolConfig: any = {
-    connectionString,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
-  };
-
-  // Si no estamos en desarrollo local, forzamos SSL sin verificación
-  if (process.env.NODE_ENV === 'production' || !connectionString.includes('localhost')) {
-    poolConfig.ssl = {
-      rejectUnauthorized: false,
-      ca: null, // Ignorar CA específica
-    };
-    
-    // Aseguramos que la URL tenga sslmode=no-verify
-    if (!connectionString.includes('sslmode=')) {
-      poolConfig.connectionString += (connectionString.includes('?') ? '&' : '?') + 'sslmode=no-verify';
-    }
+  // Limpiar la cadena de conexión de parámetros conflictivos y asegurar sslmode
+  let finalConnectionString = connectionString;
+  if (!finalConnectionString.includes('sslmode=')) {
+    finalConnectionString += (finalConnectionString.includes('?') ? '&' : '?') + 'sslmode=no-verify';
   }
 
-  pool = new Pool(poolConfig);
+  pool = new Pool({
+    connectionString: finalConnectionString,
+    ssl: {
+      rejectUnauthorized: false
+    },
+    max: 10, // Reducido para mayor estabilidad en serverless
+    idleTimeoutMillis: 20000,
+    connectionTimeoutMillis: 15000,
+  });
 
   pool.on('error', (err) => {
-    console.error('❌ Error inesperado en el Pool de Postgres:', err.message);
+    console.error('❌ Error crítico en Pool de Postgres:', err.message);
   });
 }
 
