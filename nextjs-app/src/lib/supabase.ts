@@ -1,34 +1,25 @@
 
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
-const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+// Cliente público para el navegador
+const publicUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+const publicAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder'
 
-// Solo verificar variables críticas en el servidor para evitar ruido en la consola del navegador
-if (typeof window === 'undefined') {
-  if (!url) {
-    console.error('❌ ERROR CRÍTICO: NEXT_PUBLIC_SUPABASE_URL (o SUPABASE_URL) no está definida en el servidor')
-  }
-
-  if (!serviceKey) {
-    console.warn('⚠️ ADVERTENCIA: SUPABASE_SERVICE_ROLE_KEY no está definida. Admin/Service Role deshabilitado.')
-  } else {
-    console.log('✅ SUPABASE_SERVICE_ROLE_KEY detectada. Modo Admin habilitado.')
-  }
-}
-
-export const supabase = (url && key) ? createSupabaseClient(url, key) : (undefined as any)
+export const supabase = createSupabaseClient(publicUrl, publicAnonKey)
 
 // Cliente con permisos de admin (Service Role) para usar SOLO en el servidor
-export const supabaseAdmin = (url && serviceKey) 
-  ? createSupabaseClient(url, serviceKey, {
+const adminUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+const adminKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+export const supabaseAdmin = (adminUrl && adminKey) 
+  ? createSupabaseClient(adminUrl, adminKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false
       }
     }) 
-  : undefined
+  : null
+
 
 export interface Producto {
   id: string

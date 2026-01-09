@@ -22,6 +22,7 @@ import ReviewsManagement from './components/ReviewsManagement'
 
 export default function AdminPage() {
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const [activeTab, setActiveTab] = useState('productos')
@@ -43,8 +44,12 @@ export default function AdminPage() {
   const [storeName, setStoreName] = useState('URBAN')
 
   useEffect(() => {
+    setMounted(true)
     checkAuthAndLoadData()
   }, [])
+
+  if (!mounted) return null
+
   async function checkAuthAndLoadData() {
     try {
       const res = await fetch('/api/auth/session')
