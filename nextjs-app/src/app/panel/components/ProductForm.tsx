@@ -75,21 +75,24 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
       uploadData.append('file', file)
       uploadData.append('folder', 'productos')
 
-      const res = await fetch('/api/upload', { method: 'POST', body: uploadData })
-      if (!res.ok) throw new Error('Error al subir imagen')
+      const res = await fetch('/api/upload-image', { method: 'POST', body: uploadData })
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.details || errorData.error || 'Error al subir imagen')
+      }
       
-      const { publicUrl } = await res.json()
+      const { url } = await res.json()
       
-      const nuevasImagenes = [...formData.imagenes, publicUrl]
+      const nuevasImagenes = [...formData.imagenes, url]
       setFormData({ 
         ...formData, 
-        imagen_url: formData.imagen_url || publicUrl,
+        imagen_url: formData.imagen_url || url,
         imagenes: nuevasImagenes 
       })
       toast.success('Imagen subida correctamente')
     } catch (error: any) {
       console.error('Error uploading:', error)
-      toast.error('Error al subir imagen')
+      toast.error(error.message || 'Error al subir imagen')
     } finally {
       setUploading(false)
     }
@@ -100,8 +103,9 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
     setLoading(true)
     try {
       await onSave(formData)
-    } catch (error) {
+    } catch (error: any) {
       console.error(error)
+      toast.error(error.message || 'Error al guardar producto')
     } finally {
       setLoading(false)
     }
