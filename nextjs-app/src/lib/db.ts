@@ -51,14 +51,14 @@ function normalizeSql(sql: string): string {
     .replace(/\bCURRENT_TIMESTAMP\b/g, 'NOW()')
     .replace(/(\w+)\s*=\s*1/gi, (match, col) => {
       const lowerCol = col.toLowerCase();
-      if (['activo', 'destacado', 'top', 'admin', 'aprobado'].includes(lowerCol)) {
+      if (['activo', 'destacado', 'top', 'admin', 'aprobado', 'proximo_lanzamiento', 'nuevo_lanzamiento'].includes(lowerCol)) {
         return `${col} = TRUE`;
       }
       return match;
     })
     .replace(/(\w+)\s*=\s*0/gi, (match, col) => {
       const lowerCol = col.toLowerCase();
-      if (['activo', 'destacado', 'top', 'admin', 'aprobado'].includes(lowerCol)) {
+      if (['activo', 'destacado', 'top', 'admin', 'aprobado', 'proximo_lanzamiento', 'nuevo_lanzamiento'].includes(lowerCol)) {
         return `${col} = FALSE`;
       }
       return match;

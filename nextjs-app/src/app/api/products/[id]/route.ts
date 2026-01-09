@@ -34,24 +34,55 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   try {
      const body = await req.json();
      
-     // Build dynamic update query
-     const keys = Object.keys(body).filter(k => k !== 'id' && k !== 'created_at');
-     if (keys.length === 0) return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+     // Lista de campos estrictamente verificados que existen en la base de datos
+     const allowedKeys = [
+       'nombre', 'slug', 'descripcion', 'precio', 'precio_original', 
+       'descuento_porcentaje', 'stock_actual', 'stock_minimo', 
+       'categoria_id', 'subcategoria_id', 'imagen_url', 'imagenes', 
+       'variantes', 'activo', 'destacado', 'top', 'sku'
+     ];
+
+     // Build dynamic update query with filtered keys
+     const keys = Object.keys(body).filter(k => allowedKeys.includes(k));
+     
+     if (keys.length === 0) {
+        return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
+     }
 
      const setClause = keys.map(k => `${k} = ?`).join(', ');
      const values = keys.map(k => {
          let val = body[k];
-         if (k === 'imagenes' || k === 'variantes' || k === 'dimensiones' || k === 'metadata') {
-             return JSON.stringify(val);
+         
+         // Serializar campos JSON
+         if (['imagenes', 'variantes'].includes(k)) {
+             return JSON.stringify(Array.isArray(val) ? val : []);
          }
-         if (k === 'activo' || k === 'destacado' || k === 'top') {
-             return val ? 1 : 0;
+         
+         // Normalizar booleanos
+         if (['activo', 'destacado', 'top'].includes(k)) {
+             return (val === true || val === 1 || val === 'true') ? 1 : 0;
          }
+         
          return val;
      });
+     
      values.push(id);
 
-     const { changes } = await db.run(`UPDATE productos SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, values);
+     // Ejecutar con manejo de error detallado
+     try {
+       const { changes } = await db.run(`UPDATE productos SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, values);
+       
+       if (changes === 0) {
+          return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+       }
+     } catch (dbErr: any) {
+       console.error('Database Update Error:', dbErr.message);
+       // Si falla por columna inexistente, devolvemos un error más claro
+       return NextResponse.json({ 
+         error: 'Error de base de datos', 
+         details: dbErr.message 
+       }, { status: 500 });
+     }
 
      if (changes === 0) {
         return NextResponse.json({ error: 'Product not found' }, { status: 404 });
