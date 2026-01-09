@@ -32,67 +32,86 @@ export async function POST(req: Request) {
     const id = uuidv4();
     const { tipo, referencia_id, titulo, subtitulo, gif_url, orden, activo } = body;
 
-    console.log('[sections:POST] Intentando crear sección', { id, tipo, referencia_id, titulo, orden, activo });
+    console.log('[sections:POST] Iniciando creación:', { id, tipo });
 
-    // Insert robusto: evitar columnas opcionales que puedan no existir aún (ej: gif_url)
-    const result = await db.run(
-      'INSERT INTO homepage_sections (id, tipo, referencia_id, titulo, subtitulo, orden, activo) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [id, tipo, referencia_id, titulo, subtitulo, orden ?? 0, activo ? 1 : 0]
-    );
-
-    if (!result || result.changes === 0) {
-      console.warn('[sections:POST] Insert con db.run no aplicó cambios, probando fallback admin');
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      if (supabaseUrl && supabaseServiceKey) {
-        const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-          auth: { autoRefreshToken: false, persistSession: false }
-        });
-        const { data, error } = await supabaseAdmin
-          .from('homepage_sections')
-          .insert({
-            id,
-            tipo,
-            referencia_id,
-            titulo,
-            subtitulo,
-            orden: typeof orden === 'number' ? orden : 0,
-            activo: !!activo
-          })
-          .select('id');
-        if (error) {
-          console.error('[sections:POST] Fallback admin insert error:', error.message);
-          // Intentar esquema alternativo (compat): guardar referencia en 'config' como JSON texto
-          const altPayload = {
-            id,
-            tipo,
-            titulo,
-            subtitulo,
-            config: JSON.stringify({ referencia_id }),
-            orden: typeof orden === 'number' ? orden : 0,
-            activo: !!activo
-          };
-          const alt = await supabaseAdmin.from('homepage_sections').insert(altPayload).select('id');
-          if (alt.error) {
-            console.error('[sections:POST] Alternate insert error:', alt.error.message);
-            return NextResponse.json({ error: 'Error al insertar sección', details: alt.error.message }, { status: 500 });
-          }
+    // Estrategia 1: Intentar insertar con db.run (si funciona, genial)
+    try {
+      const result = await db.run(
+        'INSERT INTO homepage_sections (id, tipo, referencia_id, titulo, subtitulo, orden, activo) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [id, tipo, referencia_id, titulo, subtitulo, orden ?? 0, activo ? 1 : 0]
+      );
+      
+      if (result && result.changes > 0) {
+        // Éxito en el primer intento
+        if (gif_url) {
+           await db.run('UPDATE homepage_sections SET gif_url = ? WHERE id = ?', [gif_url, id]).catch(() => {});
         }
-      } else {
-        console.error('[sections:POST] Fallback admin no disponible (URL o Service Key ausentes)');
-        return NextResponse.json({ error: 'No se pudo insertar la sección' }, { status: 500 });
+        return NextResponse.json({ success: true, id });
       }
+    } catch (e) {
+      console.warn('[sections:POST] db.run falló, probando admin client:', e);
     }
 
-    // Si existe gif_url y la columna está disponible, intentar actualizarla (no crítico)
-    if (gif_url) {
-      await db.run('UPDATE homepage_sections SET gif_url = ? WHERE id = ?', [gif_url, id]);
+    // Estrategia 2: Cliente Admin Supabase (Fuerza Bruta)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Faltan credenciales de Admin (SUPABASE_SERVICE_ROLE_KEY)');
     }
 
-    return NextResponse.json({ success: true, id });
+    const admin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
+
+    let lastError = '';
+
+    // Intento A: Esquema Completo
+    const attemptA = await admin.from('homepage_sections').insert({
+      id,
+      tipo,
+      referencia_id,
+      titulo,
+      subtitulo,
+      orden: orden ?? 0,
+      activo: activo ? true : false
+    });
+
+    if (!attemptA.error) {
+      return NextResponse.json({ success: true, id, method: 'admin_full' });
+    }
+    lastError = attemptA.error.message;
+    console.warn('[sections:POST] Admin insert A falló:', lastError);
+
+    // Intento B: Esquema Compat (referencia en config)
+    const attemptB = await admin.from('homepage_sections').insert({
+      id,
+      tipo,
+      titulo,
+      subtitulo,
+      config: JSON.stringify({ referencia_id }),
+      orden: orden ?? 0,
+      activo: activo ? 1 : 0 // Probamos 1/0 por si acaso
+    });
+
+    if (!attemptB.error) {
+      return NextResponse.json({ success: true, id, method: 'admin_compat' });
+    }
+    lastError = attemptB.error.message;
+    console.warn('[sections:POST] Admin insert B falló:', lastError);
+
+    // Si todo falla, devolvemos el último error
+    return NextResponse.json({ 
+      error: 'No se pudo crear la sección', 
+      details: `Intento A y B fallaron. Último error: ${lastError}` 
+    }, { status: 500 });
+
   } catch (error: any) {
-    console.error('[sections:POST] Error inesperado:', error?.message || error);
-    return NextResponse.json({ error: 'Database error', details: error?.message }, { status: 500 });
+    console.error('[sections:POST] Critical error:', error);
+    return NextResponse.json({ 
+      error: 'Error crítico en servidor', 
+      details: error?.message || String(error) 
+    }, { status: 500 });
   }
 }
 
@@ -101,7 +120,6 @@ export async function PUT(req: Request) {
     const body = await req.json();
     const { id, orden } = body;
     
-    // Only supporting reordering for now based on the frontend usage
     if (orden !== undefined) {
         await db.run('UPDATE homepage_sections SET orden = ? WHERE id = ?', [orden, id]);
     }
