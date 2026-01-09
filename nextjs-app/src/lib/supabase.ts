@@ -48,6 +48,8 @@ export interface Producto {
   activo: boolean
   destacado: boolean
   top: boolean
+  proximo_lanzamiento?: boolean
+  nuevo_lanzamiento?: boolean
   sku?: string
   peso?: number
   dimensiones?: any

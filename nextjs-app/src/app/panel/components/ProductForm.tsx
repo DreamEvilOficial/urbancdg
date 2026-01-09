@@ -50,8 +50,8 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
         subcategoria_id: producto.subcategoria_id || '',
         destacado: producto.destacado || false,
         top: producto.top || false,
-        proximo_lanzamiento: (producto as any).proximo_lanzamiento || false,
-        nuevo_lanzamiento: (producto as any).nuevo_lanzamiento || false,
+        proximo_lanzamiento: producto.proximo_lanzamiento || false,
+        nuevo_lanzamiento: producto.nuevo_lanzamiento || false,
         imagen_url: producto.imagen_url || '',
         imagenes: producto.imagenes || [],
         variantes: (producto.variantes || []).map(v => ({
@@ -59,7 +59,8 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
              color_nombre: v.color_nombre || v.color, // Fallback
              stock: v.stock || 0
         })),
-        sku: (producto as any).sku || '',
+        sku: producto.sku || '',
+        stock_minimo: producto.stock_minimo?.toString() || '5',
         proveedor_nombre: producto.proveedor_nombre || '',
         proveedor_contacto: producto.proveedor_contacto || '',
         precio_costo: producto.precio_costo?.toString() || ''
