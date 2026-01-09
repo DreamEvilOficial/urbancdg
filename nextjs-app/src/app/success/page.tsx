@@ -154,7 +154,7 @@ function SuccessContent() {
                   {/* Product Preview */}
                   <div className="flex items-center gap-4 p-4 bg-gray-900/50 rounded-xl border border-gray-800">
                     <Image 
-                      src={item.imagen_url || '/placeholder.png'} 
+                      src={item.imagen_url || '/proximamente.png'} 
                       alt={item.nombre} 
                       width={64}
                       height={64}

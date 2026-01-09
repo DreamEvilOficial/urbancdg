@@ -154,7 +154,7 @@ export default function CheckoutPage() {
                      <div key={i} className="flex items-center gap-2">
                         <div className="w-8 h-8 bg-black/5 rounded overflow-hidden shrink-0 relative">
                           <NextImage 
-                            src={item.imagen_url || '/placeholder.png'} 
+                            src={item.imagen_url || '/proximamente.png'} 
                             alt={item.nombre}
                             fill
                             className="object-cover"

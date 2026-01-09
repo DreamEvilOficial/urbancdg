@@ -119,3 +119,21 @@ export async function POST(req: Request) {
         }, { status: 500 });
     }
 }
+
+export async function PUT(req: Request) {
+    try {
+        const body = await req.json();
+        const { id, estado } = body;
+
+        if (!id || !estado) {
+            return NextResponse.json({ error: 'ID and estado are required' }, { status: 400 });
+        }
+
+        await db.run('UPDATE ordenes SET estado = ? WHERE id = ?', [estado, id]);
+
+        return NextResponse.json({ success: true });
+    } catch (err: any) {
+        console.error('[orders:PUT] Error:', err.message);
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}

@@ -12,13 +12,15 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     // Parse JSON fields
     const parsedProduct = {
         ...product,
-        activo: !!product.activo,
-        destacado: !!product.destacado,
-        top: !!product.top,
-        imagenes: product.imagenes ? JSON.parse(product.imagenes) : [],
-        variantes: product.variantes ? JSON.parse(product.variantes) : [],
-        dimensiones: product.dimensiones ? JSON.parse(product.dimensiones) : null,
-        metadata: product.metadata ? JSON.parse(product.metadata) : null,
+        activo: product.activo === true || product.activo === 1 || product.activo === 'true',
+        destacado: product.destacado === true || product.destacado === 1 || product.destacado === 'true',
+        top: product.top === true || product.top === 1 || product.top === 'true',
+        proximo_lanzamiento: product.proximo_lanzamiento === true || product.proximo_lanzamiento === 1 || product.proximo_lanzamiento === 'true',
+        nuevo_lanzamiento: product.nuevo_lanzamiento === true || product.nuevo_lanzamiento === 1 || product.nuevo_lanzamiento === 'true',
+        imagenes: product.imagenes ? (typeof product.imagenes === 'string' ? JSON.parse(product.imagenes) : product.imagenes) : [],
+        variantes: product.variantes ? (typeof product.variantes === 'string' ? JSON.parse(product.variantes) : product.variantes) : [],
+        dimensiones: product.dimensiones ? (typeof product.dimensiones === 'string' ? JSON.parse(product.dimensiones) : product.dimensiones) : null,
+        metadata: product.metadata ? (typeof product.metadata === 'string' ? JSON.parse(product.metadata) : product.metadata) : null,
     };
     
     return NextResponse.json(parsedProduct);

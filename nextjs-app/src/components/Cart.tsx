@@ -63,7 +63,7 @@ export default function Cart({ onClose }: CartProps) {
       nombre: product.nombre,
       precio: product.precio,
       cantidad: 1,
-      imagen_url: product.imagen_url
+      imagen_url: product.imagen_url || (product.imagenes && product.imagenes.length > 0 ? product.imagenes[0] : '/proximamente.png')
     })
     document.dispatchEvent(new Event('cartUpdated'))
   }
@@ -124,17 +124,12 @@ export default function Cart({ onClose }: CartProps) {
                   key={item.id}
                   className="flex gap-4 p-2 rounded-2xl items-center group hover:bg-white/[0.03] transition-colors"
                 >
-                  {/* Foto cuadrada */}
-                  <div className="w-20 h-20 flex-shrink-0 bg-white/[0.02] rounded-2xl overflow-hidden border border-white/10 group-hover:border-white/20 transition-colors">
-                    {item.imagen_url ? (
-                      <img 
-                        src={item.imagen_url} 
-                        alt={item.nombre}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-white/20">📦</div>
-                    )}
+                  <div className="relative w-20 h-24 bg-white/5 rounded-xl overflow-hidden shrink-0 group">
+                    <img 
+                      src={item.imagen_url || '/proximamente.png'} 
+                      alt={item.nombre} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                    />
                   </div>
                   
                   <div className="flex-1 min-w-0 py-1">
@@ -213,9 +208,13 @@ export default function Cart({ onClose }: CartProps) {
                   >
                     <div className="relative aspect-[3/4] rounded-2xl overflow-hidden mb-2 border border-white/10 group-hover:border-accent/30 transition-colors">
                       <img 
-                        src={prod.imagen_url} 
+                        src={prod.imagen_url || (prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : '/proximamente.png')} 
                         alt={prod.nombre} 
                         className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" 
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/proximamente.png';
+                        }}
                       />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <Plus className="w-6 h-6 text-white" />

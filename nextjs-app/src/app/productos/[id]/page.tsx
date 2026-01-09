@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { productosAPI, type Producto } from '@/lib/supabase'
 import { useCartStore } from '@/store/cartStore'
-import { ShoppingBag, ChevronLeft, ChevronRight, Minus, Plus, ShieldCheck, CreditCard, Banknote, ArrowLeft } from 'lucide-react'
+import { ShoppingBag, ChevronLeft, ChevronRight, Minus, Plus, ShieldCheck, CreditCard, Banknote, ArrowLeft, Ticket } from 'lucide-react'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
 import ProductCard from '@/components/ProductCard'
@@ -37,15 +37,12 @@ export default function ProductDetailPage() {
       setLoading(true)
       let data: Producto | undefined
       
-      // Intentar por slug primero (no numérico)
-      const numericId = Number(productSlug)
-      if (Number.isNaN(numericId)) {
-        data = await productosAPI.obtenerPorSlug(productSlug)
-      }
+      // Intentar por slug primero
+      data = await productosAPI.obtenerPorSlug(productSlug)
       
-      // Fallback por id numérico
-      if (!data && !Number.isNaN(numericId)) {
-        data = await productosAPI.obtenerPorId(String(numericId))
+      // Fallback por ID (si el slug no devolvió nada o si parece un ID)
+      if (!data) {
+        data = await productosAPI.obtenerPorId(productSlug)
       }
       
       if (!data || !data.activo) {
@@ -60,8 +57,9 @@ export default function ProductDetailPage() {
         const todos = await productosAPI.obtenerTodos()
         setProductosRelacionados(todos.filter(p => p.categoria_id === d.categoria_id && p.id !== d.id).slice(0, 4))
       }
-    } catch {
-      toast.error('Falla al cargar')
+    } catch (error) {
+      console.error('Error cargando producto:', error)
+      // No mostramos toast de error si es simplemente un 404
     } finally {
       setLoading(false)
     }
@@ -86,7 +84,22 @@ export default function ProductDetailPage() {
     return variantes.reduce((acc, v) => acc + v.stock, 0)
   }, [hasVariants, producto, variantes, selectedTalle, selectedColor])
 
-  const imagenes = producto?.imagenes?.length ? producto.imagenes : (producto?.imagen_url ? [producto.imagen_url] : [])
+  const imagenes = useMemo(() => {
+    const imgs: string[] = []
+    
+    // Prioridad 1: Array de imágenes
+    if (Array.isArray(producto?.imagenes) && producto.imagenes.length > 0) {
+      imgs.push(...producto.imagenes)
+    }
+    
+    // Prioridad 2: imagen_url principal (si no está ya en el array)
+    if (producto?.imagen_url && !imgs.includes(producto.imagen_url)) {
+      imgs.unshift(producto.imagen_url)
+    }
+    
+    // Fallback: Imagen de proximamente
+    return imgs.length > 0 ? imgs : ['/proximamente.png']
+  }, [producto?.imagenes, producto?.imagen_url])
 
   const { precioTransferencia, precioCuotas } = useMemo(() => ({
     precioTransferencia: producto ? Math.round(producto.precio * 0.9) : 0,
@@ -141,7 +154,7 @@ export default function ProductDetailPage() {
 
             {/* Compact Price Panel */}
             <section className="bg-white/[0.03] border border-white/10 p-6 rounded-[35px] shadow-2xl relative overflow-hidden scale-[0.95] origin-left backdrop-blur-xl">
-               <div className="absolute top-0 right-0 p-4 opacity-10 text-accent"><TicketIcon className="w-24 h-24 rotate-12" /></div>
+               <div className="absolute top-0 right-0 p-4 opacity-10 text-accent"><Ticket className="w-24 h-24 rotate-12" /></div>
                <div className="space-y-4">
                   <div>
                     <span className="text-[8px] font-black text-white/45 uppercase tracking-widest block mb-1">Precio Online</span>

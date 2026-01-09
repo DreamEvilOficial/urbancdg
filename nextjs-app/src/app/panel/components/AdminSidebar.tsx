@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { authAPI } from "@/lib/supabase";
+import { useState, useEffect } from "react";
 
 interface SidebarItemProps {
   id: string;
@@ -64,6 +65,16 @@ export default function AdminSidebar({
   onNavigate,
 }: AdminSidebarProps) {
   const router = useRouter();
+  const [version, setVersion] = useState("v1.0.8-JAN");
+
+  useEffect(() => {
+    fetch("/api/version")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.version) setVersion(data.version);
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <aside
@@ -84,7 +95,7 @@ export default function AdminSidebar({
               <h2 className="font-display text-xl tracking-[0.08em] uppercase">Admin</h2>
             </div>
             <span className="text-[9px] font-mono text-white/30 bg-white/5 px-1.5 py-0.5 rounded border border-white/5">
-              v1.0.8-JAN
+              {version}
             </span>
           </div>
           <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/45 truncate">{storeName}</p>

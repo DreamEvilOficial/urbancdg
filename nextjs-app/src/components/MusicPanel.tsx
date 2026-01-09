@@ -23,7 +23,7 @@ function getYouTubeId(url: string) {
 export default function MusicPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [tracks, setTracks] = useState<Track[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [volume, setVolume] = useState(80)
+  const [volume, setVolume] = useState(20)
   const [muted, setMuted] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement | null>(null)
   const [initialized, setInitialized] = useState(false)
@@ -81,9 +81,10 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
         '*',
       )
       iframeRef.current?.contentWindow?.postMessage(
-        JSON.stringify({ event: 'command', func: 'setVolume', args: [10] }),
+        JSON.stringify({ event: 'command', func: 'setVolume', args: [20] }),
         '*',
       )
+      setVolume(20)
       document.removeEventListener('pointerdown', handler)
     }
     document.addEventListener('pointerdown', handler, { once: true })

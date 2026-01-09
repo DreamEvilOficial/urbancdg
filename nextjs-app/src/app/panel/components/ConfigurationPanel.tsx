@@ -132,6 +132,33 @@ export default function ConfigurationPanel() {
     }
   }
 
+  const compressImage = (file: File, maxWidth = 1920, quality = 0.8): Promise<Blob> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = (event) => {
+        const img = new Image()
+        img.src = event.target?.result as string
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          let width = img.width
+          let height = img.height
+
+          if (width > maxWidth) {
+            height = (maxWidth / width) * height
+            width = maxWidth
+          }
+
+          canvas.width = width
+          canvas.height = height
+          const ctx = canvas.getContext('2d')
+          ctx?.drawImage(img, 0, 0, width, height)
+          canvas.toBlob((blob) => resolve(blob || file), 'image/jpeg', quality)
+        }
+      }
+    })
+  }
+
   async function handleBannerUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files
     if (!files || files.length === 0) return
@@ -142,8 +169,13 @@ export default function ConfigurationPanel() {
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
+        
+        // Comprimir si es banner (suelen ser grandes)
+        const blob = await compressImage(file)
+        const compressedFile = new File([blob], file.name, { type: 'image/jpeg' })
+
         const formData = new FormData()
-        formData.append('file', file)
+        formData.append('file', compressedFile)
         formData.append('folder', 'banners')
 
         const res = await fetch('/api/upload', { method: 'POST', body: formData })

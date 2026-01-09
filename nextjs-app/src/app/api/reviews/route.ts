@@ -6,7 +6,8 @@ export const dynamic = 'force-dynamic'
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const limitParam = searchParams.get('limit');
+    const limit = limitParam === 'all' ? 1000 : parseInt(limitParam || '50');
     const productId = searchParams.get('productId');
     const approvedOnly = searchParams.get('approved') !== 'false';
 
@@ -18,9 +19,11 @@ export async function GET(req: Request) {
         r.created_at,
         r.producto_id,
         r.cliente_nombre as usuario_nombre,
+        r.cliente_email as usuario_email,
         r.aprobado,
         r.destacado,
-        p.nombre as producto_nombre
+        p.nombre as producto_nombre,
+        p.imagen_url as producto_imagen
       FROM resenas r
       LEFT JOIN productos p ON r.producto_id = p.id
       WHERE 1=1

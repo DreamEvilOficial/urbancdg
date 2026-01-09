@@ -6,6 +6,14 @@ import { promisify } from 'util';
 
 const pump = promisify(pipeline);
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+};
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();

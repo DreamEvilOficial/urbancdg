@@ -85,9 +85,18 @@ function ProductCard({ producto }: ProductCardProps) {
   const productId = useMemo(() => String(producto.id), [producto.id])
   const productName = producto.nombre
   const productPrice = producto.precio
-  const productImage = producto.imagen_url
   const productOriginalPrice = producto.precio_original
-  const productDiscount = producto.descuento_porcentaje ?? 0
+  const productDiscount = useMemo(() => {
+    if (!productOriginalPrice || productOriginalPrice <= productPrice) return 0
+    return Math.round(((productOriginalPrice - productPrice) / productOriginalPrice) * 100)
+  }, [productPrice, productOriginalPrice])
+
+  const productImage = useMemo(() => {
+    if (producto.imagen_url) return producto.imagen_url
+    if (Array.isArray(producto.imagenes) && producto.imagenes.length > 0) return producto.imagenes[0]
+    return '/proximamente.png'
+  }, [producto.imagen_url, producto.imagenes])
+
   const productHref = useMemo(() => `/productos/${producto.slug || producto.id}`, [producto.slug, producto.id])
 
   const hasDiscount = productDiscount > 0
@@ -335,35 +344,27 @@ function ProductCard({ producto }: ProductCardProps) {
         href={productHref} 
         className="block relative w-full h-48 md:h-64 lg:h-72 bg-white/[0.03] overflow-hidden"
       >
-        {producto.imagen_url ? (
+        <Image
+          src={productImage}
+          alt={productName}
+          fill
+          sizes="(min-width: 1280px) 18rem, (min-width: 1024px) 22vw, (min-width: 768px) 30vw, 45vw"
+          className={`object-cover transition duration-300 ${isProximoLanzamiento ? '' : 'group-hover:scale-105'}`}
+        />
+        {isProximoLanzamiento && (
           <>
-            <Image
-              src={producto.imagen_url}
-              alt={productName}
-              fill
-              sizes="(min-width: 1280px) 18rem, (min-width: 1024px) 22vw, (min-width: 768px) 30vw, 45vw"
-              className={`object-cover transition duration-300 ${isProximoLanzamiento ? '' : 'group-hover:scale-105'}`}
-            />
-            {isProximoLanzamiento && (
-              <>
-                <div className="absolute inset-0 z-10">
-                  <Image
-                    src="/proximamente.png"
-                    alt="Próximamente"
-                    fill
-                    className="object-cover opacity-80 mix-blend-multiply"
-                  />
-                </div>
-                <div className="absolute inset-0 z-20 flex items-center justify-center">
-                  <div className="text-7xl animate-pulse drop-shadow-2xl filter brightness-110">🔒</div>
-                </div>
-              </>
-            )}
+            <div className="absolute inset-0 z-10">
+              <Image
+                src="/proximamente.png"
+                alt="Próximamente"
+                fill
+                className="object-cover opacity-80 mix-blend-multiply"
+              />
+            </div>
+            <div className="absolute inset-0 z-20 flex items-center justify-center">
+              <div className="text-7xl animate-pulse drop-shadow-2xl filter brightness-110">🔒</div>
+            </div>
           </>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-6xl">
-            📦
-          </div>
         )}
       </Link>
       

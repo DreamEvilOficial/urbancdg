@@ -169,19 +169,15 @@ export default function SavedProducts({ onClose }: SavedProductsProps) {
                   onClick={() => { router.push(`/productos/${item.slug || item.id}`); onClose(); }}
                   className="flex gap-4 p-2 rounded-2xl items-center group hover:bg-white/[0.03] transition-colors cursor-pointer border border-transparent hover:border-white/5"
                 >
-                  {/* Foto cuadrada */}
-                  <div className="w-20 h-20 flex-shrink-0 bg-white/[0.02] rounded-2xl overflow-hidden border border-white/10 group-hover:border-white/20 transition-colors relative">
-                    {item.imagen_url ? (
-                      <Image 
-                        src={item.imagen_url} 
-                        alt={item.nombre}
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-white/20">📦</div>
-                    )}
+                  {/* Foto */}
+                  <div className="relative w-20 h-24 bg-white/5 rounded-xl overflow-hidden shrink-0 group">
+                    <Image 
+                      src={item.imagen_url || (item.imagenes && item.imagenes.length > 0 ? item.imagenes[0] : '/proximamente.png')} 
+                      alt={item.nombre} 
+                      fill 
+                      className="object-cover group-hover:scale-110 transition-transform duration-500" 
+                      unoptimized
+                    />
                   </div>
                   
                   <div className="flex-1 min-w-0 py-1">

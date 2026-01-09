@@ -156,7 +156,7 @@ ${config.mensaje_transferencia || ''}
               {orderItems.map((item, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <Image 
-                    src={item.imagen_url || '/placeholder.png'} 
+                    src={item.imagen_url || '/proximamente.png'} 
                     alt={item.nombre}
                     width={48}
                     height={48}

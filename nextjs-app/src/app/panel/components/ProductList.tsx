@@ -157,7 +157,7 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
                         <div className="h-14 w-14 rounded-2xl overflow-hidden shadow-sm border border-white/10 flex-shrink-0 bg-white/[0.02] relative">
                           <NextImage 
                             className="h-full w-full object-cover transition group-hover:scale-110" 
-                            src={producto.imagen_url || '/placeholder.png'} 
+                            src={producto.imagen_url || '/proximamente.png'} 
                             alt={producto.nombre} 
                             fill
                             sizes="56px"
