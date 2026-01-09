@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase-server'
 import { sanitizeFilename } from '@/lib/security'
+import { supabaseAdmin } from '@/lib/supabase'
 
 // Tamaño máximo de archivo: 5MB
 const MAX_FILE_SIZE = 5 * 1024 * 1024
@@ -50,23 +50,16 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
-    // Usar Service Role si está disponible para bypass policies
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    
-    let supabase;
-    
-    if (supabaseServiceKey) {
-        const { createClient } = await import('@supabase/supabase-js')
-        supabase = createClient(supabaseUrl, supabaseServiceKey, {
-          auth: { autoRefreshToken: false, persistSession: false }
-        })
-    } else {
-        const { createClient } = await import('@/lib/supabase-server')
-        supabase = createClient()
+    // Usar Service Role OBLIGATORIAMENTE para bypass policies
+    if (!supabaseAdmin) {
+        console.error('SUPABASE_SERVICE_ROLE_KEY missing in upload-image')
+        return NextResponse.json(
+            { error: 'Server configuration error: Admin client not available' },
+            { status: 500 }
+        )
     }
 
-    const { data, error } = await supabase.storage
+    const { data, error } = await supabaseAdmin.storage
       .from('productos')
       .upload(fileName, buffer, {
         contentType: file.type,
@@ -80,7 +73,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Obtener URL pública
-    const { data: publicUrlData } = supabase.storage
+    const { data: publicUrlData } = supabaseAdmin.storage
       .from('productos')
       .getPublicUrl(fileName)
 

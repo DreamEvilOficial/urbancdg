@@ -1,12 +1,20 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { supabaseAdmin } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function GET() {
   try {
+    if (supabaseAdmin) {
+        const { data, error } = await supabaseAdmin.from('filtros_especiales').select('*').order('orden', { ascending: true });
+        if (error) throw error;
+        return NextResponse.json(data);
+    }
+
     const filters = await db.all('SELECT * FROM filtros_especiales ORDER BY orden ASC');
     return NextResponse.json(filters);
   } catch (err) {
+    console.error('Error getting filters:', err);
     return NextResponse.json({ error: 'Database error' }, { status: 500 });
   }
 }
@@ -17,6 +25,20 @@ export async function POST(req: Request) {
     const id = uuidv4();
     const { nombre, clave, imagen_url, icono, activo, orden } = body;
 
+    if (supabaseAdmin) {
+        const { error } = await supabaseAdmin.from('filtros_especiales').insert({
+            id,
+            nombre,
+            clave,
+            icono: icono || '',
+            imagen_url: imagen_url || '',
+            activo: activo ? true : false,
+            orden: orden || 0
+        });
+        if (error) throw error;
+        return NextResponse.json({ success: true, id });
+    }
+
     await db.run(
       'INSERT INTO filtros_especiales (id, nombre, clave, icono, imagen_url, activo, orden) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [id, nombre, clave, icono || '', imagen_url || '', activo ? 1 : 0, orden || 0]
@@ -24,6 +46,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, id });
   } catch (err) {
+    console.error('Error creating filter:', err);
     return NextResponse.json({ error: 'Database error' }, { status: 500 });
   }
 }
