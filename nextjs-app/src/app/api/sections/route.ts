@@ -16,8 +16,9 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { tipo, referencia_id, titulo, subtitulo, gif_url, orden, activo } = body;
 
-    if (!tipo || !referencia_id || !titulo) {
-      return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
+    // Validación más flexible: solo tipo y titulo son estrictamente obligatorios
+    if (!tipo || !titulo) {
+      return NextResponse.json({ error: 'Tipo y título son obligatorios' }, { status: 400 });
     }
 
     const sql = `
@@ -27,14 +28,19 @@ export async function POST(req: Request) {
     `;
 
     const result = await db.run(sql, [
-      tipo, referencia_id, titulo, subtitulo || null, 
-      gif_url || null, orden || 0, activo ?? true
+      tipo, 
+      referencia_id || '', // Evitar nulos si no se envía
+      titulo, 
+      subtitulo || '', 
+      gif_url || '', 
+      orden || 0, 
+      activo ?? true
     ]);
 
     return NextResponse.json({ success: true, id: result.id });
   } catch (error: any) {
     console.error('Error creating section:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Error en el servidor: ' + error.message }, { status: 500 });
   }
 }
 

@@ -52,6 +52,15 @@ export default function HomepageManagement() {
   }
 
   async function handleAdd() {
+    if (!newSection.titulo) {
+      toast.error('El título es obligatorio')
+      return
+    }
+    if (!newSection.referencia_id) {
+      toast.error('Debes seleccionar un filtro o categoría')
+      return
+    }
+
     try {
       const res = await fetch('/api/sections', {
         method: 'POST',
