@@ -6,7 +6,21 @@ import { createClient } from '@supabase/supabase-js';
 export async function GET() {
   try {
     const sections = await db.all('SELECT * FROM homepage_sections ORDER BY orden ASC');
-    return NextResponse.json(sections);
+    const normalized = (sections || []).map((s: any) => {
+      let referencia = s.referencia_id;
+      if (!referencia && s.config) {
+        try {
+          const cfg = typeof s.config === 'string' ? JSON.parse(s.config) : s.config;
+          referencia = cfg?.referencia_id || cfg?.ref || referencia;
+        } catch {}
+      }
+      return {
+        ...s,
+        referencia_id: referencia,
+        activo: s.activo === 1 || s.activo === true
+      };
+    });
+    return NextResponse.json(normalized);
   } catch (error) {
     return NextResponse.json({ error: 'Database error' }, { status: 500 });
   }
@@ -48,7 +62,21 @@ export async function POST(req: Request) {
           .select('id');
         if (error) {
           console.error('[sections:POST] Fallback admin insert error:', error.message);
-          return NextResponse.json({ error: 'Error al insertar sección', details: error.message }, { status: 500 });
+          // Intentar esquema alternativo (compat): guardar referencia en 'config' como JSON texto
+          const altPayload = {
+            id,
+            tipo,
+            titulo,
+            subtitulo,
+            config: JSON.stringify({ referencia_id }),
+            orden: typeof orden === 'number' ? orden : 0,
+            activo: !!activo
+          };
+          const alt = await supabaseAdmin.from('homepage_sections').insert(altPayload).select('id');
+          if (alt.error) {
+            console.error('[sections:POST] Alternate insert error:', alt.error.message);
+            return NextResponse.json({ error: 'Error al insertar sección', details: alt.error.message }, { status: 500 });
+          }
         }
       } else {
         console.error('[sections:POST] Fallback admin no disponible (URL o Service Key ausentes)');
