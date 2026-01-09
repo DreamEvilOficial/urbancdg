@@ -41,16 +41,26 @@ export async function GET(req: Request) {
         
         console.log(`[products:GET] Success. Found ${data?.length || 0} products`);
         
-        const parsedProducts = (data || []).map((p: any) => ({
-            ...p,
-            activo: p.activo === true || p.activo === 1,
-            destacado: p.destacado === true || p.destacado === 1,
-            top: p.top === true || p.top === 1,
-            imagenes: typeof p.imagenes === 'string' ? JSON.parse(p.imagenes || '[]') : (p.imagenes || []),
-            variantes: typeof p.variantes === 'string' ? JSON.parse(p.variantes || '[]') : (p.variantes || []),
-            dimensiones: typeof p.dimensiones === 'string' ? JSON.parse(p.dimensiones || '{}') : (p.dimensiones || {}),
-            metadata: typeof p.metadata === 'string' ? JSON.parse(p.metadata || '{}') : (p.metadata || {})
-        }));
+        const parsedProducts = (data || []).map((p: any) => {
+            const meta = typeof p.metadata === 'string' ? JSON.parse(p.metadata || '{}') : (p.metadata || {});
+            return {
+                ...p,
+                activo: p.activo === true || p.activo === 1,
+                destacado: p.destacado === true || p.destacado === 1,
+                top: p.top === true || p.top === 1,
+                // Fallbacks desde metadata
+                imagen_url: p.imagen_url || meta.imagen_url || '',
+                sku: p.sku || meta.sku || '',
+                descuento_porcentaje: p.descuento_porcentaje || meta.descuento_porcentaje || 0,
+                proximo_lanzamiento: p.proximo_lanzamiento || meta.proximo_lanzamiento || false,
+                nuevo_lanzamiento: p.nuevo_lanzamiento || meta.nuevo_lanzamiento || false,
+                // Parseo de JSONs
+                imagenes: typeof p.imagenes === 'string' ? JSON.parse(p.imagenes || '[]') : (p.imagenes || []),
+                variantes: typeof p.variantes === 'string' ? JSON.parse(p.variantes || '[]') : (p.variantes || []),
+                dimensiones: typeof p.dimensiones === 'string' ? JSON.parse(p.dimensiones || '{}') : (p.dimensiones || meta.dimensiones || {}),
+                metadata: meta
+            };
+        });
         
         return NextResponse.json(parsedProducts);
     }
@@ -99,7 +109,7 @@ export async function POST(req: Request) {
         stock_actual: body.stock_actual, 
         categoria_id: body.categoria_id, 
         subcategoria_id: body.subcategoria_id, 
-        imagen_url: body.imagen_url,
+        // imagen_url: body.imagen_url, // SE ELIMINA POR ERROR EN DB
         imagenes: safeJson(body.imagenes), 
         variantes: safeJson(body.variantes), 
         activo: body.activo ? true : false, 
@@ -107,6 +117,7 @@ export async function POST(req: Request) {
         top: body.top ? true : false, 
         metadata: JSON.stringify({
             ...(body.metadata || {}),
+            imagen_url: body.imagen_url,
             sku: body.sku,
             peso: body.peso,
             dimensiones: body.dimensiones,
@@ -162,16 +173,16 @@ export async function POST(req: Request) {
         await db.run(`
             INSERT INTO productos (
                 id, nombre, slug, descripcion, precio, precio_original,
-                stock_actual, categoria_id, subcategoria_id, imagen_url,
+                stock_actual, categoria_id, subcategoria_id,
                 imagenes, variantes, activo, destacado, top, metadata
             ) VALUES (
                 ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?,
+                ?, ?, ?,
                 ?, ?, ?, ?, ?, ?
             )
         `, [
             productData.id, productData.nombre, productData.slug, productData.descripcion, productData.precio, productData.precio_original,
-            productData.stock_actual, productData.categoria_id, productData.subcategoria_id, productData.imagen_url,
+            productData.stock_actual, productData.categoria_id, productData.subcategoria_id,
             productData.imagenes, productData.variantes, productData.activo ? 1 : 0, productData.destacado ? 1 : 0, productData.top ? 1 : 0, productData.metadata
         ]);
         
