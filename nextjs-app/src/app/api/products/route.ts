@@ -55,8 +55,8 @@ export async function GET(req: Request) {
                 proximo_lanzamiento: p.proximo_lanzamiento || meta.proximo_lanzamiento || false,
                 nuevo_lanzamiento: p.nuevo_lanzamiento || meta.nuevo_lanzamiento || false,
                 // Parseo de JSONs
-                imagenes: typeof p.imagenes === 'string' ? JSON.parse(p.imagenes || '[]') : (p.imagenes || []),
-                variantes: typeof p.variantes === 'string' ? JSON.parse(p.variantes || '[]') : (p.variantes || []),
+                imagenes: typeof p.imagenes === 'string' ? JSON.parse(p.imagenes || '[]') : (p.imagenes || meta.imagenes || []),
+                variantes: typeof p.variantes === 'string' ? JSON.parse(p.variantes || '[]') : (p.variantes || meta.variantes || []),
                 dimensiones: typeof p.dimensiones === 'string' ? JSON.parse(p.dimensiones || '{}') : (p.dimensiones || meta.dimensiones || {}),
                 metadata: meta
             };
@@ -97,8 +97,9 @@ export async function POST(req: Request) {
     const safeJson = (val: any) => JSON.stringify(val || []);
     const safeObj = (val: any) => JSON.stringify(val || {});
     
-    // Valores comunes - Simplificamos al máximo para evitar errores de columnas inexistentes
-    // Movemos campos dudosos a metadata
+    // Valores comunes - Estrategia de Esquema Mínimo Garantizado
+    // Solo enviamos las columnas que sabemos que existen con certeza.
+    // El resto se guarda en metadata para evitar errores de "column not found".
     const productData = {
         id, 
         nombre: body.nombre, 
@@ -109,15 +110,15 @@ export async function POST(req: Request) {
         stock_actual: body.stock_actual, 
         categoria_id: body.categoria_id, 
         subcategoria_id: body.subcategoria_id, 
-        // imagen_url: body.imagen_url, // SE ELIMINA POR ERROR EN DB
-        imagenes: safeJson(body.imagenes), 
-        variantes: safeJson(body.variantes), 
+        // imagenes: safeJson(body.imagenes), // SE ELIMINA DE LA RAÍZ POR ERROR 500
         activo: body.activo ? true : false, 
         destacado: body.destacado ? true : false, 
         top: body.top ? true : false, 
         metadata: JSON.stringify({
             ...(body.metadata || {}),
+            imagenes: body.imagenes || [],
             imagen_url: body.imagen_url,
+            variantes: body.variantes || [],
             sku: body.sku,
             peso: body.peso,
             dimensiones: body.dimensiones,
@@ -137,35 +138,60 @@ export async function POST(req: Request) {
     // Estrategia Principal: Usar supabaseAdmin directamente
     // Esto es mucho más fiable que db.run para objetos complejos con JSON
     if (supabaseAdmin) {
-        try {
-            const { error } = await supabaseAdmin.from('productos').insert(productData);
+        console.log(`[products:POST] Intentando crear producto ${id} con Supabase Admin`);
+        
+        // Objeto de inserción limpio con solo columnas garantizadas
+        const insertData: any = {
+            id: productData.id,
+            nombre: productData.nombre,
+            slug: productData.slug,
+            descripcion: productData.descripcion,
+            precio: productData.precio,
+            stock_actual: productData.stock_actual,
+            categoria_id: productData.categoria_id,
+            subcategoria_id: productData.subcategoria_id,
+            activo: productData.activo,
+            destacado: productData.destacado,
+            top: productData.top,
+            metadata: productData.metadata,
+            created_at: productData.created_at
+        };
+
+        // Solo agregar precio_original si viene en el body, por si acaso no existe la columna
+        if (body.precio_original !== undefined) {
+            insertData.precio_original = body.precio_original;
+        }
+
+        const { error: supabaseError } = await supabaseAdmin
+            .from('productos')
+            .insert(insertData);
+
+        if (supabaseError) {
+            console.error('[products:POST] Error detallado de Supabase:', {
+                message: supabaseError.message,
+                details: supabaseError.details,
+                hint: supabaseError.hint,
+                code: supabaseError.code
+            });
             
-            if (error) {
-                console.error('[products:POST] Error de Supabase Admin:', error);
-                
-                // Si falla por columnas inexistentes, intentamos con datos mínimos
-                console.warn('[products:POST] Reintentando con datos mínimos...');
-                const minimalData = {
-                    id, 
-                    nombre: body.nombre, 
-                    slug: body.slug, 
-                    precio: body.precio,
-                    activo: body.activo ? true : false,
-                    categoria_id: body.categoria_id,
-                    imagen_url: body.imagen_url
+            // Si el error es por una columna específica, intentamos una inserción aún más básica
+            if (supabaseError.message.includes('column') || supabaseError.code === '42703') {
+                console.log('[products:POST] Re-intentando inserción ultra-básica...');
+                const ultraBasicData = {
+                    id: insertData.id,
+                    nombre: insertData.nombre,
+                    slug: insertData.slug,
+                    precio: insertData.precio,
+                    metadata: insertData.metadata
                 };
-                
-                const { error: minError } = await supabaseAdmin.from('productos').insert(minimalData);
-                if (minError) throw minError;
-                
-                return NextResponse.json({ ...body, id, method: 'admin_minimal' });
+                const { error: retryError } = await supabaseAdmin.from('productos').insert(ultraBasicData);
+                if (!retryError) return NextResponse.json({ ...body, id, status: 'created_basic' });
             }
             
-            return NextResponse.json({ ...body, id, method: 'admin_direct' });
-        } catch (adminErr: any) {
-            console.error('[products:POST] Falló Admin Direct:', adminErr.message);
-            // Si falla admin, dejamos que intente db.run como último recurso (aunque db.run es más probable que falle)
+            throw new Error(`Error de base de datos: ${supabaseError.message} (${supabaseError.code})`);
         }
+        
+        return NextResponse.json({ ...body, id, status: 'created' });
     }
 
     // Estrategia Fallback: DB Run (Legacy/SQL)
