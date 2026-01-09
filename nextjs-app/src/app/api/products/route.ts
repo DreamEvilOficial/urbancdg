@@ -87,8 +87,8 @@ export async function POST(req: Request) {
     const safeJson = (val: any) => JSON.stringify(val || []);
     const safeObj = (val: any) => JSON.stringify(val || {});
     
-    // Valores comunes - Eliminamos descuento_porcentaje de la raíz si no existe en la DB
-    // Lo movemos a metadata para no perderlo
+    // Valores comunes - Simplificamos al máximo para evitar errores de columnas inexistentes
+    // Movemos campos dudosos a metadata
     const productData = {
         id, 
         nombre: body.nombre, 
@@ -96,9 +96,7 @@ export async function POST(req: Request) {
         descripcion: body.descripcion, 
         precio: body.precio, 
         precio_original: body.precio_original, 
-        // descuento_porcentaje: body.descuento_porcentaje, // SE ELIMINA DE AQUÍ POR ERROR EN DB
         stock_actual: body.stock_actual, 
-        stock_minimo: body.stock_minimo, 
         categoria_id: body.categoria_id, 
         subcategoria_id: body.subcategoria_id, 
         imagen_url: body.imagen_url,
@@ -107,14 +105,15 @@ export async function POST(req: Request) {
         activo: body.activo ? true : false, 
         destacado: body.destacado ? true : false, 
         top: body.top ? true : false, 
-        sku: body.sku, 
-        peso: body.peso, 
-        dimensiones: safeObj(body.dimensiones),
-        proveedor_nombre: body.proveedor_nombre, 
-        proveedor_contacto: body.proveedor_contacto, 
-        precio_costo: body.precio_costo, 
         metadata: JSON.stringify({
             ...(body.metadata || {}),
+            sku: body.sku,
+            peso: body.peso,
+            dimensiones: body.dimensiones,
+            stock_minimo: body.stock_minimo,
+            precio_costo: body.precio_costo,
+            proveedor_nombre: body.proveedor_nombre,
+            proveedor_contacto: body.proveedor_contacto,
             descuento_porcentaje: body.descuento_porcentaje,
             proximo_lanzamiento: body.proximo_lanzamiento,
             nuevo_lanzamiento: body.nuevo_lanzamiento
@@ -163,20 +162,17 @@ export async function POST(req: Request) {
         await db.run(`
             INSERT INTO productos (
                 id, nombre, slug, descripcion, precio, precio_original,
-                stock_actual, stock_minimo, categoria_id, subcategoria_id, imagen_url,
-                imagenes, variantes, activo, destacado, top, sku, peso, dimensiones,
-                proveedor_nombre, proveedor_contacto, precio_costo, metadata
+                stock_actual, categoria_id, subcategoria_id, imagen_url,
+                imagenes, variantes, activo, destacado, top, metadata
             ) VALUES (
                 ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?
+                ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?
             )
         `, [
             productData.id, productData.nombre, productData.slug, productData.descripcion, productData.precio, productData.precio_original,
-            productData.stock_actual, productData.stock_minimo, productData.categoria_id, productData.subcategoria_id, productData.imagen_url,
-            productData.imagenes, productData.variantes, productData.activo ? 1 : 0, productData.destacado ? 1 : 0, productData.top ? 1 : 0, productData.sku, productData.peso, productData.dimensiones,
-            productData.proveedor_nombre, productData.proveedor_contacto, productData.precio_costo, productData.metadata
+            productData.stock_actual, productData.categoria_id, productData.subcategoria_id, productData.imagen_url,
+            productData.imagenes, productData.variantes, productData.activo ? 1 : 0, productData.destacado ? 1 : 0, productData.top ? 1 : 0, productData.metadata
         ]);
         
         return NextResponse.json({ ...body, id, method: 'db_run' });

@@ -78,9 +78,14 @@ export default function AdminSidebar({
         </div>
 
         <div className="relative">
-          <div className="flex items-center gap-2 text-white mb-1">
-            <LayoutDashboard className="w-5 h-5 text-white" />
-            <h2 className="font-display text-xl tracking-[0.08em] uppercase">Admin</h2>
+          <div className="flex items-center justify-between gap-2 text-white mb-1">
+            <div className="flex items-center gap-2">
+              <LayoutDashboard className="w-5 h-5 text-white" />
+              <h2 className="font-display text-xl tracking-[0.08em] uppercase">Admin</h2>
+            </div>
+            <span className="text-[9px] font-mono text-white/30 bg-white/5 px-1.5 py-0.5 rounded border border-white/5">
+              v1.0.8-JAN
+            </span>
           </div>
           <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/45 truncate">{storeName}</p>
         </div>
