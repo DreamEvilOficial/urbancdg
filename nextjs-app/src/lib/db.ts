@@ -84,7 +84,7 @@ class Database {
     const { data, error } = await query;
     if (error) {
       console.error(`❌ DB Select Error (${table}):`, error.message);
-      return [] as T[];
+      throw error;
     }
     return (data as T[]) || ([] as T[]);
   }
@@ -119,7 +119,10 @@ class Database {
       }
     }
     const { data, error } = await query.limit(1);
-    if (error) return undefined as T | undefined;
+    if (error) {
+      console.error(`❌ DB Get Error (${table}):`, error.message);
+      throw error;
+    }
     const item = Array.isArray(data) ? data[0] : undefined;
     return (item as T) || undefined;
   }
@@ -142,7 +145,10 @@ class Database {
         obj[c] = (c === 'activo' || c === 'destacado' || c === 'top') ? (v === 1 || v === true) : v;
       });
       const { data, error } = await client.from(table).insert(obj).select('id');
-      if (error) return { id: null, changes: 0 };
+      if (error) {
+        console.error(`❌ DB Insert Error (${table}):`, error.message);
+        throw error;
+      }
       const id = Array.isArray(data) ? (data[0]?.id ?? null) : null;
       const changes = Array.isArray(data) ? data.length : (data ? 1 : 0);
       return { id, changes };
@@ -161,7 +167,10 @@ class Database {
         const idVal = params[1];
         const setValue = (setCol === 'activo' || setCol === 'destacado' || setCol === 'top') ? (value === 1 || value === true) : value;
         const { data, error } = await client.from(table).update({ [setCol]: setValue }).eq(whereCol, idVal).select('id');
-        if (error) return { id: null, changes: 0 };
+        if (error) {
+          console.error(`❌ DB Update Error (${table}):`, error.message);
+          throw error;
+        }
         const changes = Array.isArray(data) ? data.length : (data ? 1 : 0);
         const id = Array.isArray(data) ? (data[0]?.id ?? null) : null;
         return { id, changes };

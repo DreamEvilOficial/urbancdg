@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, Edit, Trash2, Search, Filter } from 'lucide-react'
 import { Producto } from '@/lib/supabase'
+import NextImage from 'next/image'
 
 interface ProductListProps {
   productos: Producto[]
@@ -16,17 +17,18 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
   const [stockFilter, setStockFilter] = useState('todos') // todos, bajo, agotado
   const [statusFilter, setStatusFilter] = useState('todos') // todos, activos, inactivos
 
-  const filteredProducts = productos.filter(p => {
+  const filteredProducts = (productos || []).filter(p => {
+    if (!p || !p.nombre) return false;
     const matchesSearch = p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
+                          (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()))
     const matchesCategory = categoryFilter === 'todos' || p.categoria_id === categoryFilter
     
     let matchesStock = true
-    if (stockFilter === 'bajo') matchesStock = p.stock_actual > 0 && p.stock_actual < 5
-    if (stockFilter === 'agotado') matchesStock = p.stock_actual <= 0
+    if (stockFilter === 'bajo') matchesStock = (p.stock_actual || 0) > 0 && (p.stock_actual || 0) < 5
+    if (stockFilter === 'agotado') matchesStock = (p.stock_actual || 0) <= 0
     
     let matchesStatus = true
-    if (statusFilter === 'activos') matchesStatus = p.activo
+    if (statusFilter === 'activos') matchesStatus = !!p.activo
     if (statusFilter === 'inactivos') matchesStatus = !p.activo
 
     return matchesSearch && matchesCategory && matchesStock && matchesStatus
@@ -152,11 +154,13 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
                   <tr key={producto.id} className="group hover:bg-white/[0.03] transition-colors">
                     <td className="px-8 py-5 whitespace-nowrap">
                       <div className="flex items-center gap-4">
-                        <div className="h-14 w-14 rounded-2xl overflow-hidden shadow-sm border border-white/10 flex-shrink-0 bg-white/[0.02]">
-                          <img 
+                        <div className="h-14 w-14 rounded-2xl overflow-hidden shadow-sm border border-white/10 flex-shrink-0 bg-white/[0.02] relative">
+                          <NextImage 
                             className="h-full w-full object-cover transition group-hover:scale-110" 
                             src={producto.imagen_url || '/placeholder.png'} 
-                            alt="" 
+                            alt={producto.nombre} 
+                            fill
+                            sizes="56px"
                           />
                         </div>
                         <div>

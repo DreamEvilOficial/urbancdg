@@ -32,6 +32,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
     imagenes: [] as string[],
     variantes: [] as Array<{talle: string, color: string, color_nombre: string, stock: number}>,
     sku: '',
+    stock_minimo: '5',
     proveedor_nombre: '',
     proveedor_contacto: '',
     precio_costo: ''
@@ -224,13 +225,27 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                   <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Categoría</label>
                   <select
                     value={formData.categoria_id}
-                    onChange={e => setFormData({...formData, categoria_id: e.target.value})}
+                    onChange={e => setFormData({...formData, categoria_id: e.target.value, subcategoria_id: ''})}
                     className="w-full bg-[#111] border border-white/5 p-4 rounded-2xl text-sm font-bold focus:bg-black focus:border-white text-white transition-all outline-none"
                     required
                   >
                     <option value="">Seleccionar...</option>
                     {categorias.map(cat => (
                       <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Subcategoría</label>
+                  <select
+                    value={formData.subcategoria_id}
+                    onChange={e => setFormData({...formData, subcategoria_id: e.target.value})}
+                    className="w-full bg-[#111] border border-white/5 p-4 rounded-2xl text-sm font-bold focus:bg-black focus:border-white text-white transition-all outline-none"
+                    disabled={!formData.categoria_id}
+                  >
+                    <option value="">Ninguna</option>
+                    {categorias.find(c => String(c.id) === String(formData.categoria_id))?.subcategorias?.map((sub: any) => (
+                      <option key={sub.id} value={sub.id}>{sub.nombre}</option>
                     ))}
                   </select>
                 </div>
@@ -506,8 +521,18 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
               <div className="space-y-4">
                 <div className="flex justify-between items-center px-2">
                   <h4 className="text-[10px] font-black uppercase text-gray-300 tracking-[0.3em]">Variantes en Inventario</h4>
-                  <div className="h-px flex-1 mx-6 bg-white/5" />
-                  <span className="text-[9px] font-black text-gray-400 uppercase bg-white/5 px-3 py-1 rounded-full">{formData.variantes.length} Variantes</span>
+                  <div className="flex items-center gap-4">
+                    <div className="flex flex-col items-end">
+                      <label className="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1">Stock Mínimo Alerta</label>
+                      <input 
+                        type="number"
+                        value={formData.stock_minimo}
+                        onChange={e => setFormData({...formData, stock_minimo: e.target.value})}
+                        className="w-16 h-8 bg-[#111] border border-white/10 rounded-lg text-center text-xs font-black text-white outline-none focus:border-white transition-all"
+                      />
+                    </div>
+                    <span className="text-[9px] font-black text-gray-400 uppercase bg-white/5 px-3 py-1 rounded-full">{formData.variantes.length} Variantes</span>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

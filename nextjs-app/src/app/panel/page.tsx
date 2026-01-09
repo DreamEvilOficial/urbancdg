@@ -172,6 +172,7 @@ export default function AdminPage() {
         sku: data.sku || null,
         slug,
         stock_actual: totalStock,
+        stock_minimo: data.stock_minimo ? Number(data.stock_minimo) : 5,
         activo: true
       }
 
@@ -185,7 +186,7 @@ export default function AdminPage() {
 
       setShowProductForm(false)
       setEditingProduct(null)
-      cargarDatos() // Recargar lista
+      await cargarDatos() // Recargar lista esperando a que termine
     } catch (error: any) {
       console.error(error)
       toast.error('Error al guardar: ' + error.message)

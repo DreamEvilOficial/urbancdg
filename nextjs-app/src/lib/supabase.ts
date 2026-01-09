@@ -105,11 +105,16 @@ export interface Orden {
 // Helper para fetch
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
   // Aseguramos que la URL sea relativa o completa
-  const url = endpoint.startsWith('/') ? `/api${endpoint}` : `/api/${endpoint}`;
+  // Añadimos un timestamp para evitar cache del navegador en peticiones GET
+  const separator = endpoint.includes('?') ? '&' : '?';
+  const url = endpoint.startsWith('/') 
+    ? `/api${endpoint}${options.method === 'GET' || !options.method ? `${separator}t=${Date.now()}` : ''}` 
+    : `/api/${endpoint}${options.method === 'GET' || !options.method ? `${separator}t=${Date.now()}` : ''}`;
   
   console.log(`[apiFetch] Requesting: ${url}`, options);
 
   const res = await fetch(url, {
+    cache: 'no-store', // Deshabilitar cache de Next.js y navegador
     ...options,
     headers: {
       'Content-Type': 'application/json',

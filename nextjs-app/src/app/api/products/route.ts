@@ -4,17 +4,24 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 import { createClient } from '@supabase/supabase-js';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
+    const isAdmin = searchParams.get('admin') === 'true';
     const categoryId = searchParams.get('categoria');
     const subcategoryId = searchParams.get('subcategoria');
     const featured = searchParams.get('destacado');
     const top = searchParams.get('top');
     const search = searchParams.get('q');
     
-    // Use Admin Client directly to bypass RLS and avoid regex parsing issues
+    console.log(`[products:GET] Request received. AdminParam: ${isAdmin}, HasAdminClient: ${!!supabaseAdmin}`);
+    
+    // Si tenemos supabaseAdmin, lo usamos siempre para el panel o si se solicita admin
     if (supabaseAdmin) {
+        console.log('[products:GET] Fetching with Supabase Admin (bypassing RLS)');
         let query = supabaseAdmin.from('productos').select('*');
         
         if (categoryId) query = query.eq('categoria_id', categoryId);
@@ -28,17 +35,17 @@ export async function GET(req: Request) {
         const { data, error } = await query;
         
         if (error) {
-            console.error('Supabase Admin GET error:', error);
+            console.error('[products:GET] Supabase Admin error:', error);
             throw error;
         }
         
-        console.log(`[products:GET] Admin client fetched ${data?.length || 0} products`);
+        console.log(`[products:GET] Success. Found ${data?.length || 0} products`);
         
         const parsedProducts = (data || []).map((p: any) => ({
             ...p,
-            activo: !!p.activo,
-            destacado: !!p.destacado,
-            top: !!p.top,
+            activo: p.activo === true || p.activo === 1,
+            destacado: p.destacado === true || p.destacado === 1,
+            top: p.top === true || p.top === 1,
             imagenes: typeof p.imagenes === 'string' ? JSON.parse(p.imagenes || '[]') : (p.imagenes || []),
             variantes: typeof p.variantes === 'string' ? JSON.parse(p.variantes || '[]') : (p.variantes || []),
             dimensiones: typeof p.dimensiones === 'string' ? JSON.parse(p.dimensiones || '{}') : (p.dimensiones || {}),
@@ -48,43 +55,16 @@ export async function GET(req: Request) {
         return NextResponse.json(parsedProducts);
     }
 
-    // Fallback to db.all if admin client not available (local/legacy)
-    let query = 'SELECT * FROM productos WHERE 1=1';
-    const params: any[] = [];
+    console.log('[products:GET] Falling back to db.all (No Admin Client)');
+    const products = await db.all('SELECT * FROM productos ORDER BY created_at DESC');
     
-    if (categoryId) {
-        query += ' AND categoria_id = ?';
-        params.push(categoryId);
-    }
-    
-    if (subcategoryId) {
-        query += ' AND subcategoria_id = ?';
-        params.push(subcategoryId);
-    }
-    
-    if (featured === 'true') {
-        query += ' AND destacado = 1';
-    }
-    
-    if (top === 'true') {
-        query += ' AND top = 1';
-    }
-    
-    if (search) {
-        query += ' AND (nombre ILIKE ? OR descripcion ILIKE ? OR sku ILIKE ?)';
-        const term = `%${search}%`;
-        params.push(term, term, term);
-    }
-    
-    query += ' ORDER BY created_at DESC';
-    
-    const products = await db.all(query, params);
+    console.log(`[products:GET] Fallback success. Found ${products?.length || 0} products`);
     
     const parsedProducts = products.map((p: any) => ({
         ...p,
-        activo: !!p.activo,
-        destacado: !!p.destacado,
-        top: !!p.top,
+        activo: p.activo === true || p.activo === 1 || p.activo === '1',
+        destacado: p.destacado === true || p.destacado === 1 || p.destacado === '1',
+        top: p.top === true || p.top === 1 || p.top === '1',
         imagenes: typeof p.imagenes === 'string' ? JSON.parse(p.imagenes || '[]') : (p.imagenes || []),
         variantes: typeof p.variantes === 'string' ? JSON.parse(p.variantes || '[]') : (p.variantes || []),
         dimensiones: typeof p.dimensiones === 'string' ? JSON.parse(p.dimensiones || '{}') : (p.dimensiones || {}),
@@ -132,12 +112,47 @@ export async function POST(req: Request) {
         proveedor_nombre: body.proveedor_nombre, 
         proveedor_contacto: body.proveedor_contacto, 
         precio_costo: body.precio_costo, 
-        metadata: safeObj(body.metadata)
+        metadata: safeObj(body.metadata),
+        created_at: new Date().toISOString()
     };
 
     console.log('[products:POST] Intentando crear producto:', { id, nombre: body.nombre });
 
-    // Estrategia 1: DB Run (Standard)
+    // Estrategia Principal: Usar supabaseAdmin directamente
+    // Esto es mucho más fiable que db.run para objetos complejos con JSON
+    if (supabaseAdmin) {
+        try {
+            const { error } = await supabaseAdmin.from('productos').insert(productData);
+            
+            if (error) {
+                console.error('[products:POST] Error de Supabase Admin:', error);
+                
+                // Si falla por columnas inexistentes, intentamos con datos mínimos
+                console.warn('[products:POST] Reintentando con datos mínimos...');
+                const minimalData = {
+                    id, 
+                    nombre: body.nombre, 
+                    slug: body.slug, 
+                    precio: body.precio,
+                    activo: body.activo ? true : false,
+                    categoria_id: body.categoria_id,
+                    imagen_url: body.imagen_url
+                };
+                
+                const { error: minError } = await supabaseAdmin.from('productos').insert(minimalData);
+                if (minError) throw minError;
+                
+                return NextResponse.json({ ...body, id, method: 'admin_minimal' });
+            }
+            
+            return NextResponse.json({ ...body, id, method: 'admin_direct' });
+        } catch (adminErr: any) {
+            console.error('[products:POST] Falló Admin Direct:', adminErr.message);
+            // Si falla admin, dejamos que intente db.run como último recurso (aunque db.run es más probable que falle)
+        }
+    }
+
+    // Estrategia Fallback: DB Run (Legacy/SQL)
     try {
         await db.run(`
             INSERT INTO productos (
@@ -158,55 +173,14 @@ export async function POST(req: Request) {
             productData.proveedor_nombre, productData.proveedor_contacto, productData.precio_costo, productData.metadata
         ]);
         
-        return NextResponse.json({ ...body, id });
+        return NextResponse.json({ ...body, id, method: 'db_run' });
     } catch (e: any) {
-        console.warn('[products:POST] db.run falló, intentando Admin Client:', e.message);
+        console.error('[products:POST] Todos los métodos de inserción fallaron:', e.message);
+        return NextResponse.json({ 
+            error: 'Failed to create product', 
+            details: e.message 
+        }, { status: 500 });
     }
-
-    // Estrategia 2: Admin Client (Fuerza Bruta)
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-        throw new Error('Faltan credenciales de Admin para fallback');
-    }
-
-    const admin = createClient(supabaseUrl, supabaseServiceKey, {
-        auth: { autoRefreshToken: false, persistSession: false }
-    });
-
-    // Intento A: Insertar todo
-    const { error } = await admin.from('productos').insert(productData);
-    
-    if (!error) {
-        return NextResponse.json({ ...body, id, method: 'admin_full' });
-    }
-
-    console.warn('[products:POST] Admin insert full falló:', error.message);
-
-    // Intento B: Insertar mínimo (si falla por columnas opcionales inexistentes)
-    // Excluyendo columnas que podrían no estar en todas las versiones del esquema
-    const minimalData = {
-        id, 
-        nombre: body.nombre, 
-        slug: body.slug, 
-        precio: body.precio,
-        activo: body.activo ? true : false,
-        categoria_id: body.categoria_id,
-        imagen_url: body.imagen_url
-    };
-
-    const { error: minError } = await admin.from('productos').insert(minimalData);
-    
-    if (!minError) {
-        return NextResponse.json({ ...body, id, method: 'admin_minimal' });
-    }
-
-    // Si todo falla
-    return NextResponse.json({ 
-        error: 'Failed to create product', 
-        details: `Todos los métodos fallaron. Último error: ${minError.message}` 
-    }, { status: 500 });
 
   } catch (err: any) {
     console.error('Failed to create product:', err);
