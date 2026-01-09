@@ -574,7 +574,13 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
               <div className="grid grid-cols-2 gap-3">
                 {formData.imagenes.map((img, idx) => (
                   <div key={idx} className="relative group aspect-[3/4] rounded-2xl overflow-hidden border border-white/10">
-                    <img src={img} className="w-full h-full object-cover" />
+                    <Image 
+                      src={img} 
+                      alt={`Imagen producto ${idx + 1}`}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                    />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
                       <button
                         type="button"
