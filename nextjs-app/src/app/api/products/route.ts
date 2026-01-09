@@ -3,6 +3,64 @@ import db from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
 import { createClient } from '@supabase/supabase-js';
 
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const categoryId = searchParams.get('categoria');
+    const subcategoryId = searchParams.get('subcategoria');
+    const featured = searchParams.get('destacado');
+    const top = searchParams.get('top');
+    const search = searchParams.get('q');
+    
+    let query = 'SELECT * FROM productos WHERE 1=1';
+    const params: any[] = [];
+    
+    if (categoryId) {
+        query += ' AND categoria_id = ?';
+        params.push(categoryId);
+    }
+    
+    if (subcategoryId) {
+        query += ' AND subcategoria_id = ?';
+        params.push(subcategoryId);
+    }
+    
+    if (featured === 'true') {
+        query += ' AND destacado = 1';
+    }
+    
+    if (top === 'true') {
+        query += ' AND top = 1';
+    }
+    
+    if (search) {
+        query += ' AND (nombre ILIKE ? OR descripcion ILIKE ? OR sku ILIKE ?)';
+        const term = `%${search}%`;
+        params.push(term, term, term);
+    }
+    
+    query += ' ORDER BY created_at DESC';
+    
+    const products = await db.all(query, params);
+    
+    const parsedProducts = products.map((p: any) => ({
+        ...p,
+        activo: !!p.activo,
+        destacado: !!p.destacado,
+        top: !!p.top,
+        imagenes: typeof p.imagenes === 'string' ? JSON.parse(p.imagenes || '[]') : (p.imagenes || []),
+        variantes: typeof p.variantes === 'string' ? JSON.parse(p.variantes || '[]') : (p.variantes || []),
+        dimensiones: typeof p.dimensiones === 'string' ? JSON.parse(p.dimensiones || '{}') : (p.dimensiones || {}),
+        metadata: typeof p.metadata === 'string' ? JSON.parse(p.metadata || '{}') : (p.metadata || {})
+    }));
+    
+    return NextResponse.json(parsedProducts);
+  } catch (err) {
+    console.error('Error fetching products:', err);
+    return NextResponse.json({ error: 'Error fetching products' }, { status: 500 });
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();

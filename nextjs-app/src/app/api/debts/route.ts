@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { supabaseAdmin } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function GET(request: Request) {
@@ -8,11 +9,30 @@ export async function GET(request: Request) {
     const id = searchParams.get('id');
 
     if (id) {
+      // Use admin client if available, else db fallback
+      if (supabaseAdmin) {
+          const { data, error } = await supabaseAdmin.from('deudas').select('*').eq('id', id).single();
+          if (error) throw error;
+          if (data) {
+              try { data.historial = JSON.parse(data.historial || '[]'); } catch { data.historial = []; }
+          }
+          return NextResponse.json(data);
+      }
+      
       const debt = await db.get('SELECT * FROM deudas WHERE id = ?', [id]);
       if (debt) {
         try { debt.historial = JSON.parse(debt.historial || '[]'); } catch { debt.historial = []; }
       }
       return NextResponse.json(debt);
+    }
+
+    if (supabaseAdmin) {
+        const { data, error } = await supabaseAdmin.from('deudas').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        data?.forEach((d: any) => {
+            try { d.historial = JSON.parse(d.historial || '[]'); } catch { d.historial = []; }
+        });
+        return NextResponse.json(data || []);
     }
 
     const debts = await db.all('SELECT * FROM deudas ORDER BY created_at DESC');
@@ -35,6 +55,31 @@ export async function POST(request: Request) {
     const id = uuidv4();
     const now = new Date().toISOString();
     
+    // Prefer supabaseAdmin for reliable insertion and return
+    if (supabaseAdmin) {
+        const { data, error } = await supabaseAdmin.from('deudas').insert({
+            id,
+            cliente_nombre: cliente_nombre || '',
+            cliente_apellido: cliente_apellido || '',
+            cliente_dni: cliente_dni || '',
+            cliente_celular: cliente_celular || '',
+            cliente_direccion: cliente_direccion || '',
+            total_deuda: 0,
+            historial: '[]',
+            created_at: now,
+            updated_at: now
+        }).select().single();
+
+        if (error) throw error;
+        
+        // Parse historial just in case
+        if (data) {
+             try { data.historial = JSON.parse(data.historial || '[]'); } catch { data.historial = []; }
+        }
+        return NextResponse.json(data);
+    }
+
+    // Fallback to db.run if admin not available (unlikely in prod if configured)
     await db.run(
       `INSERT INTO deudas (id, cliente_nombre, cliente_apellido, cliente_dni, cliente_celular, cliente_direccion, total_deuda, historial, created_at, updated_at) 
        VALUES (?, ?, ?, ?, ?, ?, 0, '[]', ?, ?)`,
@@ -50,9 +95,9 @@ export async function POST(request: Request) {
     newDebt.historial = [];
 
     return NextResponse.json(newDebt);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating debt:', error);
-    return NextResponse.json({ error: 'Error creating debt', details: String(error) }, { status: 500 });
+    return NextResponse.json({ error: 'Error creating debt', details: error.message || String(error) }, { status: 500 });
   }
 }
 

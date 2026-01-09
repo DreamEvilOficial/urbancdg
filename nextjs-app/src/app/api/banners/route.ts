@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { writeFile } from 'fs/promises'
-import { join } from 'path'
+import { supabaseAdmin } from '@/lib/supabase'
 
 // Almacenamiento simple en memoria para configuración de banners
 let bannersConfigStore: {
@@ -65,17 +64,33 @@ export async function POST(request: NextRequest) {
     const enabled = formData.get('enabled') === 'true'
 
     if (file) {
-      // Procesar upload de archivo
+      if (!supabaseAdmin) {
+        throw new Error('Supabase Admin client not available');
+      }
+
+      // Procesar upload de archivo a Supabase Storage
       const timestamp = Date.now()
-      const fileName = `banner-${bannerType}-${timestamp}.${file.name.split('.').pop()}`
+      const fileName = `banners/${bannerType}-${timestamp}.${file.name.split('.').pop()}`
       
       const bytes = await file.arrayBuffer()
       const buffer = Buffer.from(bytes)
       
-      const uploadPath = join(process.cwd(), 'public', 'uploads', fileName)
-      await writeFile(uploadPath, buffer)
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from('productos') // Usamos 'productos' bucket que sabemos existe
+        .upload(fileName, buffer, {
+            contentType: file.type,
+            upsert: false
+        })
+
+      if (uploadError) {
+          throw new Error(`Storage upload failed: ${uploadError.message}`);
+      }
       
-      const publicUrl = `/uploads/${fileName}`
+      const { data: publicUrlData } = supabaseAdmin.storage
+        .from('productos')
+        .getPublicUrl(fileName)
+      
+      const publicUrl = publicUrlData.publicUrl
       
       if (bannerType === 'top') {
         bannersConfigStore.topBanner = {
