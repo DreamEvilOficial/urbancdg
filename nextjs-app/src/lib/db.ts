@@ -13,12 +13,31 @@ const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 let pool: Pool | null = null;
 
 if (connectionString) {
-  pool = new Pool({
+  // Configuración de SSL ultra-compatible para Vercel + Supabase/Neon
+  const poolConfig: any = {
     connectionString,
-    ssl: { rejectUnauthorized: false },
-    max: 20, // Máximo de conexiones en el pool
+    max: 20,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
+    connectionTimeoutMillis: 10000,
+  };
+
+  // Si no estamos en desarrollo local, forzamos SSL sin verificación
+  if (process.env.NODE_ENV === 'production' || !connectionString.includes('localhost')) {
+    poolConfig.ssl = {
+      rejectUnauthorized: false,
+      ca: null, // Ignorar CA específica
+    };
+    
+    // Aseguramos que la URL tenga sslmode=no-verify
+    if (!connectionString.includes('sslmode=')) {
+      poolConfig.connectionString += (connectionString.includes('?') ? '&' : '?') + 'sslmode=no-verify';
+    }
+  }
+
+  pool = new Pool(poolConfig);
+
+  pool.on('error', (err) => {
+    console.error('❌ Error inesperado en el Pool de Postgres:', err.message);
   });
 }
 

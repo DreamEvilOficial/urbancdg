@@ -97,7 +97,26 @@ export interface Orden {
 
 // Helper para fetch
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
-  // Aseguramos que la URL sea relativa o completa
+  try {
+    const res = await fetch(endpoint, options)
+    const data = await res.json()
+    if (!res.ok) {
+      console.error(`API Error (${endpoint}):`, data)
+      // Si la API devuelve un error, lanzamos una excepción con el mensaje o el objeto completo
+      throw new Error(data.error || data.message || `Error ${res.status}`)
+    }
+    return data
+  } catch (error: any) {
+    console.error(`Fetch Error (${endpoint}):`, error.message)
+    // Devolvemos un array vacío como fallback seguro para evitar .map() errors si es un GET de listas
+    if (!options.method || options.method === 'GET') {
+      if (endpoint.includes('products') || endpoint.includes('categories') || endpoint.includes('tags') || endpoint.includes('orders') || endpoint.includes('debts')) {
+        return []
+      }
+    }
+    throw error
+  }
+}
   // Añadimos un timestamp para evitar cache del navegador en peticiones GET
   const separator = endpoint.includes('?') ? '&' : '?';
   const url = endpoint.startsWith('/') 
