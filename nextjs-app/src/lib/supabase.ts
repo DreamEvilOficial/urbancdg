@@ -97,55 +97,42 @@ export interface Orden {
 
 // Helper para fetch
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
-  try {
-    const res = await fetch(endpoint, options)
-    const data = await res.json()
-    if (!res.ok) {
-      console.error(`API Error (${endpoint}):`, data)
-      // Si la API devuelve un error, lanzamos una excepción con el mensaje o el objeto completo
-      throw new Error(data.error || data.message || `Error ${res.status}`)
-    }
-    return data
-  } catch (error: any) {
-    console.error(`Fetch Error (${endpoint}):`, error.message)
-    // Devolvemos un array vacío como fallback seguro para evitar .map() errors si es un GET de listas
-    if (!options.method || options.method === 'GET') {
-      if (endpoint.includes('products') || endpoint.includes('categories') || endpoint.includes('tags') || endpoint.includes('orders') || endpoint.includes('debts')) {
-        return []
-      }
-    }
-    throw error
-  }
-}
-  // Añadimos un timestamp para evitar cache del navegador en peticiones GET
+  // 1. Construir URL con prefijo /api y timestamp para evitar cache
   const separator = endpoint.includes('?') ? '&' : '?';
   const url = endpoint.startsWith('/') 
     ? `/api${endpoint}${options.method === 'GET' || !options.method ? `${separator}t=${Date.now()}` : ''}` 
     : `/api/${endpoint}${options.method === 'GET' || !options.method ? `${separator}t=${Date.now()}` : ''}`;
-  
-  console.log(`[apiFetch] Requesting: ${url}`, options);
 
-  const res = await fetch(url, {
-    cache: 'no-store', // Deshabilitar cache de Next.js y navegador
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
+  try {
+    const res = await fetch(url, {
+      cache: 'no-store',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      }
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error(`[apiFetch] Error ${res.status} (${url}):`, data);
+      throw new Error(data.error || data.message || `Error ${res.status}`);
     }
-  });
 
-  if (!res.ok) {
-     const errorText = await res.text();
-     console.error(`[apiFetch] Error ${res.status}:`, errorText);
-     try {
-        const error = JSON.parse(errorText);
-        throw new Error(error.error || error.message || 'Error en la petición');
-     } catch (e) {
-        throw new Error(`Error ${res.status}: ${errorText}`);
-     }
+    return data;
+  } catch (error: any) {
+    console.error(`[apiFetch] Fetch Error (${url}):`, error.message);
+    
+    // Devolvemos un array vacío como fallback seguro para evitar .map() errors si es un GET de listas
+    if (!options.method || options.method === 'GET') {
+      const isListEndpoint = ['products', 'categories', 'tags', 'orders', 'debts', 'sections', 'reviews'].some(e => url.includes(e));
+      if (isListEndpoint) {
+        return [];
+      }
+    }
+    throw error;
   }
-  
-  return res.json();
 }
 
 export const productosAPI = {
