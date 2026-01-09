@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { X, Upload, Plus, Trash2 } from 'lucide-react'
 import { Producto, supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
+import NextImage from 'next/image'
 
 interface ProductFormProps {
   producto?: Producto | null
@@ -574,7 +575,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
               <div className="grid grid-cols-2 gap-3">
                 {formData.imagenes.map((img, idx) => (
                   <div key={idx} className="relative group aspect-[3/4] rounded-2xl overflow-hidden border border-white/10">
-                    <Image 
+                    <NextImage 
                       src={img} 
                       alt={`Imagen producto ${idx + 1}`}
                       fill
