@@ -92,23 +92,36 @@ function ProductCard({ producto }: ProductCardProps) {
   }, [productPrice, productOriginalPrice])
 
   const productImage = useMemo(() => {
-    // 0. Si es top pick y tiene imagen específica, usarla
-    // (A veces el objeto producto puede tener propiedades extra si viene de una consulta específica)
-    
     // 1. Validar imagen_url (prioridad)
     if (producto.imagen_url && typeof producto.imagen_url === 'string' && producto.imagen_url.trim().length > 0) {
        return producto.imagen_url
     }
+    
     // 2. Validar array de imágenes
     if (Array.isArray(producto.imagenes) && producto.imagenes.length > 0) {
-      // Tomar la primera imagen válida
-      const firstImg = producto.imagenes.find(img => typeof img === 'string' && img.length > 0)
-      if (firstImg) return firstImg
+      // Buscar primera imagen válida (string o objeto con url)
+      const validImg = producto.imagenes.find(img => {
+        if (typeof img === 'string' && img.trim().length > 0) return true
+        if (typeof img === 'object' && img !== null && (img as any).url && typeof (img as any).url === 'string') return true
+        return false
+      })
+
+      if (validImg) {
+        if (typeof validImg === 'string') return validImg
+        return (validImg as any).url
+      }
     }
     
     // Fallback
-    return '/placeholder.png'
+    return '/Logaso.png'
   }, [producto])
+
+  const [imgSrc, setImgSrc] = useState<string>(productImage)
+
+  // Actualizar imgSrc si cambia el producto
+  React.useEffect(() => {
+    setImgSrc(productImage)
+  }, [productImage])
 
   const productHref = useMemo(() => `/productos/${producto.slug || producto.id}`, [producto.slug, producto.id])
 
@@ -340,7 +353,7 @@ function ProductCard({ producto }: ProductCardProps) {
       {/* Imagen */}
       <Link href={productHref} className="relative block w-full aspect-[4/5] bg-black overflow-hidden">
         <Image
-          src={productImage}
+          src={imgSrc}
           alt={productName}
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -349,6 +362,10 @@ function ProductCard({ producto }: ProductCardProps) {
               ? 'group-hover:scale-105' 
               : 'group-hover:scale-110 group-hover:brightness-110'
           }`}
+          onError={() => {
+            console.warn(`Error loading image for ${productName}: ${imgSrc}`)
+            setImgSrc('/Logaso.png')
+          }}
         />
       </Link>
       
