@@ -15,7 +15,6 @@ export default function ReviewsManagement() {
 
   async function fetchReviews() {
     try {
-      // Fetch all reviews (both approved and pending)
       const res = await fetch('/api/reviews?limit=all')
       if (!res.ok) throw new Error('Error al cargar reseñas')
       const data = await res.json()
@@ -70,11 +69,13 @@ export default function ReviewsManagement() {
     }
   }
 
-  if (loading) return (
-    <div className="flex justify-center items-center h-64">
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white/20 border-t-accent"></div>
-    </div>
-  )
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">

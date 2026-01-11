@@ -117,6 +117,18 @@ export default function OrderTrackingPage() {
                   <span className="text-white/50">Fecha de compra</span>
                   <span className="font-mono font-bold">{new Date(order.created_at).toLocaleDateString()}</span>
                 </div>
+                
+                {/* Estimated Delivery */}
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/50">Entrega Estimada</span>
+                  <span className="font-mono font-bold text-green-400">
+                    {order.estado === 'entregado' 
+                        ? 'Entregado' 
+                        : new Date(new Date(order.created_at).setDate(new Date(order.created_at).getDate() + 5)).toLocaleDateString()
+                    }
+                  </span>
+                </div>
+
                 <div className="flex justify-between text-sm">
                   <span className="text-white/50">Total</span>
                   <span className="font-mono font-bold text-lg text-accent">${order.total?.toLocaleString()}</span>

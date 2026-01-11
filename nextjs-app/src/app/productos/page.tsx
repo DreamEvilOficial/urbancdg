@@ -149,10 +149,10 @@ function ProductosContent() {
   }, [filter, categoriaSlug, subcategoriaSlug, searchQuery])
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white relative z-10 overflow-hidden">
+    <div className="min-h-screen bg-[#06070c] text-white relative z-10 overflow-x-hidden">
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-900/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-900/10 rounded-full blur-[120px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-900/5 rounded-full blur-[150px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-900/5 rounded-full blur-[150px]" />
       </div>
 
       <DynamicTitle title={`${titulo} / Urban Indumentaria`} />
