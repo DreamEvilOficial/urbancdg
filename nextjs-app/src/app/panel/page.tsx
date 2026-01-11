@@ -328,7 +328,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="fixed inset-0 flex bg-[#05060a] overflow-hidden">
+    <div className="flex min-h-screen bg-[#05060a]">
       <style dangerouslySetInnerHTML={{
         __html: `
           input[type="text"],
@@ -346,26 +346,40 @@ export default function AdminPage() {
           }
         `
       }} />
-      <AdminSidebar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        sidebarOpen={sidebarOpen}
-        storeName={storeName}
-        onNavigate={() => {
-          // Cerrar sidebar en móvil tras seleccionar
-          setSidebarOpen(false)
-        }}
-      />
+      {/* Sidebar - Desktop */}
+      <div className={`hidden lg:block sticky top-0 h-screen overflow-y-auto border-r border-white/5 bg-[#05060a] z-50 w-64 flex-shrink-0 transition-all duration-300`}>
+        <AdminSidebar 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab} 
+          sidebarOpen={true}
+          storeName={storeName}
+          onNavigate={() => {}}
+        />
+      </div>
+
+      {/* Sidebar - Mobile Overlay */}
+      <div className={`lg:hidden fixed inset-0 z-50 pointer-events-none transition-opacity duration-300 ${sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0'}`}>
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+        <div className={`absolute left-0 top-0 bottom-0 w-64 bg-[#05060a] border-r border-white/10 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+           <AdminSidebar 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab} 
+            sidebarOpen={true}
+            storeName={storeName}
+            onNavigate={() => setSidebarOpen(false)}
+          />
+        </div>
+      </div>
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile Header */}
         <header className="lg:hidden bg-[#05060a]/80 backdrop-blur-xl border-b border-white/10 p-4 flex items-center justify-between sticky top-0 z-40">
           <div className="flex items-center gap-4">
             <button 
-              onClick={() => setSidebarOpen(!sidebarOpen)} 
+              onClick={() => setSidebarOpen(true)} 
               className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95"
             >
-              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              <Menu className="w-5 h-5" />
             </button>
             <div>
               <h1 className="text-sm font-black uppercase tracking-widest text-white">Admin Panel</h1>
@@ -373,15 +387,8 @@ export default function AdminPage() {
             </div>
           </div>
         </header>
-        {/* Overlay para cerrar al tocar afuera */}
-        {sidebarOpen && (
-          <div
-            className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative overscroll-contain">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
           {activeTab === 'productos' && (
             showProductForm ? (
               <ProductForm 

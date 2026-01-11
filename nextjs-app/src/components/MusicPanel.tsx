@@ -26,6 +26,7 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [volume, setVolume] = useState(20)
   const [muted, setMuted] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(true) // Default true as it autoplays
   const iframeRef = useRef<HTMLIFrameElement | null>(null)
   const [initialized, setInitialized] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
@@ -119,16 +120,22 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
   }, [initialized])
 
   function play() {
+    setIsPlaying(true)
     iframeRef.current?.contentWindow?.postMessage(
       JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
       '*',
     )
   }
   function pause() {
+    setIsPlaying(false)
     iframeRef.current?.contentWindow?.postMessage(
       JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }),
       '*',
     )
+  }
+  function togglePlay() {
+    if (isPlaying) pause()
+    else play()
   }
   function next() {
     if (tracks.length === 0) return
@@ -222,7 +229,28 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
             </div>
 
             {/* Bottom Controls */}
-            <div className="mt-4 flex items-center gap-3">
+            <div className="mt-4 flex flex-col gap-3">
+              {/* Playback Controls - Always Visible */}
+              <div className="flex items-center justify-center gap-6">
+                 <button onClick={prev} className={`p-2 rounded-full hover:bg-white/10 transition ${isDarkMode ? 'text-white' : 'text-black'}`} title="Anterior">
+                   <SkipBack className="w-5 h-5 fill-current" />
+                 </button>
+                 <button 
+                   onClick={togglePlay} 
+                   className={`p-3 rounded-full transition-all hover:scale-105 shadow-lg ${
+                     isDarkMode ? 'bg-white text-black hover:bg-white/90' : 'bg-black text-white hover:bg-black/90'
+                   }`} 
+                   title={isPlaying ? "Pausar" : "Reproducir"}
+                 >
+                   {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
+                 </button>
+                 <button onClick={next} className={`p-2 rounded-full hover:bg-white/10 transition ${isDarkMode ? 'text-white' : 'text-black'}`} title="Siguiente">
+                   <SkipForward className="w-5 h-5 fill-current" />
+                 </button>
+              </div>
+
+              {/* Volume & Additional */}
+              <div className="flex items-center gap-3">
                <button onClick={toggleMute} className={`${isDarkMode ? 'text-white/60 hover:text-white' : 'text-black/60 hover:text-black'} transition`}>
                  {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                </button>
@@ -245,6 +273,7 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
                </div>
                
                <span className={`text-[9px] font-mono ${isDarkMode ? 'text-white/40' : 'text-black/40'}`}>{volume}%</span>
+              </div>
             </div>
 
             {/* Track List (Optional/Collapsible) */}
