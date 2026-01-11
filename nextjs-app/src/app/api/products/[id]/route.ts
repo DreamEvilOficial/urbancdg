@@ -62,10 +62,37 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     } catch (dbErr: any) {
       console.error('Database Update Error (Attempt 1):', dbErr.message);
       
-      // 2. Retry Logic: Handle specific column errors
-      // If error is about a missing column, try to remove that column from the update
       const errorMessage = dbErr.message.toLowerCase();
-      if (errorMessage.includes('no such column') || errorMessage.includes('has no column')) {
+
+      // 2. Auto-fix: Add missing columns if detected (Postgres specific)
+      // Error: column "nuevo_lanzamiento" does not exist
+      if (errorMessage.includes('column') && errorMessage.includes('does not exist')) {
+         const match = errorMessage.match(/column "(.+)" does not exist/);
+         if (match && match[1]) {
+             const missingCol = match[1];
+             // Only allow adding specific known flags to prevent abuse
+             const allowedCols = ['nuevo_lanzamiento', 'proximo_lanzamiento', 'top', 'destacado', 'activo'];
+             
+             if (allowedCols.includes(missingCol)) {
+                 try {
+                     console.log(`Auto-adding missing column: ${missingCol}`);
+                     // Use raw SQL to add column
+                     await db.raw(`ALTER TABLE productos ADD COLUMN ${missingCol} BOOLEAN DEFAULT FALSE`);
+                     
+                     // Retry original update with updated_at
+                     const result = await db.run(`UPDATE productos SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, values);
+                     return NextResponse.json(result);
+                 } catch (alterErr) {
+                     console.error('Failed to auto-add column:', alterErr);
+                     // Continue to fallback
+                 }
+             }
+         }
+      }
+      
+      // 3. Retry Logic: Handle specific column errors (Fallback)
+      // If error is about a missing column, try to remove that column from the update
+      if (errorMessage.includes('no such column') || errorMessage.includes('has no column') || errorMessage.includes('does not exist')) {
           // Extract column name from error message if possible, or fallback to generic retry
           // Simple fallback: Retry WITHOUT updated_at first
           try {
@@ -74,6 +101,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
                 return NextResponse.json({ error: 'Product not found' }, { status: 404 });
              }
              // Success on retry
+             return NextResponse.json({ success: true, warning: 'Updated with limited columns' });
           } catch (retryErr: any) {
              // If it still fails, it might be one of the dynamic keys. 
              // We can't easily guess which one, but we can log it.
@@ -95,6 +123,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
                  try {
                      await db.run(`UPDATE productos SET ${safeSetClause} WHERE id = ?`, safeValues);
                      // Success on final retry
+                     return NextResponse.json({ success: true });
                  } catch (finalErr: any) {
                      return NextResponse.json({ 
                         error: 'Error de base de datos al guardar', 
