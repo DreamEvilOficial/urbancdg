@@ -21,7 +21,6 @@ export async function GET(req: Request) {
         r.cliente_nombre as usuario_nombre,
         r.cliente_email as usuario_email,
         r.aprobado,
-        r.destacado,
         p.nombre as producto_nombre,
         p.imagen_url as producto_imagen
       FROM resenas r

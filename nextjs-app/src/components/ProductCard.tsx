@@ -92,8 +92,18 @@ function ProductCard({ producto }: ProductCardProps) {
   }, [productPrice, productOriginalPrice])
 
   const productImage = useMemo(() => {
-    if (producto.imagen_url) return producto.imagen_url
-    if (Array.isArray(producto.imagenes) && producto.imagenes.length > 0) return producto.imagenes[0]
+    // 1. Validar imagen_url (prioridad)
+    if (producto.imagen_url && typeof producto.imagen_url === 'string' && producto.imagen_url.trim().length > 0) {
+       return producto.imagen_url
+    }
+    // 2. Validar array de imágenes
+    if (Array.isArray(producto.imagenes) && producto.imagenes.length > 0) {
+       const firstImg = producto.imagenes[0]
+       if (typeof firstImg === 'string' && firstImg.trim().length > 0) {
+         return firstImg
+       }
+    }
+    // 3. Fallback
     return '/proximamente.png'
   }, [producto.imagen_url, producto.imagenes])
 

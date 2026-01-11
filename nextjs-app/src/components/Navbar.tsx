@@ -316,11 +316,11 @@ export default function Navbar() {
                 } else if (filtro.icono) {
                   iconElement = <span className="text-sm">{filtro.icono}</span>
                 } else if (filtro.clave === 'descuentos') {
-                  iconElement = <img src="/Discount Icon.gif" alt="Descuento" className="w-4 h-4" />
+                  iconElement = <img src="/discount-icon.gif" alt="Descuento" className="w-4 h-4" />
                 } else if (filtro.clave === 'nuevos') {
-                  iconElement = <img src="/New label.gif" alt="Nuevo" className="w-4 h-4" />
+                  iconElement = <img src="/new-label.gif" alt="Nuevo" className="w-4 h-4" />
                 } else if (filtro.clave === 'proximamente') {
-                  iconElement = <img src="/Fire.gif" alt="Próximamente" className="w-4 h-4" />
+                  iconElement = <img src="/fire.gif" alt="Próximamente" className="w-4 h-4" />
                 } else {
                   iconElement = <span className="text-sm">🏷️</span>
                 }

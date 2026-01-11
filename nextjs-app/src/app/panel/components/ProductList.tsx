@@ -150,14 +150,16 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
             </thead>
             <tbody className="divide-y divide-white/10">
               {filteredProducts.length > 0 ? (
-                filteredProducts.map((producto) => (
+                filteredProducts.map((producto) => {
+                  const img = producto.imagen_url || (producto.imagenes && producto.imagenes.length > 0 ? producto.imagenes[0] : '/proximamente.png')
+                  return (
                   <tr key={producto.id} className="group hover:bg-white/[0.03] transition-colors">
                     <td className="px-8 py-5 whitespace-nowrap">
                       <div className="flex items-center gap-4">
                         <div className="h-14 w-14 rounded-2xl overflow-hidden shadow-sm border border-white/10 flex-shrink-0 bg-white/[0.02] relative">
                           <NextImage 
                             className="h-full w-full object-cover transition group-hover:scale-110" 
-                            src={producto.imagen_url || '/proximamente.png'} 
+                            src={img} 
                             alt={producto.nombre} 
                             fill
                             sizes="56px"
@@ -246,7 +248,8 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
                       </div>
                     </td>
                   </tr>
-                ))
+                  )
+                })
               ) : (
                 <tr>
                   <td colSpan={6} className="px-8 py-20 text-center">

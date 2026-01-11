@@ -21,24 +21,28 @@ export async function POST(req: Request) {
 
     // Generar un nombre de archivo único
     const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
-    const filePath = `${folder}/${fileName}`;
+    
+    // Usar el parámetro folder como nombre del bucket (ej: 'banners', 'productos')
+    // Si folder es 'uploads', usar un bucket default o 'public' si existe
+    const bucketName = folder === 'uploads' ? 'public' : folder;
+    const filePath = fileName; // En el bucket raíz
 
-    // Subir el archivo al bucket "public" (asegúrate de que el bucket exista y sea público)
+    // Subir el archivo al bucket correspondiente
     const { data, error } = await supabaseAdmin.storage
-      .from('public')
+      .from(bucketName)
       .upload(filePath, buffer, {
         contentType: file.type,
         upsert: true
       });
 
     if (error) {
-      console.error('Supabase upload error:', error);
+      console.error(`Supabase upload error (bucket: ${bucketName}):`, error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     // Obtener la URL pública del archivo
     const { data: { publicUrl } } = supabaseAdmin.storage
-      .from('public')
+      .from(bucketName)
       .getPublicUrl(filePath);
 
     return NextResponse.json({ publicUrl });

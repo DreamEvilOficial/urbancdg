@@ -19,6 +19,7 @@ import OperatorManagement from './components/OperatorManagement'
 import HomepageManagement from './components/HomepageManagement'
 import DebtManagement from './components/DebtManagement'
 import ReviewsManagement from './components/ReviewsManagement'
+import FeaturedProductsManagement from './components/FeaturedProductsManagement'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -376,6 +377,10 @@ export default function AdminPage() {
                 }}
               />
             )
+          )}
+
+          {activeTab === 'destacados' && (
+            <FeaturedProductsManagement />
           )}
 
           {activeTab === 'categorias' && (

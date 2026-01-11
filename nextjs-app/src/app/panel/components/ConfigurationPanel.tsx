@@ -178,11 +178,15 @@ export default function ConfigurationPanel() {
         formData.append('file', compressedFile)
         formData.append('folder', 'banners')
 
-        const res = await fetch('/api/upload', { method: 'POST', body: formData })
-        if (!res.ok) throw new Error('Error al subir imagen')
-        
-        const { publicUrl } = await res.json()
-        uploadedBanners.push({ url: publicUrl, link: '' })
+      const res = await fetch('/api/upload', { method: 'POST', body: formData })
+      
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Error al subir imagen')
+      }
+      
+      const { publicUrl } = await res.json()
+      uploadedBanners.push({ url: publicUrl, link: '' })
       }
 
       setConfig(prev => ({ ...prev, banner_urls: [...prev.banner_urls, ...uploadedBanners] }))

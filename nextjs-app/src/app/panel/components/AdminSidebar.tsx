@@ -1,4 +1,5 @@
 import {
+  Star,
   Package,
   Layers,
   ShoppingBag,
@@ -114,6 +115,13 @@ export default function AdminSidebar({
           id="productos"
           icon={Package}
           label="Productos"
+          activeTab={activeTab}
+          setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
+        />
+        <SidebarItem
+          id="destacados"
+          icon={Star}
+          label="Destacados"
           activeTab={activeTab}
           setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
         />

@@ -194,10 +194,19 @@ export default function HomepageManagement() {
               type="text" placeholder="Subtítulo (opcional)" className="px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl text-sm font-bold outline-none transition hover:border-white/20 focus:border-accent/40"
               onChange={e => setNewSection({...newSection, subtitulo: e.target.value})}
             />
-            <input 
-              type="text" placeholder="URL de GIF de ícono (ej: /Fire.gif)" className="px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl text-sm font-bold outline-none transition hover:border-white/20 focus:border-accent/40"
-              onChange={e => setNewSection({...newSection, gif_url: e.target.value})}
-            />
+            <div className="relative">
+              <input 
+                type="text" placeholder="URL de GIF de ícono (ej: /Fire.gif)" className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl text-sm font-bold outline-none transition hover:border-white/20 focus:border-accent/40 pr-12"
+                value={newSection.gif_url}
+                onChange={e => setNewSection({...newSection, gif_url: e.target.value})}
+              />
+              <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                 <label className="cursor-pointer p-2 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center">
+                    <ImageIcon className="w-4 h-4 text-white/50" />
+                    <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
+                 </label>
+              </div>
+            </div>
           </div>
           <div className="flex gap-2">
             <button onClick={handleAdd} className="flex-1 px-5 py-3 bg-accent text-ink rounded-2xl transition shadow-[0_18px_50px_-30px_rgba(183,255,42,0.6)] hover:brightness-95 active:scale-[0.99] text-[10px] font-black uppercase tracking-[0.28em]">Guardar</button>
