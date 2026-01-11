@@ -9,7 +9,6 @@ import MaintenanceScreen from './MaintenanceScreen'
 import Header from './Header'
 import Navbar from './Navbar'
 import Footer from './Footer'
-import WhatsAppButton from './WhatsAppButton'
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
