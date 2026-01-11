@@ -259,28 +259,30 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
               {/* Visibilidad y Lanzamiento */}
               <div className="p-6 bg-[#111] rounded-3xl border border-white/5 space-y-4">
                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Visibilidad y Lanzamiento</h4>
-                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <label className="flex items-center gap-3 p-3 bg-black rounded-xl border border-white/5 cursor-pointer hover:border-white/20 transition">
+                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <label className="flex flex-col items-center justify-center gap-3 p-4 bg-black rounded-2xl border border-white/5 cursor-pointer hover:border-white/20 hover:bg-white/5 transition text-center h-full group">
                       <input 
                         type="checkbox" 
                         checked={formData.descuento_activo}
                         onChange={e => setFormData({...formData, descuento_activo: e.target.checked})}
-                        className="w-4 h-4 rounded border-gray-600 text-pink-500 focus:ring-pink-500 bg-gray-900"
+                        className="w-5 h-5 rounded border-gray-600 text-pink-500 focus:ring-pink-500 bg-gray-900 mb-1"
                       />
-                      <span className="text-xs font-bold text-white">Oferta Activa</span>
+                      <span className="text-xl group-hover:scale-110 transition-transform">🏷️</span>
+                      <span className="text-[10px] font-bold text-white uppercase tracking-wider">Oferta</span>
                     </label>
 
-                    <label className="flex items-center gap-3 p-3 bg-black rounded-xl border border-white/5 cursor-pointer hover:border-white/20 transition">
+                    <label className="flex flex-col items-center justify-center gap-3 p-4 bg-black rounded-2xl border border-white/5 cursor-pointer hover:border-white/20 hover:bg-white/5 transition text-center h-full group">
                       <input 
                         type="checkbox" 
                         checked={formData.nuevo_lanzamiento}
                         onChange={e => setFormData({...formData, nuevo_lanzamiento: e.target.checked})}
-                        className="w-4 h-4 rounded border-gray-600 text-green-500 focus:ring-green-500 bg-gray-900"
+                        className="w-5 h-5 rounded border-gray-600 text-green-500 focus:ring-green-500 bg-gray-900 mb-1"
                       />
-                      <span className="text-xs font-bold text-white">Nuevo</span>
+                      <span className="text-xl group-hover:scale-110 transition-transform">✨</span>
+                      <span className="text-[10px] font-bold text-white uppercase tracking-wider">Nuevo</span>
                     </label>
                     
-                    <label className="flex items-center gap-3 p-3 bg-black rounded-xl border border-white/5 cursor-pointer hover:border-white/20 transition">
+                    <label className="flex flex-col items-center justify-center gap-3 p-4 bg-black rounded-2xl border border-white/5 cursor-pointer hover:border-white/20 hover:bg-white/5 transition text-center h-full group">
                       <input 
                         type="checkbox" 
                         checked={formData.proximo_lanzamiento}
@@ -288,32 +290,34 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                             ...formData, 
                             proximo_lanzamiento: e.target.checked,
                             // Sync legacy column in form state so it gets sent to API
-                            // Note: 'proximamente' isn't explicitly in formData type above but will be merged
                             ...({ proximamente: e.target.checked } as any)
                         })}
-                        className="w-4 h-4 rounded border-gray-600 text-blue-500 focus:ring-blue-500 bg-gray-900"
+                        className="w-5 h-5 rounded border-gray-600 text-blue-500 focus:ring-blue-500 bg-gray-900 mb-1"
                       />
-                      <span className="text-xs font-bold text-white">Próximamente</span>
+                      <span className="text-xl group-hover:scale-110 transition-transform">🔒</span>
+                      <span className="text-[10px] font-bold text-white uppercase tracking-wider">Próximo</span>
                     </label>
 
-                    <label className="flex items-center gap-3 p-3 bg-black rounded-xl border border-white/5 cursor-pointer hover:border-white/20 transition">
+                    <label className="flex flex-col items-center justify-center gap-3 p-4 bg-black rounded-2xl border border-white/5 cursor-pointer hover:border-white/20 hover:bg-white/5 transition text-center h-full group">
                       <input 
                         type="checkbox" 
                         checked={formData.destacado}
                         onChange={e => setFormData({...formData, destacado: e.target.checked})}
-                        className="w-4 h-4 rounded border-gray-600 text-yellow-500 focus:ring-yellow-500 bg-gray-900"
+                        className="w-5 h-5 rounded border-gray-600 text-yellow-500 focus:ring-yellow-500 bg-gray-900 mb-1"
                       />
-                      <span className="text-xs font-bold text-white">Destacado</span>
+                      <span className="text-xl group-hover:scale-110 transition-transform">⭐</span>
+                      <span className="text-[10px] font-bold text-white uppercase tracking-wider">Destacado</span>
                     </label>
 
-                    <label className="flex items-center gap-3 p-3 bg-black rounded-xl border border-white/5 cursor-pointer hover:border-white/20 transition">
+                    <label className="flex flex-col items-center justify-center gap-3 p-4 bg-black rounded-2xl border border-white/5 cursor-pointer hover:border-white/20 hover:bg-white/5 transition text-center h-full group">
                       <input 
                         type="checkbox" 
                         checked={formData.top}
                         onChange={e => setFormData({...formData, top: e.target.checked})}
-                        className="w-4 h-4 rounded border-gray-600 text-purple-500 focus:ring-purple-500 bg-gray-900"
+                        className="w-5 h-5 rounded border-gray-600 text-purple-500 focus:ring-purple-500 bg-gray-900 mb-1"
                       />
-                      <span className="text-xs font-bold text-white">Top Pick</span>
+                      <span className="text-xl group-hover:scale-110 transition-transform">👑</span>
+                      <span className="text-[10px] font-bold text-white uppercase tracking-wider">Top Pick</span>
                     </label>
                  </div>
                  
@@ -724,43 +728,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
               </div>
             </div>
 
-            {/* Sección Configuración */}
-            <div className="bg-[#06070c] rounded-[32px] p-8 border border-white/10 shadow-sm space-y-6">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-1.5 h-1.5 bg-white rounded-full" />
-                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Visibilidad y Badges</h3>
-              </div>
 
-              <div className="space-y-3">
-                {[
-                  { id: 'destacado', label: 'Destacado en Inicio', icon: '⭐' },
-                  { id: 'top', label: 'Producto TOP👑', icon: '' },
-                  { id: 'nuevo_lanzamiento', label: 'Nuevo Lanzamiento', icon: '✨' },
-                  { id: 'proximo_lanzamiento', label: 'Preventa / Próximamente', icon: '🔒' }
-                ].map((opt) => (
-                  <label 
-                    key={opt.id}
-                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${
-                      (formData as any)[opt.id] ? 'bg-white border-white text-black' : 'bg-[#111] border-transparent hover:border-white/20 text-gray-400'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm">{opt.icon}</span>
-                      <span className="text-[10px] font-black uppercase tracking-widest">{opt.label}</span>
-                    </div>
-                    <input 
-                      type="checkbox"
-                      checked={(formData as any)[opt.id]}
-                      onChange={e => setFormData({...formData, [opt.id]: e.target.checked})}
-                      className="hidden"
-                    />
-                    <div className={`w-4 h-4 rounded-full border ${ (formData as any)[opt.id] ? 'bg-black border-black' : 'border-white/20'} flex items-center justify-center transition-colors`}>
-                      {(formData as any)[opt.id] && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
           </div>
         </form>
       </div>

@@ -97,7 +97,7 @@ function ProductosContent() {
 
     // 2. Special URL Filters
     if (filter === 'descuentos') {
-      result = result.filter(p => (p as any).descuento_activo)
+      result = result.filter(p => (p as any).descuento_activo && ((p.descuento_porcentaje || 0) > 0 || (p.precio_original && p.precio_original > p.precio)))
     } else if (filter === 'nuevos') {
       result = result.filter(p => {
         if (!(p as any).nuevo_lanzamiento) return false
@@ -156,7 +156,15 @@ function ProductosContent() {
     return result
   }, [allProductos, filter, onlyOffers, priceRange, selectedSizes, selectedColors, searchQuery, categoriaSlug, allCategorias])
 
-  const titulo = searchQuery ? `Búsqueda: "${searchQuery}"` : (filter === 'descuentos' ? 'Descuentos' : (filter === 'nuevos' ? 'Nuevos' : (subcategoriaNombre || categoriaNombre || 'Colección')))
+  const titulo = searchQuery 
+    ? `BÚSQUEDA: "${searchQuery.toUpperCase()}"` 
+    : (filter === 'descuentos' 
+      ? 'DESCUENTOS' 
+      : (filter === 'nuevos' 
+        ? 'NUEVOS INGRESOS' 
+        : (subcategoriaNombre || categoriaNombre || 'COLECCIÓN').toUpperCase()
+      )
+    )
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })

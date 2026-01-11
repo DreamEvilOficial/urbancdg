@@ -9,10 +9,10 @@ export default function Footer() {
   const [mounted, setMounted] = useState(false)
   const [config, setConfig] = useState({
     nombre_tienda: 'URBAN',
-    direccion: 'Bv Lopez 1183, Cañada de Gomez',
+    direccion: 'Migre 692, Cañada de Gomez',
     telefono: '+54 9 3471598691',
     email: 'urbanindumentaria@hotmail.com',
-    instagram: '@urbancdg',
+    instagram: '@urban.cdg',
     logo_url: '/logo.svg',
     brand_tagline: 'Streetwear sin filtro. Drops reales, fits pesados y calidad para bancarla en la calle. No rules, solo estilo.'
   })
@@ -78,12 +78,14 @@ export default function Footer() {
                   </div>
                 </a>
               </li>
-              <li className="group flex items-start gap-4 cursor-default">
-                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0 border border-white/5"><MapPin className="w-3.5 h-3.5 text-gray-400" /></div>
-                <div>
-                  <p className="text-[9px] font-black uppercase text-white/50 tracking-widest mb-0.5">Showroom</p>
-                  <p className="text-[10px] font-bold text-white tracking-widest uppercase">{config.direccion}</p>
-                </div>
+              <li>
+                <a href="https://maps.app.goo.gl/hpJmoi8HfohiNk7N7" target="_blank" rel="noopener noreferrer" className="group flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0 border border-white/5 group-hover:border-white/10 group-hover:bg-white/10 transition-colors"><MapPin className="w-3.5 h-3.5 text-gray-400 group-hover:text-white" /></div>
+                  <div>
+                    <p className="text-[9px] font-black uppercase text-white/50 tracking-widest mb-0.5 group-hover:text-white/70 transition-colors">Showroom</p>
+                    <p className="text-[10px] font-bold text-white tracking-widest uppercase group-hover:text-accent transition-colors">{config.direccion}</p>
+                  </div>
+                </a>
               </li>
               {instagramHref && (
                 <li>

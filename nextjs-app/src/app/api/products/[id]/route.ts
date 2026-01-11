@@ -110,7 +110,16 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
              console.error('Database Update Error (Retry 1):', retryErr.message);
 
              // FINAL ATTEMPT: Filter out known problematic columns like 'descuento_porcentaje' if present in keys
-             const problematicColumns = ['descuento_porcentaje', 'precio_original'];
+             const problematicColumns = ['descuento_porcentaje', 'precio_original', 'imagen_url', 'categoria_slug', 'subcategoria_slug'];
+             
+             // Also filter out the specific column that caused the error if identified
+             if (errorMessage.includes('column') && errorMessage.includes('does not exist')) {
+                 const match = errorMessage.match(/column "(.+)" does not exist/);
+                 if (match && match[1]) {
+                     problematicColumns.push(match[1]);
+                 }
+             }
+
              const safeKeys = keys.filter(k => !problematicColumns.includes(k));
              
              if (safeKeys.length < keys.length) {

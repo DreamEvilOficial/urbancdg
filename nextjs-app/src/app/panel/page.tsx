@@ -193,7 +193,7 @@ export default function AdminPage() {
         nuevo_lanzamiento: data.nuevo_lanzamiento || false,
         descuento_activo: data.descuento_activo || false,
         fecha_lanzamiento: data.fecha_lanzamiento || undefined,
-        imagen_url: data.imagen_url || '',
+        // imagen_url: data.imagen_url || '', // REMOVED: Database does not have this column, use imagenes array instead
         imagenes: data.imagenes || [],
         variantes: data.variantes || [],
         sku: data.sku || undefined,
@@ -328,7 +328,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="flex h-[100dvh] bg-transparent overflow-hidden">
+    <div className="fixed inset-0 flex bg-[#05060a] overflow-hidden">
       <style dangerouslySetInnerHTML={{
         __html: `
           input[type="text"],
@@ -381,7 +381,7 @@ export default function AdminPage() {
           />
         )}
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative overscroll-contain">
           {activeTab === 'productos' && (
             showProductForm ? (
               <ProductForm 
