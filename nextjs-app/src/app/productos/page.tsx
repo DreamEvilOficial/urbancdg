@@ -9,6 +9,7 @@ import { SlidersHorizontal, X, Tag } from 'lucide-react'
 
 function ProductosContent() {
   const [allProductos, setAllProductos] = useState<Producto[]>([])
+  const [allCategorias, setAllCategorias] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [categoriaNombre, setCategoriaNombre] = useState('')
   const [subcategoriaNombre, setSubcategoriaNombre] = useState('')
@@ -61,22 +62,22 @@ function ProductosContent() {
         const dataProd = await resProd.json()
         setAllProductos(dataProd || [])
 
+        // Load all categories for search mapping
+        const resAllCats = await fetch('/api/categories')
+        const dataAllCats = resAllCats.ok ? await resAllCats.json() : []
+        setAllCategorias(dataAllCats)
+
         if (categoriaSlug) {
            setCategoriaNombre('') 
            setSubcategoriaNombre('') 
            
-           // Load category info
-           const resCat = await fetch(`/api/categories?slug=${categoriaSlug}`)
-           if (resCat.ok) {
-             const allCats = await resCat.json()
-             const cat = allCats.find((c: any) => c.slug === categoriaSlug)
-             
-             if (cat) {
-               setCategoriaNombre(cat.nombre)
-               if (subcategoriaSlug && cat.subcategorias) {
-                 const sub = (cat.subcategorias as any[]).find(s => s.slug === subcategoriaSlug)
-                 if (sub) setSubcategoriaNombre(sub.nombre)
-               }
+           const cat = dataAllCats.find((c: any) => c.slug === categoriaSlug)
+           
+           if (cat) {
+             setCategoriaNombre(cat.nombre)
+             if (subcategoriaSlug && cat.subcategorias) {
+               const sub = (cat.subcategorias as any[]).find(s => s.slug === subcategoriaSlug)
+               if (sub) setSubcategoriaNombre(sub.nombre)
              }
            }
         }
@@ -124,11 +125,22 @@ function ProductosContent() {
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
-      result = result.filter(p => p.nombre.toLowerCase().includes(q))
+      result = result.filter(p => {
+        const cat = allCategorias.find(c => c.id === p.categoria_id)
+        const catName = cat ? cat.nombre.toLowerCase() : ''
+        
+        let subcatName = ''
+        if (cat && cat.subcategorias && p.subcategoria_id) {
+             const sub = cat.subcategorias.find((s: any) => s.id === p.subcategoria_id)
+             if (sub) subcatName = sub.nombre.toLowerCase()
+        }
+
+        return p.nombre.toLowerCase().includes(q) || catName.includes(q) || subcatName.includes(q)
+      })
     }
 
     return result
-  }, [allProductos, filter, onlyOffers, priceRange, selectedSizes, selectedColors, searchQuery, categoriaSlug])
+  }, [allProductos, filter, onlyOffers, priceRange, selectedSizes, selectedColors, searchQuery, categoriaSlug, allCategorias])
 
   const titulo = searchQuery ? `Búsqueda: "${searchQuery}"` : (filter === 'descuentos' ? 'Descuentos' : (filter === 'nuevos' ? 'Nuevos' : (subcategoriaNombre || categoriaNombre || 'Colección')))
 
@@ -137,10 +149,15 @@ function ProductosContent() {
   }, [filter, categoriaSlug, subcategoriaSlug, searchQuery])
 
   return (
-    <div className="min-h-screen bg-transparent text-white relative z-10">
+    <div className="min-h-screen bg-[#050505] text-white relative z-10 overflow-hidden">
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-900/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-900/10 rounded-full blur-[120px]" />
+      </div>
+
       <DynamicTitle title={`${titulo} / Urban Indumentaria`} />
       
-      <div className="max-w-[1400px] mx-auto px-4 md:px-10 pt-16 pb-20">
+      <div className="max-w-[1400px] mx-auto px-4 md:px-10 pt-16 pb-20 relative z-10">
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12 border-b border-white/5 pb-10">

@@ -38,6 +38,14 @@ export async function GET() {
             ALTER TABLE resenas RENAME COLUMN usuario_nombre TO cliente_nombre;
         END IF;
 
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'resenas' AND column_name = 'comprobante_url') THEN
+            ALTER TABLE resenas ADD COLUMN comprobante_url TEXT;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'resenas' AND column_name = 'numero_orden') THEN
+            ALTER TABLE resenas ADD COLUMN numero_orden TEXT;
+        END IF;
+
         -- 4. Corregir tabla BANNERS
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'banners' AND column_name = 'tipo') THEN
             ALTER TABLE banners ADD COLUMN tipo VARCHAR(50) DEFAULT 'hero';

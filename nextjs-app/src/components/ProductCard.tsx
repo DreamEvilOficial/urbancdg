@@ -173,21 +173,14 @@ function ProductCard({ producto }: ProductCardProps) {
   }, [producto.stock_actual, hasVariants, variantes])
 
   const upcomingContent = (
-    <div className="flex flex-col flex-grow">
-      <div className="space-y-2 md:space-y-4 flex-grow">
-        <div className="bg-gradient-to-r from-yellow-600/30 to-amber-600/30 border border-yellow-500/40 rounded-lg p-2 md:p-4 text-center">
-          <div className="text-2xl md:text-4xl mb-1 md:mb-2">🔒</div>
-          <p className="text-yellow-400 font-bold text-sm md:text-lg mb-0.5 md:mb-1">PRÓXIMAMENTE</p>
-          <p className="text-gray-300 text-xs md:text-sm">Este producto estará disponible pronto</p>
-        </div>
-      </div>
-
-      <button
+    <div className="flex flex-col flex-grow items-center justify-center p-4">
+       <button 
         type="button"
         disabled
-        className="w-full bg-gray-800 text-gray-500 py-2 md:py-3 rounded-lg font-bold text-xs md:text-sm cursor-not-allowed border border-gray-700 mt-4"
+        className="w-full bg-yellow-400 text-black py-3 rounded-none transform skew-x-[-10deg] font-black text-sm uppercase tracking-widest border-y-2 border-black relative overflow-hidden group-hover:scale-105 transition-transform duration-300"
       >
-        🔔 Próximamente
+        <span className="relative z-10">PRÓXIMAMENTE</span>
+        <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(0,0,0,0.1)_25%,rgba(0,0,0,0.1)_50%,transparent_50%,transparent_75%,rgba(0,0,0,0.1)_75%,rgba(0,0,0,0.1)_100%)] bg-[length:20px_20px] opacity-20"></div>
       </button>
     </div>
   )
@@ -299,7 +292,7 @@ function ProductCard({ producto }: ProductCardProps) {
   )
 
   return (
-    <div className={`bg-black border rounded-xl md:rounded-2xl overflow-hidden group transition w-full relative flex flex-col h-full ${
+    <div className={`bg-black border rounded-xl md:rounded-2xl overflow-hidden group transition w-full relative flex flex-col h-full hover:z-30 ${
       isTopProduct 
         ? 'border-yellow-400 hover:border-yellow-300 shadow-lg shadow-yellow-400/20 hover:shadow-yellow-400/40' 
         : hasHotSale 
@@ -349,32 +342,32 @@ function ProductCard({ producto }: ProductCardProps) {
       {/* Fire Effect para HOT SALE */}
       {hasHotSale && <div className="fire-effect"></div>}
 
-      {/* Product Image */}
-      <Link 
-        href={productHref} 
-        className="block relative w-full h-48 md:h-64 lg:h-72 bg-white/[0.03] overflow-hidden"
-      >
+      {/* Imagen */}
+      <Link href={productHref} className="relative block w-full aspect-[4/5] bg-gray-900 overflow-hidden">
         <Image
           src={productImage}
           alt={productName}
           fill
-          sizes="(min-width: 1280px) 18rem, (min-width: 1024px) 22vw, (min-width: 768px) 30vw, 45vw"
-          className={`object-cover transition duration-300 ${isProximoLanzamiento ? '' : 'group-hover:scale-105'}`}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className={`object-cover transition-all duration-700 ${
+            isProximoLanzamiento 
+              ? 'blur-sm scale-105 grayscale-[50%] opacity-60' 
+              : 'group-hover:scale-110 group-hover:brightness-110'
+          }`}
         />
+        
         {isProximoLanzamiento && (
-          <>
-            <div className="absolute inset-0 z-10">
-              <Image
-                src="/proximamente.png"
-                alt="Próximamente"
-                fill
-                className="object-cover opacity-80 mix-blend-multiply"
-              />
-            </div>
-            <div className="absolute inset-0 z-20 flex items-center justify-center">
-              <div className="text-7xl animate-pulse drop-shadow-2xl filter brightness-110">🔒</div>
-            </div>
-          </>
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none overflow-hidden">
+             {/* Cintas decorativas */}
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-16 bg-yellow-400 -rotate-12 flex items-center justify-center border-y-4 border-black shadow-xl z-20"
+                  style={{
+                    backgroundImage: 'repeating-linear-gradient(45deg, #000 0, #000 10px, #facc15 10px, #facc15 20px)'
+                  }}>
+                <div className="bg-black text-yellow-400 px-4 md:px-6 py-1 text-sm md:text-xl font-black uppercase tracking-[0.2em] transform skew-x-[-10deg] border-2 border-yellow-400 shadow-[4px_4px_0px_0px_rgba(250,204,21,1)] whitespace-nowrap">
+                  PRÓXIMAMENTE
+                </div>
+             </div>
+          </div>
         )}
       </Link>
       

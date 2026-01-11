@@ -306,6 +306,15 @@ export default function Navbar() {
                 )}
               </AnimatePresence>
             </div>
+
+            {/* Seguimiento */}
+            <Link 
+                href="/seguimiento" 
+                className="flex items-center gap-2 text-white text-sm font-medium hover:text-gray-300 transition uppercase tracking-wider"
+            >
+                <Truck className="w-4 h-4" />
+                Seguimiento
+            </Link>
             
               {/* Filtros especiales */}
               {filtrosEspeciales.map((filtro) => {

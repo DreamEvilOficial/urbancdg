@@ -3,7 +3,7 @@ import db from '@/lib/db'
 
 export async function POST(req: NextRequest) {
   try {
-    const { productoId, numeroOrden, nombre, email, comentario, rating } = await req.json()
+    const { productoId, numeroOrden, nombre, email, comentario, rating, comprobanteUrl } = await req.json()
     
     if (!productoId || !rating) {
       return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     }
     
     const text = String(comentario || '').trim()
-    if (text.length > 500) { // Increased limit slightly but kept reasonable
+    if (text.length > 500) { 
       return NextResponse.json({ error: 'Comentario demasiado largo' }, { status: 400 })
     }
 
@@ -28,15 +28,21 @@ export async function POST(req: NextRequest) {
     // Si se proporciona número de orden, verificar si existe y si el producto estaba en ella
     let verificado = false;
     if (numeroOrden) {
-      const order = await db.get('SELECT id FROM ordenes WHERE numero_orden = ?', [numeroOrden]);
-      if (order) {
-        // En un sistema real, buscaríamos en orden_items. 
-        // Por ahora, si la orden existe, marcamos como intención de verificado.
-        const item = await db.get(
-          'SELECT 1 FROM orden_items WHERE orden_id = ? AND producto_id = ?', 
-          [order.id, productoId]
-        );
-        if (item) verificado = true;
+      // En un sistema real, verificaríamos contra la tabla de órdenes.
+      // Por ahora, confiamos en que si mandan el comprobante es un paso de verificación manual.
+      // Pero si tenemos tabla de ordenes, podemos chequear.
+      try {
+        const order = await db.get('SELECT id FROM ordenes WHERE numero_orden = ?', [numeroOrden]);
+        if (order) {
+            const item = await db.get(
+              'SELECT 1 FROM orden_items WHERE orden_id = ? AND producto_id = ?', 
+              [order.id, productoId]
+            );
+            if (item) verificado = true;
+        }
+      } catch (err) {
+        console.error('Error verificando orden:', err);
+        // No bloqueamos el submit si falla la verificación automática, lo dejamos para revisión manual
       }
     }
 
@@ -47,14 +53,15 @@ export async function POST(req: NextRequest) {
         cliente_email, 
         calificacion, 
         comentario, 
+        numero_orden,
+        comprobante_url,
+        verificado,
         aprobado
-      ) VALUES (?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    // Por defecto las reseñas están aprobadas si son de una compra verificada, 
-    // o pendientes (aprobado=false) si no lo son. 
-    // Para simplificar según el esquema previo, las dejamos como TRUE pero podríamos cambiarlo.
-    const aprobado = true; 
+    // Por defecto las reseñas requieren aprobación
+    const aprobado = false; 
 
     await db.run(sql, [
       productoId,
@@ -62,6 +69,9 @@ export async function POST(req: NextRequest) {
       email || null,
       cleanRating,
       text,
+      numeroOrden || null,
+      comprobanteUrl || null,
+      verificado,
       aprobado
     ]);
 

@@ -1,8 +1,10 @@
 "use client"
 
-import { useEffect, useState, useCallback } from 'react'
-import { Star, MessageSquare, CheckCircle2, ShoppingBag, Send, UserCircle2 } from 'lucide-react'
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { Star, MessageSquare, CheckCircle2, ShoppingBag, Send, UserCircle2, Upload, X, Paperclip } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { supabase } from '@/lib/supabase'
+import { createPortal } from 'react-dom'
 
 interface Review {
   id: string
@@ -16,6 +18,7 @@ export default function ProductReviews({ productId, productName }: { productId: 
   const [reviews, setReviews] = useState<Review[]>([])
   const [avg, setAvg] = useState<number>(0)
   const [loading, setLoading] = useState(true)
+  const [showModal, setShowModal] = useState(false)
 
   // form state
   const [orderNumber, setOrderNumber] = useState("")
@@ -24,6 +27,8 @@ export default function ProductReviews({ productId, productName }: { productId: 
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
   const [submitting, setSubmitting] = useState(false)
+  const [file, setFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchReviews = useCallback(async () => {
     try {
@@ -43,14 +48,38 @@ export default function ProductReviews({ productId, productName }: { productId: 
     fetchReviews()
   }, [productId, fetchReviews])
 
+  async function handleFileUpload(file: File): Promise<string> {
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`
+    const filePath = `comprobantes/${fileName}`
+
+    // Intentamos subir al bucket 'public' o 'comprobantes'
+    // En este caso asumimos 'public' y carpeta 'comprobantes'
+    const { error: uploadError } = await supabase.storage
+      .from('public') 
+      .upload(filePath, file)
+
+    if (uploadError) throw uploadError
+
+    const { data } = supabase.storage.from('public').getPublicUrl(filePath)
+    return data.publicUrl
+  }
+
   async function submitReview(e: React.FormEvent) {
     e.preventDefault()
     if (!orderNumber.trim()) return toast.error('Ingresá tu número de orden')
     if (rating < 1) return toast.error('Elegí una puntuación')
     if (!comment.trim()) return toast.error('Escribí un comentario')
+    if (comment.length < 20) return toast.error('El comentario debe tener al menos 20 caracteres')
+    if (!file) return toast.error('Subí el comprobante de compra')
     
     setSubmitting(true)
+    const toastId = toast.loading('Enviando reseña...')
+
     try {
+      // Upload file
+      const comprobanteUrl = await handleFileUpload(file)
+
       const res = await fetch('/api/reviews/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -59,20 +88,24 @@ export default function ProductReviews({ productId, productName }: { productId: 
           numeroOrden: orderNumber.trim(), 
           nombre: name.trim() || 'Cliente Anónimo', 
           comentario: comment.trim(), 
-          rating 
+          rating,
+          comprobanteUrl
         })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Falla al validar orden')
       
-      toast.success('¡Experiencia compartida con éxito!')
+      toast.success('¡Experiencia compartida con éxito!', { id: toastId })
       setOrderNumber("")
       setName("")
       setComment("")
       setRating(0)
+      setFile(null)
+      setShowModal(false)
       await fetchReviews()
     } catch (e: any) {
-      toast.error(e.message || 'Error al enviar reseña')
+      console.error(e)
+      toast.error(e.message || 'Error al enviar reseña', { id: toastId })
     } finally {
       setSubmitting(false)
     }
@@ -90,23 +123,31 @@ export default function ProductReviews({ productId, productName }: { productId: 
           <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mt-2">La voz de nuestra comunidad</p>
         </div>
         
-        <div className="bg-white/[0.03] backdrop-blur-xl border border-white/5 p-4 rounded-3xl flex items-center gap-6">
-           <div className="text-center">
-              <p className="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1">PROMEDIO</p>
-              <p className="text-2xl font-black">{avg > 0 ? avg.toFixed(1) : '—'}</p>
-           </div>
-           <div className="w-[1px] h-8 bg-white/5" />
-           <div className="flex items-center gap-1.5">
-              {[1,2,3,4,5].map(i => (
-                <Star key={i} className={`w-4 h-4 ${i <= Math.round(avg) ? 'fill-yellow-500 text-yellow-500' : 'text-white/5'}`} />
-              ))}
-           </div>
+        <div className="flex flex-col md:flex-row gap-4 items-center">
+            <button 
+                onClick={() => setShowModal(true)}
+                className="bg-accent3 text-black px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2"
+            >
+                <MessageSquare className="w-4 h-4" /> Dejar Reseña
+            </button>
+            <div className="bg-white/[0.03] backdrop-blur-xl border border-white/5 p-4 rounded-3xl flex items-center gap-6">
+                <div className="text-center">
+                    <p className="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-1">PROMEDIO</p>
+                    <p className="text-2xl font-black">{avg > 0 ? avg.toFixed(1) : '—'}</p>
+                </div>
+                <div className="w-[1px] h-8 bg-white/5" />
+                <div className="flex items-center gap-1.5">
+                    {[1,2,3,4,5].map(i => (
+                        <Star key={i} className={`w-4 h-4 ${i <= Math.round(avg) ? 'fill-yellow-500 text-yellow-500' : 'text-white/5'}`} />
+                    ))}
+                </div>
+            </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+      <div className="grid grid-cols-1 gap-10">
         {/* Listado de reseñas */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="space-y-6">
           {loading ? (
             <div className="flex justify-center py-20 opacity-20"><div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" /></div>
           ) : reviews.length === 0 ? (
@@ -117,7 +158,7 @@ export default function ProductReviews({ productId, productName }: { productId: 
                </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {reviews.map(r => (
                 <div key={r.id} className="group bg-white/[0.03] hover:bg-white/[0.05] border border-white/5 p-6 rounded-[35px] transition-all duration-500">
                   <div className="flex justify-between items-start mb-4">
@@ -146,78 +187,103 @@ export default function ProductReviews({ productId, productName }: { productId: 
             </div>
           )}
         </div>
-
-        {/* Formulario de reseñas - Liquid Glass */}
-        <div className="lg:col-span-5">
-          <div className="sticky top-10 bg-white/[0.03] text-white backdrop-blur-xl border border-white/5 p-8 rounded-[40px] shadow-[0_24px_80px_-24px_rgba(0,0,0,0.75)] relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-5"><CheckCircle2 className="w-32 h-32 rotate-12" /></div>
-            
-            <div className="relative z-10">
-              <h4 className="text-xs font-black text-white/45 uppercase tracking-[0.3em] mb-2">Compartí tu compra</h4>
-              <p className="text-lg font-black tracking-tight uppercase leading-snug mb-8">¿Qué te pareció tu <span className="text-accent3">{productName}</span>?</p>
-              
-              <form onSubmit={submitReview} className="space-y-4">
-                <div className="space-y-2">
-                  <input 
-                    required type="text" placeholder="Nº DE ORDEN (EJ: BN-3421)" value={orderNumber} 
-                    onChange={e => setOrderNumber(e.target.value.toUpperCase())}
-                    className="w-full bg-white/[0.04] border border-white/10 p-4 rounded-2xl outline-none focus:border-accent3/40 text-xs font-black uppercase transition-all placeholder:text-white/25" 
-                  />
-                  <p className="text-[8px] font-bold text-white/35 ml-2">Necesario para validar tu compra</p>
-                </div>
-
-                <input 
-                  type="text" placeholder="TU NOMBRE (OPCIONAL)" value={name} 
-                  onChange={e => setName(e.target.value)}
-                  className="w-full bg-white/[0.04] border border-white/10 p-4 rounded-2xl outline-none focus:border-accent3/40 text-xs font-black uppercase transition-all placeholder:text-white/25" 
-                />
-
-                <div className="space-y-2">
-                  <textarea 
-                    required placeholder="TU COMENTARIO" value={comment} maxLength={60} 
-                    onChange={e => setComment(e.target.value)}
-                    className="w-full bg-white/[0.04] border border-white/10 p-4 rounded-2xl outline-none focus:border-accent3/40 text-xs font-medium min-h-[100px] resize-none transition-all placeholder:text-white/25" 
-                  />
-                  <div className="flex justify-between px-2">
-                    <span className="text-[8px] font-black text-white/35 uppercase tracking-widest">Sincero y breve</span>
-                    <span className="text-[8px] font-black text-white/35">{comment.length}/60</span>
-                  </div>
-                </div>
-
-                <div className="py-4 border-t border-white/10">
-                  <p className="text-[10px] font-black text-white/45 uppercase tracking-widest mb-4 text-center">Calificá con estrellas</p>
-                  <div className="flex justify-center gap-2">
-                    {[1,2,3,4,5].map(s => (
-                      <button 
-                        type="button" key={s} 
-                        onMouseEnter={() => setHoverRating(s)} 
-                        onMouseLeave={() => setHoverRating(0)} 
-                        onClick={() => setRating(s)}
-                        className="transform hover:scale-125 transition-transform"
-                      >
-                        <Star className={`w-8 h-8 ${s <= (hoverRating || rating) ? 'fill-yellow-500 text-yellow-500' : 'text-white/10'}`} />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full bg-accent text-ink py-5 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] hover:brightness-95 active:scale-[0.98] transition-all flex items-center justify-center gap-3 group disabled:opacity-30"
-                >
-                  {submitting ? 'VALIDANDO...' : (
-                    <>
-                      PUBLICAR RESEÑA
-                      <Send className="w-3.5 h-3.5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                    </>
-                  )}
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
       </div>
+
+      {/* Modal Form */}
+      {showModal && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowModal(false)} />
+            <div className="relative bg-[#06070c] border border-white/10 w-full max-w-lg rounded-[30px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                <div className="p-8">
+                    <div className="flex justify-between items-start mb-6">
+                        <div>
+                            <h4 className="text-xs font-black text-white/45 uppercase tracking-[0.3em] mb-2">Compartí tu compra</h4>
+                            <p className="text-xl font-black tracking-tight uppercase leading-snug">¿Qué te pareció tu <span className="text-accent3">{productName}</span>?</p>
+                        </div>
+                        <button onClick={() => setShowModal(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors"><X className="w-5 h-5" /></button>
+                    </div>
+
+                    <form onSubmit={submitReview} className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <input 
+                                    required type="text" placeholder="Nº DE ORDEN" value={orderNumber} 
+                                    onChange={e => setOrderNumber(e.target.value.toUpperCase())}
+                                    className="w-full bg-white/[0.04] border border-white/10 p-4 rounded-2xl outline-none focus:border-accent3/40 text-xs font-black uppercase transition-all placeholder:text-white/25" 
+                                />
+                            </div>
+                            <input 
+                                type="text" placeholder="TU NOMBRE (OPCIONAL)" value={name} 
+                                onChange={e => setName(e.target.value)}
+                                className="w-full bg-white/[0.04] border border-white/10 p-4 rounded-2xl outline-none focus:border-accent3/40 text-xs font-black uppercase transition-all placeholder:text-white/25" 
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <textarea 
+                                required placeholder="TU COMENTARIO (MÍN 20 CARACTERES)" value={comment} maxLength={200} 
+                                onChange={e => setComment(e.target.value)}
+                                className="w-full bg-white/[0.04] border border-white/10 p-4 rounded-2xl outline-none focus:border-accent3/40 text-xs font-medium min-h-[100px] resize-none transition-all placeholder:text-white/25" 
+                            />
+                            <div className="flex justify-between px-2">
+                                <span className="text-[8px] font-black text-white/35 uppercase tracking-widest">Sincero y breve</span>
+                                <span className={`text-[8px] font-black ${comment.length < 20 ? 'text-red-500' : 'text-green-500'}`}>{comment.length}/200</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                             <div 
+                                onClick={() => fileInputRef.current?.click()}
+                                className={`w-full border border-dashed p-4 rounded-2xl flex items-center justify-center gap-3 cursor-pointer transition-all ${file ? 'border-accent3/50 bg-accent3/5' : 'border-white/10 hover:border-white/20 bg-white/[0.02]'}`}
+                             >
+                                <input 
+                                    type="file" ref={fileInputRef} className="hidden" accept="image/*"
+                                    onChange={e => e.target.files?.[0] && setFile(e.target.files[0])}
+                                />
+                                {file ? (
+                                    <>
+                                        <CheckCircle2 className="w-4 h-4 text-accent3" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-accent3 truncate max-w-[200px]">{file.name}</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Upload className="w-4 h-4 text-white/40" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Subir Comprobante (Obligatorio)</span>
+                                    </>
+                                )}
+                             </div>
+                        </div>
+
+                        <div className="py-4 border-t border-white/10">
+                            <p className="text-[10px] font-black text-white/45 uppercase tracking-widest mb-4 text-center">Calificá con estrellas</p>
+                            <div className="flex justify-center gap-2">
+                                {[1,2,3,4,5].map(s => (
+                                    <button 
+                                        type="button" key={s} 
+                                        onMouseEnter={() => setHoverRating(s)} 
+                                        onMouseLeave={() => setHoverRating(0)} 
+                                        onClick={() => setRating(s)}
+                                        className="transform hover:scale-125 transition-transform"
+                                    >
+                                        <Star className={`w-8 h-8 ${s <= (hoverRating || rating) ? 'fill-yellow-500 text-yellow-500' : 'text-white/10'}`} />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <button 
+                            disabled={submitting}
+                            type="submit"
+                            className="w-full bg-accent3 text-black py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+                        >
+                            {submitting ? <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" /> : <><Send className="w-4 h-4" /> Publicar Reseña</>}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>,
+        document.body
+      )}
     </section>
   )
 }
