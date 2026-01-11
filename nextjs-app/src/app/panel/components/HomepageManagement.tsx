@@ -51,6 +51,29 @@ export default function HomepageManagement() {
     }
   }
 
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const toastId = toast.loading('Subiendo imagen...')
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', 'homepage')
+
+      const res = await fetch('/api/upload', { method: 'POST', body: formData })
+      if (!res.ok) throw new Error('Error al subir')
+      
+      const { publicUrl } = await res.json()
+      
+      setNewSection(prev => ({ ...prev, gif_url: publicUrl }))
+      toast.success('Imagen subida correctamente', { id: toastId })
+    } catch (error) {
+      console.error('Upload error:', error)
+      toast.error('Error al subir imagen', { id: toastId })
+    }
+  }
+
   async function handleAdd() {
     if (!newSection.titulo) {
       toast.error('El título es obligatorio')
