@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useCartStore } from '@/store/cartStore'
-import { ShoppingCart, ChevronDown, ChevronRight, Home, MessageCircle, Music2 } from 'lucide-react'
+import { ShoppingCart, ChevronDown, ChevronRight, Home, MessageCircle, Music2, Truck } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
