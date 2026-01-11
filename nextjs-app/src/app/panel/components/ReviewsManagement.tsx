@@ -5,6 +5,7 @@ import { Star, Trash2, CheckCircle, XCircle, MessageSquare, FileText, ExternalLi
 import toast from 'react-hot-toast'
 
 export default function ReviewsManagement() {
+  // Reviews management component
   const [reviews, setReviews] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({ total: 0, avg: 0, pending: 0 })
