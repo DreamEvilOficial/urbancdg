@@ -681,15 +681,29 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                {formData.imagenes.map((img, idx) => (
+                {formData.imagenes.map((img, idx) => {
+                  const isSupabaseUrl = img.includes('supabase.co')
+                  const isLocalUrl = img.startsWith('/')
+                  const isValidForNextImage = isSupabaseUrl || isLocalUrl
+                  
+                  return (
                   <div key={idx} className="relative group aspect-[3/4] rounded-2xl overflow-hidden border border-white/10">
-                    <NextImage 
-                      src={img} 
-                      alt={`Imagen producto ${idx + 1}`}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 50vw, 25vw"
-                    />
+                    {isValidForNextImage ? (
+                      <NextImage 
+                        src={img} 
+                        alt={`Imagen producto ${idx + 1}`}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                      />
+                    ) : (
+                      <img 
+                        src={img} 
+                        alt={`Imagen producto ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => (e.currentTarget.src = '/logo.svg')}
+                      />
+                    )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
                       <button
                         type="button"
@@ -710,7 +724,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                       <div className="absolute top-2 left-2 px-2 py-0.5 bg-white text-black text-[8px] font-black uppercase tracking-widest rounded-full shadow-lg">PORTADA</div>
                     )}
                   </div>
-                ))}
+                )})}
                 
                 <label className="aspect-[3/4] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-white hover:bg-white/5 transition group">
                   {uploading ? (

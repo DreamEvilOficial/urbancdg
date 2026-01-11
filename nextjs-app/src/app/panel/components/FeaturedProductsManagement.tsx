@@ -96,21 +96,26 @@ export default function FeaturedProductsManagement() {
                 <th className="p-4 text-center">Destacado</th>
                 <th className="p-4 text-center">Top</th>
                 <th className="p-4 text-center">Nuevo</th>
-                <th className="p-4 text-center">Oferta</th>
                 <th className="p-4 text-center">Próximamente</th>
                 </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
                 {filteredProducts.map(product => {
                     // Check logic for fallback image to match ProductCard logic roughly
-                    const img = product.imagen_url || (product.imagenes && product.imagenes.length > 0 ? product.imagenes[0] : '/proximamente.png')
+                    const getSafeImage = (p: Producto) => {
+                        const url = p.imagen_url || (p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : null)
+                        if (!url) return '/logo.svg'
+                        if (url.startsWith('http') && !url.includes('supabase.co')) return '/logo.svg'
+                        return url
+                    }
+                    const img = getSafeImage(product)
                     
                     return (
                     <tr key={product.id} className="hover:bg-white/[0.02] transition-colors">
                         <td className="p-4">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-lg overflow-hidden bg-white/5 flex-shrink-0 border border-white/10">
-                                <img src={img} className="w-full h-full object-cover" alt="" onError={(e) => (e.currentTarget.src = '/proximamente.png')} />
+                                <img src={img} className="w-full h-full object-cover" alt="" onError={(e) => (e.currentTarget.src = '/logo.svg')} />
                             </div>
                             <div className="min-w-0">
                                 <div className="font-bold text-white text-xs uppercase truncate">{product.nombre}</div>
@@ -147,15 +152,6 @@ export default function FeaturedProductsManagement() {
                         </td>
                         <td className="p-4 text-center">
                         <button 
-                            onClick={() => toggleField(product.id, 'descuento_activo', !!(product as any).descuento_activo)} 
-                            className={`p-3 rounded-lg transition-all active:scale-95 ${(product as any).descuento_activo ? 'bg-pink-500/20 text-pink-400 shadow-[0_0_15px_-5px_rgba(236,72,153,0.5)]' : 'text-white/20 hover:text-white/50 hover:bg-white/5'}`}
-                            title="Alternar Oferta Activa"
-                        >
-                            <Tag className="w-5 h-5" />
-                        </button>
-                        </td>
-                        <td className="p-4 text-center">
-                        <button 
                             onClick={() => toggleField(product.id, 'proximamente', !!((product as any).proximo_lanzamiento || (product as any).proximamente))} 
                             className={`p-3 rounded-lg transition-all active:scale-95 ${(product as any).proximo_lanzamiento || (product as any).proximamente ? 'bg-blue-500/20 text-blue-400 shadow-[0_0_15px_-5px_rgba(96,165,250,0.5)]' : 'text-white/20 hover:text-white/50 hover:bg-white/5'}`}
                             title="Alternar Próximamente"
@@ -172,12 +168,18 @@ export default function FeaturedProductsManagement() {
         {/* Mobile Card View */}
         <div className="md:hidden grid grid-cols-1 gap-4 p-4">
             {filteredProducts.map(product => {
-                const img = product.imagen_url || (product.imagenes && product.imagenes.length > 0 ? product.imagenes[0] : '/proximamente.png')
+                const getSafeImage = (p: Producto) => {
+                    const url = p.imagen_url || (p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : null)
+                    if (!url) return '/logo.svg'
+                    if (url.startsWith('http') && !url.includes('supabase.co')) return '/logo.svg'
+                    return url
+                }
+                const img = getSafeImage(product)
                 return (
                     <div key={product.id} className="bg-white/5 rounded-2xl p-4 border border-white/10">
                         <div className="flex items-start gap-4 mb-4">
                             <div className="w-16 h-16 rounded-xl overflow-hidden bg-black/20 border border-white/10 flex-shrink-0">
-                                <img src={img} className="w-full h-full object-cover" alt="" onError={(e) => (e.currentTarget.src = '/proximamente.png')} />
+                                <img src={img} className="w-full h-full object-cover" alt="" onError={(e) => (e.currentTarget.src = '/logo.svg')} />
                             </div>
                             <div className="min-w-0 flex-1">
                                 <h3 className="font-bold text-white text-sm uppercase truncate">{product.nombre}</h3>
@@ -185,7 +187,7 @@ export default function FeaturedProductsManagement() {
                             </div>
                         </div>
                         
-                        <div className="grid grid-cols-5 gap-2">
+                        <div className="grid grid-cols-4 gap-2">
                             <button 
                                 onClick={() => toggleField(product.id, 'destacado', !!product.destacado)} 
                                 className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all ${product.destacado ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : 'bg-white/5 text-white/20 border border-white/5'}`}
@@ -203,12 +205,6 @@ export default function FeaturedProductsManagement() {
                                 className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all ${(product as any).nuevo_lanzamiento ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-white/5 text-white/20 border border-white/5'}`}
                             >
                                 <Sparkles className="w-4 h-4" />
-                            </button>
-                            <button 
-                                onClick={() => toggleField(product.id, 'descuento_activo', !!(product as any).descuento_activo)} 
-                                className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all ${(product as any).descuento_activo ? 'bg-pink-500/10 text-pink-400 border border-pink-500/20' : 'bg-white/5 text-white/20 border border-white/5'}`}
-                            >
-                                <Tag className="w-4 h-4" />
                             </button>
                             <button 
                                 onClick={() => toggleField(product.id, 'proximamente', !!((product as any).proximo_lanzamiento || (product as any).proximamente))} 

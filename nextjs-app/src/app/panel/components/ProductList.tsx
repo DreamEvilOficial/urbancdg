@@ -138,18 +138,34 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
       <div className="grid grid-cols-1 gap-4 md:hidden">
         {filteredProducts.length > 0 ? (
           filteredProducts.map((producto) => {
-            const img = producto.imagen_url || (producto.imagenes && producto.imagenes.length > 0 ? producto.imagenes[0] : '/proximamente.png')
+            const getSafeImage = (p: Producto) => {
+              const url = p.imagen_url || (p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : null)
+              if (!url) return '/logo.svg'
+              // Si es una URL completa que no es de supabase ni relativa, fallback
+              if (url.startsWith('http') && !url.includes('supabase.co')) return '/logo.svg'
+              return url
+            }
+            const img = getSafeImage(producto)
+            
             return (
               <div key={producto.id} className="bg-[#06070c]/70 backdrop-blur-2xl border border-white/10 p-5 rounded-3xl shadow-lg relative overflow-hidden">
                 <div className="flex items-start gap-4">
                   <div className="h-20 w-20 rounded-2xl overflow-hidden shadow-sm border border-white/10 flex-shrink-0 bg-white/[0.02] relative">
-                    <NextImage 
-                      className="h-full w-full object-cover" 
-                      src={img} 
-                      alt={producto.nombre} 
-                      fill
-                      sizes="80px"
-                    />
+                    {img.startsWith('/') || img.includes('supabase.co') ? (
+                      <NextImage 
+                        className="h-full w-full object-cover" 
+                        src={img} 
+                        alt={producto.nombre} 
+                        fill
+                        sizes="80px"
+                      />
+                    ) : (
+                      <img 
+                        className="h-full w-full object-cover" 
+                        src={img} 
+                        alt={producto.nombre} 
+                      />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start">
@@ -233,19 +249,34 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
             <tbody className="divide-y divide-white/10">
               {filteredProducts.length > 0 ? (
                 filteredProducts.map((producto) => {
-                  const img = producto.imagen_url || (producto.imagenes && producto.imagenes.length > 0 ? producto.imagenes[0] : '/proximamente.png')
+                  const getSafeImage = (p: Producto) => {
+                    const url = p.imagen_url || (p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : null)
+                    if (!url) return '/logo.svg'
+                    if (url.startsWith('http') && !url.includes('supabase.co')) return '/logo.svg'
+                    return url
+                  }
+                  const img = getSafeImage(producto)
+                  
                   return (
                   <tr key={producto.id} className="group hover:bg-white/[0.03] transition-colors">
                     <td className="px-4 py-4 md:px-8 md:py-5 whitespace-nowrap">
                       <div className="flex items-center gap-4">
                         <div className="h-14 w-14 rounded-2xl overflow-hidden shadow-sm border border-white/10 flex-shrink-0 bg-white/[0.02] relative">
-                          <NextImage 
-                            className="h-full w-full object-cover transition group-hover:scale-110" 
-                            src={img} 
-                            alt={producto.nombre} 
-                            fill
-                            sizes="56px"
-                          />
+                          {img.startsWith('/') || img.includes('supabase.co') ? (
+                            <NextImage 
+                              className="h-full w-full object-cover transition group-hover:scale-110" 
+                              src={img} 
+                              alt={producto.nombre} 
+                              fill
+                              sizes="56px"
+                            />
+                          ) : (
+                            <img 
+                              className="h-full w-full object-cover transition group-hover:scale-110" 
+                              src={img} 
+                              alt={producto.nombre} 
+                            />
+                          )}
                         </div>
                         <div>
                           <div className="text-sm font-bold text-white transition">{producto.nombre}</div>

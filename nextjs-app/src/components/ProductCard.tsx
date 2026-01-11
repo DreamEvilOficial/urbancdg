@@ -150,17 +150,25 @@ function ProductCard({ producto }: ProductCardProps) {
   }, [productPrice, productOriginalPrice])
 
   const productImage = useMemo(() => {
+    // Helper para validar URL
+    const isValidUrl = (url: string) => {
+      if (!url) return false
+      if (url.startsWith('/')) return true // Local
+      if (url.includes('supabase.co')) return true // Supabase
+      return false // Cualquier otra cosa (incluyendo example.com) es inválida para Next/Image
+    }
+
     // 1. Validar imagen_url (prioridad)
     if (producto.imagen_url && typeof producto.imagen_url === 'string' && producto.imagen_url.trim().length > 0) {
-       return producto.imagen_url
+       if (isValidUrl(producto.imagen_url)) return producto.imagen_url
     }
     
     // 2. Validar array de imágenes
     if (Array.isArray(producto.imagenes) && producto.imagenes.length > 0) {
       // Buscar primera imagen válida (string o objeto con url)
       const validImg = producto.imagenes.find(img => {
-        if (typeof img === 'string' && img.trim().length > 0) return true
-        if (typeof img === 'object' && img !== null && (img as any).url && typeof (img as any).url === 'string') return true
+        if (typeof img === 'string' && img.trim().length > 0) return isValidUrl(img)
+        if (typeof img === 'object' && img !== null && (img as any).url && typeof (img as any).url === 'string') return isValidUrl((img as any).url)
         return false
       })
 
@@ -171,7 +179,7 @@ function ProductCard({ producto }: ProductCardProps) {
     }
     
     // Fallback
-    return '/Logaso.png'
+    return '/logo.svg'
   }, [producto])
 
   const [imgSrc, setImgSrc] = useState<string>(productImage)
@@ -436,7 +444,7 @@ function ProductCard({ producto }: ProductCardProps) {
           }`}
           onError={() => {
             console.warn(`Error loading image for ${productName}: ${imgSrc}`)
-            setImgSrc('/Logaso.png')
+            setImgSrc('/logo.svg')
           }}
         />
       </Link>
