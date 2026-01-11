@@ -292,23 +292,17 @@ function ProductCard({ producto }: ProductCardProps) {
   )
 
   return (
-    <div className={`bg-black border rounded-xl md:rounded-2xl overflow-hidden group transition w-full relative flex flex-col h-full hover:z-30 ${
-      isTopProduct 
-        ? 'border-yellow-400 hover:border-yellow-300 shadow-lg shadow-yellow-400/20 hover:shadow-yellow-400/40' 
-        : hasHotSale 
-        ? 'hot-product border-gray-800 hover:border-gray-600' 
-        : 'border-gray-800 hover:border-gray-600'
-    }`}>
+    <div className={`bg-black border rounded-xl md:rounded-2xl overflow-hidden group transition w-full relative flex flex-col h-full hover:z-30 border-white/10 hover:border-white/20 shadow-lg shadow-black/50`}>
       {/* Badge de Descuento arriba a la izquierda */}
       {hasDiscount && !isProximoLanzamiento && (
-        <div className="absolute top-3 left-3 z-30 bg-gradient-to-r from-red-600 via-red-500 to-red-600 text-white text-[10px] md:text-xs font-bold px-2.5 py-1 rounded-full shadow-lg border border-red-400/30 animate-pulse">
+        <div className="absolute top-3 left-3 z-30 bg-white text-black text-[10px] md:text-xs font-black px-2.5 py-1 rounded-sm shadow-lg border border-white/20">
           {productDiscount}% OFF
         </div>
       )}
-      {/* Badge TOP dorado (ajustado para no solapar con el descuento) */}
+      {/* Badge TOP Minimalista */}
       {isTopProduct && (
-        <div className={`absolute ${hasDiscount ? 'top-10' : 'top-3'} left-3 z-20 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-black px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg animate-pulse`}>
-          ⭐ TOP
+        <div className={`absolute ${hasDiscount ? 'top-10' : 'top-3'} left-3 z-20 bg-black text-white border border-white/20 px-3 py-1 rounded-sm text-xs font-black flex items-center gap-1 shadow-lg backdrop-blur-md`}>
+          TOP PICK
         </div>
       )}
       
@@ -331,11 +325,11 @@ function ProductCard({ producto }: ProductCardProps) {
         ))}
       </div>
 
-      {/* Efecto dorado para productos TOP */}
+      {/* Efecto Minimalista Underground para productos TOP */}
       {isTopProduct && (
         <div className="absolute inset-0 pointer-events-none z-0">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/10 to-transparent animate-pulse" />
-          <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 via-transparent to-yellow-600/5" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
+          <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-white/5" />
         </div>
       )}
       

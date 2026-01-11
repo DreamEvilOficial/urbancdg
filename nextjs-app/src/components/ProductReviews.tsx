@@ -1,9 +1,8 @@
 "use client"
 
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { Star, MessageSquare, CheckCircle2, ShoppingBag, Send, UserCircle2, Upload, X, Paperclip } from 'lucide-react'
+import { Star, MessageSquare, CheckCircle2, ShoppingBag, Send, UserCircle2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { supabase } from '@/lib/supabase'
 import { createPortal } from 'react-dom'
 
 interface Review {
@@ -27,8 +26,6 @@ export default function ProductReviews({ productId, productName }: { productId: 
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
   const [submitting, setSubmitting] = useState(false)
-  const [file, setFile] = useState<File | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchReviews = useCallback(async () => {
     try {
@@ -48,38 +45,17 @@ export default function ProductReviews({ productId, productName }: { productId: 
     fetchReviews()
   }, [productId, fetchReviews])
 
-  async function handleFileUpload(file: File): Promise<string> {
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`
-    const filePath = `comprobantes/${fileName}`
-
-    // Intentamos subir al bucket 'public' o 'comprobantes'
-    // En este caso asumimos 'public' y carpeta 'comprobantes'
-    const { error: uploadError } = await supabase.storage
-      .from('public') 
-      .upload(filePath, file)
-
-    if (uploadError) throw uploadError
-
-    const { data } = supabase.storage.from('public').getPublicUrl(filePath)
-    return data.publicUrl
-  }
-
   async function submitReview(e: React.FormEvent) {
     e.preventDefault()
     if (!orderNumber.trim()) return toast.error('Ingresá tu número de orden')
     if (rating < 1) return toast.error('Elegí una puntuación')
     if (!comment.trim()) return toast.error('Escribí un comentario')
     if (comment.length < 20) return toast.error('El comentario debe tener al menos 20 caracteres')
-    if (!file) return toast.error('Subí el comprobante de compra')
     
     setSubmitting(true)
-    const toastId = toast.loading('Enviando reseña...')
+    const toastId = toast.loading('Verificando orden y enviando reseña...')
 
     try {
-      // Upload file
-      const comprobanteUrl = await handleFileUpload(file)
-
       const res = await fetch('/api/reviews/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -88,8 +64,7 @@ export default function ProductReviews({ productId, productName }: { productId: 
           numeroOrden: orderNumber.trim(), 
           nombre: name.trim() || 'Cliente Anónimo', 
           comentario: comment.trim(), 
-          rating,
-          comprobanteUrl
+          rating
         })
       })
       const data = await res.json()
@@ -100,7 +75,6 @@ export default function ProductReviews({ productId, productName }: { productId: 
       setName("")
       setComment("")
       setRating(0)
-      setFile(null)
       setShowModal(false)
       await fetchReviews()
     } catch (e: any) {
@@ -229,29 +203,6 @@ export default function ProductReviews({ productId, productName }: { productId: 
                                 <span className="text-[8px] font-black text-white/35 uppercase tracking-widest">Sincero y breve</span>
                                 <span className={`text-[8px] font-black ${comment.length < 20 ? 'text-red-500' : 'text-green-500'}`}>{comment.length}/200</span>
                             </div>
-                        </div>
-
-                        <div className="space-y-2">
-                             <div 
-                                onClick={() => fileInputRef.current?.click()}
-                                className={`w-full border border-dashed p-4 rounded-2xl flex items-center justify-center gap-3 cursor-pointer transition-all ${file ? 'border-accent3/50 bg-accent3/5' : 'border-white/10 hover:border-white/20 bg-white/[0.02]'}`}
-                             >
-                                <input 
-                                    type="file" ref={fileInputRef} className="hidden" accept="image/*"
-                                    onChange={e => e.target.files?.[0] && setFile(e.target.files[0])}
-                                />
-                                {file ? (
-                                    <>
-                                        <CheckCircle2 className="w-4 h-4 text-accent3" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-accent3 truncate max-w-[200px]">{file.name}</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Upload className="w-4 h-4 text-white/40" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Subir Comprobante (Obligatorio)</span>
-                                    </>
-                                )}
-                             </div>
                         </div>
 
                         <div className="py-4 border-t border-white/10">
