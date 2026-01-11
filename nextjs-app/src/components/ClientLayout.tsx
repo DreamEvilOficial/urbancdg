@@ -135,7 +135,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         <Header theme={theme} toggleTheme={toggleTheme} />
       )}
       <main className="min-h-screen">{children}</main>
-      {pathname !== '/admin/login' && <WhatsAppButton />}
       {!isAdmin && !isCheckout && !isPayment && !isCart && !isProductDetail && !isLegal && <Footer />}
     </>
   )
