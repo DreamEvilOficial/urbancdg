@@ -165,17 +165,17 @@
              <div className="text-white/70 text-sm md:text-base font-medium max-w-xl">{tienda.lema}</div>
            </div>
  
-           <div className="flex flex-wrap items-center gap-3 pt-2">
-             <a href="/productos" className="h-12 px-6 rounded-full bg-white text-black flex items-center justify-center">
-               <span className="text-[10px] font-black uppercase tracking-[0.32em]">Ver productos</span>
-             </a>
-             <a
-               href="/productos?filter=nuevos"
-               className="h-12 px-6 rounded-full border border-white/12 bg-white/[0.02] flex items-center justify-center"
-             >
-               <span className="text-[10px] font-black uppercase tracking-[0.32em] text-white/70">Nuevos ingresos</span>
-             </a>
-           </div>
+           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-4">
+            <a href="/productos" className="h-12 px-6 rounded-full bg-white text-black flex items-center justify-center w-full sm:w-auto hover:scale-105 transition-transform">
+              <span className="text-[10px] font-black uppercase tracking-[0.32em]">Ver productos</span>
+            </a>
+            <a
+              href="/productos?filter=nuevos"
+              className="h-12 px-6 rounded-full border border-white/12 bg-white/[0.02] flex items-center justify-center w-full sm:w-auto hover:bg-white/5 transition-colors"
+            >
+              <span className="text-[10px] font-black uppercase tracking-[0.32em] text-white/70">Nuevos ingresos</span>
+            </a>
+          </div>
          </div>
        </div>
  

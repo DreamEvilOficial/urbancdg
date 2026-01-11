@@ -8,6 +8,7 @@ interface ConfigData {
   nombre_tienda: string
   lema_tienda: string
   brand_tagline?: string
+  share_description?: string
   mercadopago_public_key: string
   mercadopago_access_token: string
   cvu: string
@@ -360,6 +361,17 @@ export default function ConfigurationPanel() {
               value={config.brand_tagline || ''}
               onChange={e => setConfig({ ...config, brand_tagline: e.target.value })}
               placeholder="Streetwear sin filtro..."
+              className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl text-sm font-bold focus:border-accent/40 transition outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-black mb-2 text-white/45 uppercase tracking-[0.28em] px-1">Slogan para compartir (Redes Sociales)</label>
+            <input
+              type="text"
+              value={config.share_description || ''}
+              onChange={e => setConfig({ ...config, share_description: e.target.value })}
+              placeholder="Descripción que aparece al compartir el link..."
               className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl text-sm font-bold focus:border-accent/40 transition outline-none"
             />
           </div>

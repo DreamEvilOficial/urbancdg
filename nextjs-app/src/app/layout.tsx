@@ -4,6 +4,8 @@ import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import ClientLayout from '@/components/ClientLayout'
 
+import { supabase } from '@/lib/supabase'
+
 const urbanist = Urbanist({
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700'],
@@ -16,19 +18,45 @@ const bebasNeue = Bebas_Neue({
   variable: '--font-display',
 })
 
-export const metadata: Metadata = {
-  title: 'URBAN',
-  description: 'Redefiniendo el Streetwear. Tu estilo, sin límites.',
-  openGraph: {
-    title: 'URBAN | Streetwear & Drops',
-    description: 'Redefiniendo el Streetwear. Tu estilo, sin límites. Descubrí los últimos drops y armá tu fit.',
-    type: 'website',
-    locale: 'es_AR',
-    siteName: 'URBAN CDG',
-  },
-  icons: {
-    icon: '/favicon.svg',
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  let title = 'URBAN'
+  let description = 'Redefiniendo el Streetwear. Tu estilo, sin límites.'
+  let shareDescription = 'Redefiniendo el Streetwear. Tu estilo, sin límites. Descubrí los últimos drops y armá tu fit.'
+
+  try {
+    const { data } = await supabase
+      .from('configuracion')
+      .select('clave, valor')
+      .in('clave', ['nombre_tienda', 'lema_tienda', 'share_description'])
+    
+    if (data) {
+      const config = data.reduce((acc: any, item: any) => {
+        acc[item.clave] = item.valor
+        return acc
+      }, {})
+
+      if (config.nombre_tienda) title = config.nombre_tienda
+      if (config.lema_tienda) description = config.lema_tienda
+      if (config.share_description) shareDescription = config.share_description
+    }
+  } catch (e) {
+    console.error('Error fetching metadata:', e)
+  }
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `${title} | Streetwear & Drops`,
+      description: shareDescription,
+      type: 'website',
+      locale: 'es_AR',
+      siteName: title,
+    },
+    icons: {
+      icon: '/favicon.svg',
+    },
+  }
 }
 
 export const viewport: Viewport = {

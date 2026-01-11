@@ -159,10 +159,10 @@ function ProductosContent() {
   const titulo = searchQuery 
     ? `BÚSQUEDA: "${searchQuery.toUpperCase()}"` 
     : (filter === 'descuentos' 
-      ? 'DESCUENTOS' 
+      ? 'FILTRO ESPECIAL' 
       : (filter === 'nuevos' 
         ? 'NUEVOS INGRESOS' 
-        : (subcategoriaNombre || categoriaNombre || 'COLECCIÓN').toUpperCase()
+        : (subcategoriaNombre || categoriaNombre || (categoriaSlug ? categoriaSlug.replace(/-/g, ' ') : 'COLECCIÓN')).toUpperCase()
       )
     )
 
