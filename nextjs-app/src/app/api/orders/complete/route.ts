@@ -16,20 +16,30 @@ export async function POST(request: NextRequest) {
     if (logErr) console.warn('admin_logs check error', logErr)
     if (already) return NextResponse.json({ ok: true, skipped: true })
 
-    // Traer orden con items
+    // Traer orden con items (y relación orden_items por si acaso)
     const { data: order, error: orderErr } = await db
       .from('ordenes')
-      .select('*')
+      .select('*, orden_items(*)')
       .eq('id', id)
       .single()
     if (orderErr || !order) return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 })
 
     let items: any[] = []
+    
+    // Intento 1: Leer columna 'items' (JSON)
     try {
       const raw = typeof order.items === 'string' ? JSON.parse(order.items) : order.items
       items = Array.isArray(raw) ? raw : []
     } catch {
       items = []
+    }
+
+    // Intento 2: Si está vacío, usar relación 'orden_items'
+    if (items.length === 0 && order.orden_items && Array.isArray(order.orden_items)) {
+      items = order.orden_items.map((oi: any) => ({
+        ...oi,
+        id: oi.producto_id, // Adaptar para que coincida con la lógica de abajo (it.id)
+      }))
     }
 
     if (!items.length) return NextResponse.json({ error: 'Sin items para descontar' }, { status: 400 })

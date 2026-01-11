@@ -28,6 +28,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
     top: false,
     proximo_lanzamiento: false,
     nuevo_lanzamiento: false,
+    descuento_activo: false,
     imagen_url: '',
     imagenes: [] as string[],
     variantes: [] as Array<{talle: string, color: string, color_nombre: string, stock: number}>,
@@ -35,7 +36,8 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
     stock_minimo: '5',
     proveedor_nombre: '',
     proveedor_contacto: '',
-    precio_costo: ''
+    precio_costo: '',
+    fecha_lanzamiento: ''
   })
 
   useEffect(() => {
@@ -52,6 +54,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
         top: producto.top || false,
         proximo_lanzamiento: producto.proximo_lanzamiento || (producto as any).proximamente || false,
         nuevo_lanzamiento: producto.nuevo_lanzamiento || false,
+        descuento_activo: producto.descuento_activo || false,
         imagen_url: producto.imagen_url || '',
         imagenes: producto.imagenes || [],
         variantes: (producto.variantes || []).map(v => ({
@@ -63,7 +66,8 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
         stock_minimo: producto.stock_minimo?.toString() || '5',
         proveedor_nombre: producto.proveedor_nombre || '',
         proveedor_contacto: producto.proveedor_contacto || '',
-        precio_costo: producto.precio_costo?.toString() || ''
+        precio_costo: producto.precio_costo?.toString() || '',
+        fecha_lanzamiento: producto.fecha_lanzamiento ? new Date(producto.fecha_lanzamiento).toISOString().slice(0, 16) : ''
       })
     }
   }, [producto])

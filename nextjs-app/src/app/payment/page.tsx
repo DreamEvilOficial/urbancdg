@@ -46,7 +46,7 @@ export default function PaymentPage() {
     setLoading(true)
     try {
       const dummyEmail = config.email || 'cliente@tienda.com'
-      const numeroOrden = `BN-${Math.floor(1000 + Math.random() * 8999)}`
+      const numeroOrden = `orden-${Math.floor(10000 + Math.random() * 89999)}`
       const direccionCompleta = deliveryData.deliveryMethod === 'shipping' 
         ? `${deliveryData.formData.direccion} ${deliveryData.formData.numero}, ${deliveryData.formData.ciudad}`
         : 'Retiro en Local'

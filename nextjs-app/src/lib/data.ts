@@ -1,9 +1,10 @@
 import db from '@/lib/db';
 import { Producto, Categoria } from '@/lib/supabase';
 
-function safeParse(str: string, fallback: any) {
-  if (!str) return fallback;
-  try { return JSON.parse(str); } catch { return fallback; }
+function safeParse(input: any, fallback: any) {
+  if (!input) return fallback;
+  if (typeof input === 'object') return input;
+  try { return JSON.parse(input); } catch { return fallback; }
 }
 
 function mapProduct(p: any): Producto {

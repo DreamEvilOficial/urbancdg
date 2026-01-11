@@ -5,6 +5,8 @@ import TopProducts from '@/components/TopProducts'
 import Reviews from '@/components/Reviews'
 import BannerSlider from '@/components/BannerSlider'
 
+import ProductCarousel from '@/components/ProductCarousel'
+
 // Revalidar cada 60 segundos
 export const revalidate = 60
 
@@ -95,13 +97,7 @@ export default async function Home() {
                 </div>
                 
                 {section.productos.length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6 w-full px-1 md:px-0">
-                    {section.productos.map((producto: Producto, idx: number) => (
-                      <div key={producto.id} className={`reveal reveal-delay-${(idx % 5) + 1}`}>
-                        <ProductCard producto={producto} />
-                      </div>
-                    ))}
-                  </div>
+                  <ProductCarousel products={section.productos} />
                 ) : (
                   <p className="text-center text-gray-400">Próximamente más ingresos en esta sección.</p>
                 )}
