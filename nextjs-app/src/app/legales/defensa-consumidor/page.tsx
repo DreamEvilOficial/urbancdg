@@ -5,19 +5,9 @@ import { ArrowLeft } from 'lucide-react'
 import { useEffect } from 'react'
 
 export default function DefensaConsumidorPage() {
-  useEffect(() => {
-    const prevHtmlOverflow = document.documentElement.style.overflow
-    const prevBodyOverflow = document.body.style.overflow
-    document.documentElement.style.overflow = 'hidden'
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.documentElement.style.overflow = prevHtmlOverflow
-      document.body.style.overflow = prevBodyOverflow
-    }
-  }, [])
   return (
-    <div className="h-screen bg-black text-white pt-20 pb-0 overflow-hidden">
-      <div className="max-w-[800px] mx-auto px-6">
+    <div className="min-h-screen bg-black text-white pt-24 pb-20">
+      <div className="w-full max-w-[1400px] mx-auto px-4 md:px-8">
         <Link href="/" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/50 hover:text-white mb-8 transition-colors">
           <ArrowLeft className="w-4 h-4" /> Volver
         </Link>

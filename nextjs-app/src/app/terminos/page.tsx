@@ -3,7 +3,7 @@ import BackButton from '@/components/BackButton'
 export default function TerminosPage() {
   return (
     <div className="min-h-screen text-white pt-24 pb-20">
-      <div className="max-w-[900px] mx-auto px-4 md:px-6">
+      <div className="w-full max-w-[1400px] mx-auto px-4 md:px-8">
         <BackButton />
         <header className="mb-10 border-b border-white/10 pb-8">
           <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/40 mb-4">Legal / v1.0</p>

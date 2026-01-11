@@ -27,7 +27,7 @@ export interface Producto {
   slug?: string
   descripcion: string
   precio: number
-  precio_original?: number
+  precio_original?: number | null
   descuento_porcentaje?: number
   stock_actual: number
   stock_minimo?: number
