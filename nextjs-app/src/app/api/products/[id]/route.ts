@@ -68,29 +68,38 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       // 2. Auto-fix: Add missing columns if detected (Postgres specific)
       // Error: column "nuevo_lanzamiento" does not exist
       if (errorMessage.includes('column') && errorMessage.includes('does not exist')) {
-         const match = errorMessage.match(/column "(.+)" does not exist/);
-         if (match && match[1]) {
-             const missingCol = match[1];
-             // Only allow adding specific known flags to prevent abuse
-             const allowedCols = ['nuevo_lanzamiento', 'proximo_lanzamiento', 'proximamente', 'top', 'destacado', 'activo', 'descuento_activo', 'fecha_lanzamiento'];
-             
-             if (allowedCols.includes(missingCol)) {
-                 try {
-                     console.log(`Auto-adding missing column: ${missingCol}`);
-                     // Use raw SQL to add column
-                     const type = missingCol === 'fecha_lanzamiento' ? 'TIMESTAMP' : 'BOOLEAN DEFAULT FALSE';
-                     await db.raw(`ALTER TABLE productos ADD COLUMN ${missingCol} ${type}`);
-                     
-                     // Retry original update with updated_at
-                     const result = await db.run(`UPDATE productos SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, values);
-                     return NextResponse.json(result);
-                 } catch (alterErr) {
-                     console.error('Failed to auto-add column:', alterErr);
-                     // Continue to fallback
-                 }
-             }
+            // Improve regex to handle "column "name" of relation "table" does not exist"
+            const match = errorMessage.match(/column "([^"]+)"/);
+            if (match && match[1]) {
+                const missingCol = match[1];
+                // Only allow adding specific known flags to prevent abuse
+                const allowedCols = [
+                    'nuevo_lanzamiento', 'proximo_lanzamiento', 'proximamente', 
+                    'top', 'destacado', 'activo', 'descuento_activo', 'fecha_lanzamiento',
+                    'sku', 'proveedor_nombre', 'proveedor_contacto', 'precio_costo'
+                ];
+                
+                if (allowedCols.includes(missingCol)) {
+                    try {
+                        console.log(`Auto-adding missing column: ${missingCol}`);
+                        // Use raw SQL to add column
+                        let type = 'BOOLEAN DEFAULT FALSE';
+                        if (missingCol === 'fecha_lanzamiento') type = 'TIMESTAMP';
+                        else if (['sku', 'proveedor_nombre', 'proveedor_contacto'].includes(missingCol)) type = 'TEXT';
+                        else if (missingCol === 'precio_costo') type = 'NUMERIC';
+
+                        await db.raw(`ALTER TABLE productos ADD COLUMN ${missingCol} ${type}`);
+                        
+                        // Retry original update with updated_at
+                        const result = await db.run(`UPDATE productos SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, values);
+                        return NextResponse.json(result);
+                    } catch (alterErr) {
+                        console.error('Failed to auto-add column:', alterErr);
+                        // Continue to fallback
+                    }
+                }
+            }
          }
-      }
       
       // 3. Retry Logic: Handle specific column errors (Fallback)
       // If error is about a missing column, try to remove that column from the update
@@ -114,7 +123,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
              
              // Also filter out the specific column that caused the error if identified
              if (errorMessage.includes('column') && errorMessage.includes('does not exist')) {
-                 const match = errorMessage.match(/column "(.+)" does not exist/);
+                 const match = errorMessage.match(/column "([^"]+)"/);
                  if (match && match[1]) {
                      problematicColumns.push(match[1]);
                  }
