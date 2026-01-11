@@ -1,4 +1,4 @@
-import { getSections, getProducts, getAllProducts } from '@/lib/data'
+import { getSections, getProducts, getAllProducts, getConfig } from '@/lib/data'
 import { type Producto } from '@/lib/supabase'
 import ProductCard from '@/components/ProductCard'
 import TopProducts from '@/components/TopProducts'
@@ -10,10 +10,13 @@ export const revalidate = 60
 
 export default async function Home() {
   // Carga paralela de datos iniciales
-  const [sectionsData, topProducts] = await Promise.all([
+  const [sectionsData, topProducts, config] = await Promise.all([
     getSections(),
-    getProducts({ top: true, limit: 6 })
+    getProducts({ top: true, limit: 6 }),
+    getConfig()
   ])
+  
+  const showTopPicks = typeof config.show_top_picks !== 'undefined' ? config.show_top_picks : true
 
   let sections = []
 
@@ -73,7 +76,7 @@ export default async function Home() {
         <div className="pointer-events-none absolute inset-x-0 -top-10 md:-top-16 h-16 bg-gradient-to-b from-transparent to-[#05060a]" />
         <div className="bg-[#06070c]/70 backdrop-blur-2xl border-t border-white/10 rounded-t-[42px] md:rounded-t-[64px] shadow-[0_-20px_80px_-30px_rgba(0,0,0,0.7)]">
           
-          <TopProducts products={topProducts} />
+          {showTopPicks && <TopProducts products={topProducts} />}
 
           {sections.map((section: any) => (
               <section key={section.id} className="reveal max-w-7xl mx-auto px-2 md:px-4 py-8 md:py-16">

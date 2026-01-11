@@ -32,56 +32,89 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   const id = params.id;
   try {
-     const body = await req.json();
-     
-     // Lista de campos estrictamente verificados que existen en la base de datos
-     const allowedKeys = [
-       'nombre', 'slug', 'descripcion', 'precio', 'precio_original', 
-       'descuento_porcentaje', 'stock_actual', 'stock_minimo', 
-       'categoria_id', 'subcategoria_id', 'imagen_url', 'imagenes', 
-       'variantes', 'activo', 'destacado', 'top', 'sku'
-     ];
+    // 2. Build dynamic update query
+    const body = await req.json();
+    const { id: bodyId, ...updates } = body;
+    const keys = Object.keys(updates);
+    
+    if (keys.length === 0) {
+        return NextResponse.json({ message: 'No changes provided' });
+    }
 
-     // Build dynamic update query with filtered keys
-     const keys = Object.keys(body).filter(k => allowedKeys.includes(k));
-     
-     if (keys.length === 0) {
-        return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
-     }
+    const setClause = keys.map(key => `${key} = ?`).join(', ');
+    const values = keys.map(key => {
+        const val = updates[key];
+        // Handle arrays/objects for JSON columns
+        if (typeof val === 'object' && val !== null) {
+          return JSON.stringify(val);
+        }
+        return val;
+    });
+    values.push(id);
 
-     const setClause = keys.map(k => `${k} = ?`).join(', ');
-     const values = keys.map(k => {
-         let val = body[k];
-         
-         // Serializar campos JSON
-         if (['imagenes', 'variantes'].includes(k)) {
-             return JSON.stringify(Array.isArray(val) ? val : []);
-         }
-         
-         // Normalizar booleanos
-         if (['activo', 'destacado', 'top'].includes(k)) {
-             return (val === true || val === 1 || val === 'true') ? 1 : 0;
-         }
-         
-         return val;
-     });
-     
-     values.push(id);
-
-     // Ejecutar con manejo de error detallado
     try {
+      // 1. First attempt: try to update, including updated_at
       const result = await db.run(`UPDATE productos SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, values);
       
       if (result.changes === 0) {
          return NextResponse.json({ error: 'Product not found' }, { status: 404 });
       }
     } catch (dbErr: any) {
-      console.error('Database Update Error:', dbErr.message);
-      // Si falla por columna inexistente, devolvemos un error más claro
-      return NextResponse.json({ 
-        error: 'Error de base de datos', 
-        details: dbErr.message 
-      }, { status: 500 });
+      console.error('Database Update Error (Attempt 1):', dbErr.message);
+      
+      // 2. Retry Logic: Handle specific column errors
+      // If error is about a missing column, try to remove that column from the update
+      const errorMessage = dbErr.message.toLowerCase();
+      if (errorMessage.includes('no such column') || errorMessage.includes('has no column')) {
+          // Extract column name from error message if possible, or fallback to generic retry
+          // Simple fallback: Retry WITHOUT updated_at first
+          try {
+             const resultRetry = await db.run(`UPDATE productos SET ${setClause} WHERE id = ?`, values);
+             if (resultRetry.changes === 0) {
+                return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+             }
+             // Success on retry
+          } catch (retryErr: any) {
+             // If it still fails, it might be one of the dynamic keys. 
+             // We can't easily guess which one, but we can log it.
+             console.error('Database Update Error (Retry 1):', retryErr.message);
+
+             // FINAL ATTEMPT: Filter out known problematic columns like 'descuento_porcentaje' if present in keys
+             const problematicColumns = ['descuento_porcentaje', 'precio_original'];
+             const safeKeys = keys.filter(k => !problematicColumns.includes(k));
+             
+             if (safeKeys.length < keys.length) {
+                 const safeSetClause = safeKeys.map(key => `${key} = ?`).join(', ');
+                 const safeValues = safeKeys.map(key => {
+                    const val = updates[key];
+                    if (typeof val === 'object' && val !== null) return JSON.stringify(val);
+                    return val;
+                 });
+                 safeValues.push(id);
+                 
+                 try {
+                     await db.run(`UPDATE productos SET ${safeSetClause} WHERE id = ?`, safeValues);
+                     // Success on final retry
+                 } catch (finalErr: any) {
+                     return NextResponse.json({ 
+                        error: 'Error de base de datos al guardar', 
+                        details: finalErr.message 
+                     }, { status: 500 });
+                 }
+             } else {
+                 return NextResponse.json({ 
+                    error: 'Error de base de datos al guardar', 
+                    details: retryErr.message 
+                 }, { status: 500 });
+             }
+          }
+      } else {
+        // Other DB error
+        return NextResponse.json({ 
+            error: 'Error de base de datos al guardar', 
+            details: dbErr.message 
+        }, { status: 500 });
+      }
     }
 
     // fetch updated

@@ -86,3 +86,20 @@ export async function getProducts(options: {
 export async function getAllProducts() {
     return getProducts({ active: true });
 }
+
+export async function getConfig() {
+  try {
+    const rows = await db.all('SELECT clave, valor FROM configuracion') as any[];
+    const config: Record<string, any> = {};
+    if (rows && rows.length > 0) {
+      rows.forEach((item: any) => {
+        try { config[item.clave] = JSON.parse(item.valor); }
+        catch { config[item.clave] = item.valor; }
+      });
+    }
+    return config;
+  } catch (error) {
+    console.error('Error fetching config:', error);
+    return {};
+  }
+}

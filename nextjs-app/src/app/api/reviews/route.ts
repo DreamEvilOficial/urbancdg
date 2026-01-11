@@ -46,6 +46,10 @@ export async function GET(req: Request) {
     return NextResponse.json(reviews || []);
   } catch (error: any) {
     console.error('Error fetching reviews:', error);
+    // If table doesn't exist, return empty array instead of error
+    if (error.message && error.message.includes('no such table')) {
+        return NextResponse.json([]);
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

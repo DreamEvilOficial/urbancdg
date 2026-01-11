@@ -19,6 +19,7 @@ export default function HomepageManagement() {
   const [categorias, setCategorias] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isAdding, setIsAdding] = useState(false)
+  const [showTopPicks, setShowTopPicks] = useState(true)
 
   const [newSection, setNewSection] = useState<Partial<HomepageSection>>({
     tipo: 'filtro',
@@ -42,12 +43,34 @@ export default function HomepageManagement() {
       const resCats = await fetch('/api/categories')
       const catsData = await resCats.json()
 
+      const resConfig = await fetch('/api/config')
+      const configData = await resConfig.json()
+
       setSections(sectionsData || [])
       setCategorias(catsData || [])
+      if (configData && typeof configData.show_top_picks !== 'undefined') {
+        setShowTopPicks(configData.show_top_picks)
+      }
     } catch (error) {
       toast.error('Error al cargar datos')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function toggleTopPicks() {
+    const newValue = !showTopPicks
+    setShowTopPicks(newValue)
+    try {
+      await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clave: 'show_top_picks', valor: newValue })
+      })
+      toast.success('Configuración actualizada')
+    } catch {
+      toast.error('Error al actualizar')
+      setShowTopPicks(!newValue)
     }
   }
 
@@ -239,6 +262,20 @@ export default function HomepageManagement() {
       )}
 
       <div className="space-y-4">
+        {/* Toggle Top Picks */}
+        <div className="bg-[#06070c]/70 backdrop-blur-2xl p-6 rounded-[28px] border border-white/10 shadow-[0_30px_120px_-90px_rgba(0,0,0,0.9)] flex items-center justify-between">
+          <div>
+              <h3 className="font-display text-xl tracking-[0.08em] uppercase text-white mb-1">Top Picks</h3>
+              <p className="text-xs text-white/50 font-medium">Mostrar sección de productos destacados en la parte superior</p>
+          </div>
+          <button 
+              onClick={toggleTopPicks}
+              className={`w-14 h-8 rounded-full transition-colors relative ${showTopPicks ? 'bg-accent' : 'bg-white/10'}`}
+          >
+              <div className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-transform shadow-sm ${showTopPicks ? 'left-7' : 'left-1'}`} />
+          </button>
+        </div>
+
         {sections.map((section, idx) => (
           <div key={section.id} className="bg-[#06070c]/70 backdrop-blur-2xl p-4 rounded-[24px] shadow-[0_30px_120px_-90px_rgba(0,0,0,0.9)] border border-white/10 flex items-center gap-4">
             <div className="flex flex-col gap-1">

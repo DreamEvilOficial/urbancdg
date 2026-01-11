@@ -92,20 +92,23 @@ function ProductCard({ producto }: ProductCardProps) {
   }, [productPrice, productOriginalPrice])
 
   const productImage = useMemo(() => {
+    // 0. Si es top pick y tiene imagen específica, usarla
+    // (A veces el objeto producto puede tener propiedades extra si viene de una consulta específica)
+    
     // 1. Validar imagen_url (prioridad)
     if (producto.imagen_url && typeof producto.imagen_url === 'string' && producto.imagen_url.trim().length > 0) {
        return producto.imagen_url
     }
     // 2. Validar array de imágenes
     if (Array.isArray(producto.imagenes) && producto.imagenes.length > 0) {
-       const firstImg = producto.imagenes[0]
-       if (typeof firstImg === 'string' && firstImg.trim().length > 0) {
-         return firstImg
-       }
+      // Tomar la primera imagen válida
+      const firstImg = producto.imagenes.find(img => typeof img === 'string' && img.length > 0)
+      if (firstImg) return firstImg
     }
-    // 3. Fallback
-    return '/proximamente.png'
-  }, [producto.imagen_url, producto.imagenes])
+    
+    // Fallback
+    return '/placeholder.png'
+  }, [producto])
 
   const productHref = useMemo(() => `/productos/${producto.slug || producto.id}`, [producto.slug, producto.id])
 
@@ -177,10 +180,9 @@ function ProductCard({ producto }: ProductCardProps) {
        <button 
         type="button"
         disabled
-        className="w-full bg-yellow-400 text-black py-3 rounded-none transform skew-x-[-10deg] font-black text-sm uppercase tracking-widest border-y-2 border-black relative overflow-hidden group-hover:scale-105 transition-transform duration-300"
+        className="w-full bg-zinc-900 text-white/50 py-3 rounded-lg font-black text-sm uppercase tracking-widest border border-white/10 relative overflow-hidden cursor-not-allowed"
       >
         <span className="relative z-10">PRÓXIMAMENTE</span>
-        <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(0,0,0,0.1)_25%,rgba(0,0,0,0.1)_50%,transparent_50%,transparent_75%,rgba(0,0,0,0.1)_75%,rgba(0,0,0,0.1)_100%)] bg-[length:20px_20px] opacity-20"></div>
       </button>
     </div>
   )
@@ -328,8 +330,7 @@ function ProductCard({ producto }: ProductCardProps) {
       {/* Efecto Minimalista Underground para productos TOP */}
       {isTopProduct && (
         <div className="absolute inset-0 pointer-events-none z-0">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
-          <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-white/5" />
+          <div className="absolute inset-0 bg-transparent" />
         </div>
       )}
       
@@ -337,7 +338,7 @@ function ProductCard({ producto }: ProductCardProps) {
       {hasHotSale && <div className="fire-effect"></div>}
 
       {/* Imagen */}
-      <Link href={productHref} className="relative block w-full aspect-[4/5] bg-gray-900 overflow-hidden">
+      <Link href={productHref} className="relative block w-full aspect-[4/5] bg-black overflow-hidden">
         <Image
           src={productImage}
           alt={productName}
@@ -345,24 +346,10 @@ function ProductCard({ producto }: ProductCardProps) {
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className={`object-cover transition-all duration-700 ${
             isProximoLanzamiento 
-              ? 'blur-sm scale-105 grayscale-[50%] opacity-60' 
+              ? 'group-hover:scale-105' 
               : 'group-hover:scale-110 group-hover:brightness-110'
           }`}
         />
-        
-        {isProximoLanzamiento && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none overflow-hidden">
-             {/* Cintas decorativas */}
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-16 bg-yellow-400 -rotate-12 flex items-center justify-center border-y-4 border-black shadow-xl z-20"
-                  style={{
-                    backgroundImage: 'repeating-linear-gradient(45deg, #000 0, #000 10px, #facc15 10px, #facc15 20px)'
-                  }}>
-                <div className="bg-black text-yellow-400 px-4 md:px-6 py-1 text-sm md:text-xl font-black uppercase tracking-[0.2em] transform skew-x-[-10deg] border-2 border-yellow-400 shadow-[4px_4px_0px_0px_rgba(250,204,21,1)] whitespace-nowrap">
-                  PRÓXIMAMENTE
-                </div>
-             </div>
-          </div>
-        )}
       </Link>
       
       {/* Product Info */}

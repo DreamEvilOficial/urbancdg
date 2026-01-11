@@ -48,12 +48,51 @@ html {
   scroll-behavior: smooth;
   font-size: 110%;
   min-height: 100%;
-  background: var(--bg-primary);
+  background: #000000;
 }
 
 body {
   font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
+  background-color: #000000;
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.02) 0%, transparent 30%);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Dynamic Particles Effect */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(1px 1px at 10% 10%, rgba(255,255,255,0.05) 1px, transparent 0),
+    radial-gradient(1px 1px at 20% 20%, rgba(255,255,255,0.05) 1px, transparent 0),
+    radial-gradient(1px 1px at 30% 30%, rgba(255,255,255,0.05) 1px, transparent 0),
+    radial-gradient(1px 1px at 40% 40%, rgba(255,255,255,0.05) 1px, transparent 0),
+    radial-gradient(1px 1px at 50% 50%, rgba(255,255,255,0.05) 1px, transparent 0),
+    radial-gradient(1px 1px at 60% 60%, rgba(255,255,255,0.05) 1px, transparent 0),
+    radial-gradient(1px 1px at 70% 70%, rgba(255,255,255,0.05) 1px, transparent 0),
+    radial-gradient(1px 1px at 80% 80%, rgba(255,255,255,0.05) 1px, transparent 0),
+    radial-gradient(1px 1px at 90% 90%, rgba(255,255,255,0.05) 1px, transparent 0);
+  background-size: 200px 200px;
+  animation: particleFloat 60s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.6;
+}
+
+@keyframes particleFloat {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-200px); }
+}
   background: radial-gradient(
       circle at 15% 10%,
       rgba(0, 229, 255, 0.08),

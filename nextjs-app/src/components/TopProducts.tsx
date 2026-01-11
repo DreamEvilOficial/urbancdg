@@ -10,15 +10,10 @@ export default function TopProducts({ products }: TopProductsProps) {
   if (!products || products.length === 0) return null
 
   return (
-    <section className="relative w-full py-20 overflow-hidden bg-black">
-      {/* Background Effects - Minimalist Underground */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.03)_0%,transparent_50%)]" />
+    <section className="relative w-full py-20 overflow-hidden">
+      {/* Dividers */}
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-      
-      {/* Decorative Elements */}
-      <div className="absolute top-10 right-10 w-32 h-32 bg-white/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-10 left-10 w-40 h-40 bg-white/5 rounded-full blur-3xl delay-1000" />
 
       <div className="relative max-w-7xl mx-auto px-4 z-10">
         <div className="text-center mb-16">

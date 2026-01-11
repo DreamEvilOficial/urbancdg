@@ -49,8 +49,8 @@ export default function Footer() {
   const instagramHref = sanitizeURL(`https://instagram.com/${config.instagram.replace('@', '')}`)
 
   return (
-    <footer className="bg-[#05060a]/50 backdrop-blur-xl border-t border-white/10 pt-20 pb-10 relative">
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
+    <footer className="bg-black border-t border-[#333333] pt-20 pb-10 relative">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#333333] to-transparent" />
       <div className="max-w-[1400px] mx-auto px-6 md:px-10">
         
         {/* Main Grid */}

@@ -171,7 +171,7 @@ export default function Header({ theme, toggleTheme }: HeaderProps) {
           <div className="bg-black text-white py-3 overflow-hidden relative w-full border-b border-white/5">
             <div className="announcement-scroll">
               <div className="announcement-content">
-                {[...mensajes, ...mensajes].map((mensaje, index) => (
+                {[...mensajes, ...mensajes, ...mensajes, ...mensajes, ...mensajes, ...mensajes].map((mensaje, index) => (
                   <span key={`${index}`} className="announcement-item text-[12px] md:text-[13px] font-bold uppercase tracking-[0.2em] px-12 text-white/90">
                     {mensaje}
                   </span>
