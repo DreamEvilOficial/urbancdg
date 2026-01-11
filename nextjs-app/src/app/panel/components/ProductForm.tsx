@@ -108,6 +108,19 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
+
+    // Validaciones de descuento
+    if (formData.descuento_activo) {
+      const precio = Number(formData.precio)
+      const precioOriginal = Number(formData.precio_original)
+      
+      if (!precioOriginal || precioOriginal <= precio) {
+        toast.error('El precio original debe ser mayor al precio final cuando hay un descuento activo')
+        setLoading(false)
+        return
+      }
+    }
+
     try {
       await onSave(formData)
     } catch (error: any) {

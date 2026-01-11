@@ -179,30 +179,29 @@ export default function AdminPage() {
       }
 
       const productoData = {
+        id: editingProduct ? editingProduct.id : undefined,
         nombre: data.nombre,
         descripcion: data.descripcion,
         precio: Number(data.precio),
-        precio_original: data.precio_original ? Number(data.precio_original) : undefined,
+        precio_original: data.precio_original ? Number(data.precio_original) : null,
         descuento_porcentaje: data.descuento_porcentaje ? Number(data.descuento_porcentaje) : 0,
-        categoria_id,
-        subcategoria_id,
-        destacado: data.destacado || false,
-        top: data.top || false,
-        proximo_lanzamiento: data.proximo_lanzamiento || false,
-        proximamente: data.proximo_lanzamiento || false,
-        nuevo_lanzamiento: data.nuevo_lanzamiento || false,
-        descuento_activo: data.descuento_activo || false,
-        fecha_lanzamiento: data.fecha_lanzamiento || undefined,
-        // imagen_url: data.imagen_url || '', // REMOVED: Database does not have this column, use imagenes array instead
-        imagenes: data.imagenes || [],
-        variantes: data.variantes || [],
-        sku: data.sku || undefined,
+        categoria_id: data.categoria_id,
+        subcategoria_id: data.subcategoria_id || undefined,
+        imagen_url: data.imagen_url,
+        imagenes: data.imagenes,
+        variantes: data.variantes,
+        destacado: data.destacado,
+        top: data.top,
+        proximo_lanzamiento: data.proximo_lanzamiento,
+        nuevo_lanzamiento: data.nuevo_lanzamiento,
+        descuento_activo: data.descuento_activo,
+        sku: data.sku,
+        stock_minimo: data.stock_minimo ? Number(data.stock_minimo) : 5,
         proveedor_nombre: data.proveedor_nombre || undefined,
         proveedor_contacto: data.proveedor_contacto || undefined,
         precio_costo: data.precio_costo ? Number(data.precio_costo) : undefined,
         slug,
         stock_actual: totalStock,
-        stock_minimo: data.stock_minimo ? Number(data.stock_minimo) : 5,
         activo: true
       }
 
@@ -247,8 +246,6 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 selection:bg-white selection:text-black">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-[25%] -left-[10%] w-[50%] h-[50%] bg-white/5 rounded-full blur-[120px]" />
-          <div className="absolute -bottom-[25%] -right-[10%] w-[50%] h-[50%] bg-white/5 rounded-full blur-[120px]" />
         </div>
         <div className="w-full max-w-md relative">
           <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl relative overflow-hidden group">

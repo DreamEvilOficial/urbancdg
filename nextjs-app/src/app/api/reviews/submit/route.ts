@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import db from '@/lib/db'
+import { supabase } from '@/lib/supabase'
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,8 +24,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Verificar si el producto existe
-    const product = await db.get('SELECT id FROM productos WHERE id = ?', [productoId]);
-    if (!product) {
+    const { data: product, error: productError } = await supabase
+      .from('productos')
+      .select('id')
+      .eq('id', productoId)
+      .single();
+      
+    if (productError || !product) {
       return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
     }
 
@@ -33,55 +38,45 @@ export async function POST(req: NextRequest) {
     let verificado = false;
     
     // 1. Buscar la orden por numero_orden
-    const order = await db.get('SELECT id FROM ordenes WHERE numero_orden = ?', [numeroOrden]);
+    const { data: order, error: orderError } = await supabase
+      .from('ordenes')
+      .select('id')
+      .eq('numero_orden', numeroOrden)
+      .single();
     
-    if (!order) {
+    if (orderError || !order) {
         return NextResponse.json({ error: 'Número de orden no encontrado. Por favor verificá que esté escrito correctamente.' }, { status: 404 })
     }
 
-    // 2. Verificar que el producto esté en la orden (opcional, pero recomendado para auditoría)
-    const item = await db.get(
-        'SELECT 1 FROM orden_items WHERE orden_id = ? AND producto_id = ?', 
-        [order.id, productoId]
-    );
+    // 2. Verificar que el producto esté en la orden
+    const { data: item, error: itemError } = await supabase
+      .from('orden_items')
+      .select('id')
+      .eq('orden_id', order.id)
+      .eq('producto_id', productoId)
+      .maybeSingle();
 
     if (!item) {
-        // Podríamos bloquearlo, o permitirlo con warning.
-        // El usuario pidió: "Si la orden existe y es válida, permitir la publicación"
-        // Asumimos que si la orden existe es válida, pero lo ideal es que haya comprado el producto.
-        // Si no compró el producto, tal vez se equivocó de producto?
-        // Vamos a ser estrictos: debe haber comprado el producto.
         return NextResponse.json({ error: 'Este producto no figura en la orden indicada.' }, { status: 400 })
     }
 
     verificado = true;
+    const aprobado = verificado; // Auto-aprobar si verificado
 
-    const sql = `
-      INSERT INTO resenas (
-        producto_id, 
-        cliente_nombre, 
-        cliente_email, 
-        calificacion, 
-        comentario, 
-        numero_orden,
+    const { error: insertError } = await supabase
+      .from('resenas')
+      .insert({
+        producto_id: productoId,
+        cliente_nombre: nombre || 'Cliente',
+        cliente_email: email || null,
+        calificacion: cleanRating,
+        comentario: text,
+        numero_orden: numeroOrden,
         verificado,
         aprobado
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `;
+      });
 
-    // Si está verificado (orden válida), aprobamos automáticamente.
-    const aprobado = verificado; 
-
-    await db.run(sql, [
-      productoId,
-      nombre || 'Cliente',
-      email || null,
-      cleanRating,
-      text,
-      numeroOrden,
-      verificado,
-      aprobado
-    ]);
+    if (insertError) throw insertError;
 
     return NextResponse.json({ 
       success: true, 

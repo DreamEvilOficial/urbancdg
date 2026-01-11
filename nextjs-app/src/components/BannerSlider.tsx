@@ -121,10 +121,7 @@
          }
        }}
      >
-       <div className="pointer-events-none absolute inset-0">
-         <div className="absolute -top-24 left-1/2 h-44 w-[560px] -translate-x-1/2 rounded-full bg-accent/12 blur-3xl" />
-         <div className="absolute -bottom-32 left-[8%] h-48 w-[520px] rounded-full bg-accent3/12 blur-3xl" />
-         <div className="absolute -bottom-32 right-[10%] h-48 w-[520px] rounded-full bg-accent2/12 blur-3xl" />
+       <div className="absolute inset-0 overflow-hidden pointer-events-none">
          <div className="absolute inset-0 opacity-35 mix-blend-overlay bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.10),transparent_50%),radial-gradient(circle_at_80%_10%,rgba(255,255,255,0.08),transparent_55%)]" />
        </div>
  

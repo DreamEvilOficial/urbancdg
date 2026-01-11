@@ -38,7 +38,7 @@ export default function ReviewsManagement() {
   async function fetchReviews() {
     setLoading(true)
     try {
-      const res = await fetch('/api/reviews?limit=all')
+      const res = await fetch('/api/reviews?limit=all&approved=false')
       if (!res.ok) throw new Error('Error al cargar reseñas')
       
       const data = await res.json()

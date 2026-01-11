@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import db from '@/lib/db'
+import { supabase } from '@/lib/supabase'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -10,32 +12,39 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const sql = `
-      SELECT 
-        id, 
-        cliente_nombre as usuario_nombre, 
-        comentario, 
-        calificacion as rating, 
-        created_at
-      FROM resenas
-      WHERE producto_id = ? AND aprobado = TRUE
-      ORDER BY created_at DESC
-      LIMIT 20
-    `;
+    // 1. Fetch reviews
+    const { data: reviews, error } = await supabase
+      .from('resenas')
+      .select('id, cliente_nombre, comentario, calificacion, created_at')
+      .eq('producto_id', productoId)
+      .eq('aprobado', true)
+      .order('created_at', { ascending: false })
+      .limit(20);
     
-    const reviews = await db.all(sql, [productoId]);
+    if (error) throw error;
     
-    const averageSql = `
-      SELECT AVG(calificacion) as average 
-      FROM resenas 
-      WHERE producto_id = ? AND aprobado = TRUE
-    `;
-    const avgResult = await db.get(averageSql, [productoId]);
-    const average = avgResult?.average || 0;
+    // 2. Calculate average (fetching all ratings for this product)
+    const { data: ratings, error: ratingError } = await supabase
+        .from('resenas')
+        .select('calificacion')
+        .eq('producto_id', productoId)
+        .eq('aprobado', true);
+
+    let average = 0;
+    if (!ratingError && ratings && ratings.length > 0) {
+        const total = ratings.reduce((sum: number, r: any) => sum + r.calificacion, 0);
+        average = total / ratings.length;
+    }
 
     return NextResponse.json({ 
-      reviews: reviews || [], 
-      average: Number(Number(average).toFixed(1))
+      reviews: reviews?.map((r: any) => ({
+          id: r.id,
+          usuario_nombre: r.cliente_nombre,
+          comentario: r.comentario,
+          rating: r.calificacion,
+          created_at: r.created_at
+      })) || [], 
+      average: Number(average.toFixed(1))
     })
   } catch (e: any) {
     console.error('reviews/list error', e)

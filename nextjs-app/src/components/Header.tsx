@@ -4,12 +4,14 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ShoppingCart, Bookmark, ChevronDown, Home, Menu, X, Search, Music2 } from 'lucide-react'
-import Cart from './Cart'
-import SavedProducts from './SavedProducts'
-import MusicPanel from './MusicPanel'
+import dynamic from 'next/dynamic'
 import { useCartStore } from '@/store/cartStore'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CategoryIcon } from './IconSelector'
+
+const Cart = dynamic(() => import('./Cart'), { ssr: false })
+const SavedProducts = dynamic(() => import('./SavedProducts'), { ssr: false })
+const MusicPanel = dynamic(() => import('./MusicPanel'), { ssr: false })
 
 interface HeaderProps {
   theme?: string

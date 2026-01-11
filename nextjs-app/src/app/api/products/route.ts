@@ -57,12 +57,6 @@ export async function GET(request: Request) {
         const isNew = searchParams.get('new');
         if (isNew === 'true') {
             sql += ' AND nuevo_lanzamiento = TRUE';
-            // Optional: AND fecha_lanzamiento >= NOW() - INTERVAL '30 days' (Postgres syntax)
-            // For now just the flag as requested by user ("filtre solo productos con 'nuevo_lanzamiento' = true")
-            // User also said "y fecha de lanzamiento <= 30 días".
-            // Since I added fecha_lanzamiento, I can try to use it.
-            // But let's stick to the flag first to be safe with DB compatibility if date is null.
-             sql += " AND (fecha_lanzamiento IS NULL OR fecha_lanzamiento >= NOW() - INTERVAL '30 days')";
         }
 
         const isUpcoming = searchParams.get('upcoming');

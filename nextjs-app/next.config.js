@@ -6,6 +6,9 @@ try {
 } catch {}
 
 const nextConfig = {
+  compress: true,
+  poweredByHeader: false,
+  reactStrictMode: true,
   images: {
     remotePatterns: supabaseHost ? [
       {

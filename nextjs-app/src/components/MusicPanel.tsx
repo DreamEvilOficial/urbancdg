@@ -29,7 +29,7 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
   const [isPlaying, setIsPlaying] = useState(true) // Default true as it autoplays
   const iframeRef = useRef<HTMLIFrameElement | null>(null)
   const [initialized, setInitialized] = useState(false)
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(true)
   const [isHovered, setIsHovered] = useState(false)
 
   const [isDarkMode, setIsDarkMode] = useState(true)
@@ -168,8 +168,6 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
       className={`fixed bottom-6 right-6 z-[9999] transition-all duration-500 ease-spring ${
         isFullscreen ? 'inset-0 w-full h-full rounded-none bottom-0 right-0' : (isExpanded ? 'w-[320px]' : 'w-[60px] h-[60px] hover:w-[320px]')
       }`}
-      onMouseEnter={() => { setIsHovered(true); setIsExpanded(true) }}
-      onMouseLeave={() => { setIsHovered(false); setIsExpanded(false) }}
       onClick={() => { if (!isExpanded && !isFullscreen) setIsExpanded(true) }}
     >
       <div className={`relative ${isDarkMode ? 'bg-black/80 border-white/10' : 'bg-white/90 border-black/10'} backdrop-blur-xl border rounded-3xl overflow-hidden shadow-2xl transition-all duration-500 ${
@@ -255,7 +253,7 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
                  {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                </button>
                
-               <div className={`flex-1 h-6 flex items-center group/vol cursor-pointer`}>
+               <div className={`flex-1 h-6 flex items-center group/vol cursor-pointer relative`}>
                  <div className={`w-full h-1 ${isDarkMode ? 'bg-white/10' : 'bg-black/10'} rounded-full overflow-hidden relative`}>
                    <div 
                      className={`h-full ${isDarkMode ? 'bg-white' : 'bg-black'} group-hover/vol:bg-accent transition-all`}

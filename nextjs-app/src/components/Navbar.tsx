@@ -6,10 +6,12 @@ import { ShoppingCart, ChevronDown, ChevronRight, Home, MessageCircle, Music2, T
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import Cart from './Cart'
-import MusicPanel from './MusicPanel'
+import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CategoryIcon } from './IconSelector'
+
+const Cart = dynamic(() => import('./Cart'), { ssr: false })
+const MusicPanel = dynamic(() => import('./MusicPanel'), { ssr: false })
 
 export default function Navbar() {
   const items = useCartStore((state) => state.items)

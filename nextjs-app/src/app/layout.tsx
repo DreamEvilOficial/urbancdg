@@ -18,7 +18,14 @@ const bebasNeue = Bebas_Neue({
 
 export const metadata: Metadata = {
   title: 'URBAN',
-  description: 'Streetwear y drops de temporada. Armá tu fit.',
+  description: 'Redefiniendo el Streetwear. Tu estilo, sin límites.',
+  openGraph: {
+    title: 'URBAN | Streetwear & Drops',
+    description: 'Redefiniendo el Streetwear. Tu estilo, sin límites. Descubrí los últimos drops y armá tu fit.',
+    type: 'website',
+    locale: 'es_AR',
+    siteName: 'URBAN CDG',
+  },
   icons: {
     icon: '/favicon.svg',
   },
