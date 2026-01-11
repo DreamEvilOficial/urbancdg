@@ -60,6 +60,39 @@ export async function GET() {
             updated_at TIMESTAMPTZ DEFAULT NOW()
         );
 
+        -- 6. Corregir tabla PRODUCTOS (Nuevos campos y filtros)
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'descuento_activo') THEN
+            ALTER TABLE productos ADD COLUMN descuento_activo BOOLEAN DEFAULT FALSE;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'nuevo_lanzamiento') THEN
+            ALTER TABLE productos ADD COLUMN nuevo_lanzamiento BOOLEAN DEFAULT FALSE;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'proximamente') THEN
+            ALTER TABLE productos ADD COLUMN proximamente BOOLEAN DEFAULT FALSE;
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'proximo_lanzamiento') THEN
+            ALTER TABLE productos ADD COLUMN proximo_lanzamiento BOOLEAN DEFAULT FALSE;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'fecha_lanzamiento') THEN
+            ALTER TABLE productos ADD COLUMN fecha_lanzamiento TIMESTAMPTZ;
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'proveedor_nombre') THEN
+            ALTER TABLE productos ADD COLUMN proveedor_nombre TEXT;
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'proveedor_contacto') THEN
+            ALTER TABLE productos ADD COLUMN proveedor_contacto TEXT;
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'precio_costo') THEN
+            ALTER TABLE productos ADD COLUMN precio_costo NUMERIC(10,2);
+        END IF;
+
       END $$;
     `;
 

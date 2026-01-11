@@ -198,34 +198,36 @@ export default function CategoryManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="font-display text-3xl tracking-[0.08em] uppercase text-white">Categorías</h1>
+      <div className="flex justify-between items-center gap-4">
+        <h1 className="font-display text-2xl md:text-3xl tracking-[0.08em] uppercase text-white truncate">Categorías</h1>
         <button
           onClick={() => {
             setCategoryForm({ nombre: '', icono: 'Tag', usarIcono: false, titulo_navegador: '' })
             setEditingCategory(null)
             setShowCategoryForm(true)
           }}
-          className="flex items-center gap-2 px-5 py-3 bg-accent text-ink rounded-2xl transition shadow-[0_18px_50px_-30px_rgba(183,255,42,0.6)] hover:brightness-95 active:scale-[0.99]"
+          className="flex-shrink-0 flex items-center gap-2 px-4 py-3 md:px-5 md:py-3 bg-accent text-ink rounded-2xl transition shadow-[0_18px_50px_-30px_rgba(183,255,42,0.6)] hover:brightness-95 active:scale-[0.99]"
         >
-          <Plus className="w-4 h-4" />
-          <span className="text-[10px] font-black uppercase tracking-[0.28em]">Nueva Categoría</span>
+          <Plus className="w-5 h-5 md:w-4 md:h-4" />
+          <span className="hidden md:inline text-[10px] font-black uppercase tracking-[0.28em]">Nueva Categoría</span>
+          <span className="md:hidden text-[10px] font-black uppercase tracking-[0.28em]">Nueva</span>
         </button>
       </div>
 
       {/* Formulario de Categoría */}
       {showCategoryForm && (
-        <div className="bg-[#06070c]/70 backdrop-blur-2xl rounded-[28px] shadow-[0_30px_120px_-90px_rgba(0,0,0,0.9)] border border-white/10 p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="font-display text-xl tracking-[0.08em] uppercase text-white">
-              {editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}
-            </h2>
-            <button onClick={() => setShowCategoryForm(false)} className="text-white/45 hover:text-white transition-colors">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div className="bg-[#06070c] w-full max-w-lg rounded-[28px] shadow-2xl border border-white/10 p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="font-display text-xl tracking-[0.08em] uppercase text-white">
+                  {editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}
+                </h2>
+                <button onClick={() => setShowCategoryForm(false)} className="p-2 bg-white/5 rounded-xl text-white/45 hover:text-white transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-          <div className="space-y-4">
+              <div className="space-y-5">
             <div>
               <label className="block text-[10px] font-black mb-2 text-white/45 uppercase tracking-[0.28em] px-1">Nombre</label>
               <input
@@ -297,6 +299,7 @@ export default function CategoryManagement() {
               </button>
             </div>
           </div>
+        </div>
         </div>
       )}
 

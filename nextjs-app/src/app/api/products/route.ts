@@ -20,8 +20,9 @@ export async function GET(request: Request) {
                 activo: p.activo === true || p.activo === 1 || p.activo === 'true',
                 destacado: p.destacado === true || p.destacado === 1 || p.destacado === 'true',
                 top: p.top === true || p.top === 1 || p.top === 'true',
-                proximo_lanzamiento: p.proximo_lanzamiento === true || p.proximo_lanzamiento === 1 || p.proximo_lanzamiento === 'true',
+                proximo_lanzamiento: p.proximo_lanzamiento === true || p.proximo_lanzamiento === 1 || p.proximo_lanzamiento === 'true' || p.proximamente === true || p.proximamente === 1,
                 nuevo_lanzamiento: p.nuevo_lanzamiento === true || p.nuevo_lanzamiento === 1 || p.nuevo_lanzamiento === 'true',
+                descuento_activo: p.descuento_activo === true || p.descuento_activo === 1 || p.descuento_activo === 'true',
                 imagenes: typeof p.imagenes === 'string' ? JSON.parse(p.imagenes) : (p.imagenes || []),
                 variantes: typeof p.variantes === 'string' ? JSON.parse(p.variantes) : (p.variantes || []),
                 metadata: typeof p.metadata === 'string' ? JSON.parse(p.metadata) : (p.metadata || {}),
@@ -50,6 +51,28 @@ export async function GET(request: Request) {
 
         if (featured === 'true') {
             sql += ' AND destacado = TRUE';
+        }
+        
+        // New Filters
+        const isNew = searchParams.get('new');
+        if (isNew === 'true') {
+            sql += ' AND nuevo_lanzamiento = TRUE';
+            // Optional: AND fecha_lanzamiento >= NOW() - INTERVAL '30 days' (Postgres syntax)
+            // For now just the flag as requested by user ("filtre solo productos con 'nuevo_lanzamiento' = true")
+            // User also said "y fecha de lanzamiento <= 30 días".
+            // Since I added fecha_lanzamiento, I can try to use it.
+            // But let's stick to the flag first to be safe with DB compatibility if date is null.
+             sql += " AND (fecha_lanzamiento IS NULL OR fecha_lanzamiento >= NOW() - INTERVAL '30 days')";
+        }
+
+        const isUpcoming = searchParams.get('upcoming');
+        if (isUpcoming === 'true') {
+            sql += ' AND proximamente = TRUE';
+        }
+
+        const isDiscount = searchParams.get('discount');
+        if (isDiscount === 'true') {
+            sql += ' AND descuento_activo = TRUE';
         }
 
         sql += ' ORDER BY created_at DESC';
@@ -91,6 +114,8 @@ export async function POST(request: Request) {
             top: body.top || false,
             proximo_lanzamiento: body.proximo_lanzamiento || false,
             nuevo_lanzamiento: body.nuevo_lanzamiento || false,
+            descuento_activo: body.descuento_activo || false,
+            fecha_lanzamiento: body.fecha_lanzamiento || null,
             sku: body.sku,
             proveedor_nombre: body.proveedor_nombre,
             proveedor_contacto: body.proveedor_contacto,
@@ -103,9 +128,9 @@ export async function POST(request: Request) {
                 id, nombre, slug, descripcion, precio, precio_original, descuento_porcentaje,
                 categoria_id, subcategoria_id, stock_actual, stock_minimo,
                 imagen_url, imagenes, variantes, activo, destacado, top, 
-                proximo_lanzamiento, nuevo_lanzamiento, sku, proveedor_nombre, 
-                proveedor_contacto, precio_costo, metadata
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                proximo_lanzamiento, proximamente, nuevo_lanzamiento, descuento_activo, fecha_lanzamiento,
+                sku, proveedor_nombre, proveedor_contacto, precio_costo, metadata
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (id) DO UPDATE SET
                 nombre = EXCLUDED.nombre,
                 slug = EXCLUDED.slug,
@@ -124,7 +149,10 @@ export async function POST(request: Request) {
                 destacado = EXCLUDED.destacado,
                 top = EXCLUDED.top,
                 proximo_lanzamiento = EXCLUDED.proximo_lanzamiento,
+                proximamente = EXCLUDED.proximamente,
                 nuevo_lanzamiento = EXCLUDED.nuevo_lanzamiento,
+                descuento_activo = EXCLUDED.descuento_activo,
+                fecha_lanzamiento = EXCLUDED.fecha_lanzamiento,
                 sku = EXCLUDED.sku,
                 proveedor_nombre = EXCLUDED.proveedor_nombre,
                 proveedor_contacto = EXCLUDED.proveedor_contacto,
@@ -139,7 +167,9 @@ export async function POST(request: Request) {
             productData.categoria_id, productData.subcategoria_id, productData.stock_actual,
             productData.stock_minimo, productData.imagen_url, productData.imagenes,
             productData.variantes, productData.activo, productData.destacado,
-            productData.top, productData.proximo_lanzamiento, productData.nuevo_lanzamiento,
+            productData.top, productData.proximo_lanzamiento, 
+            productData.proximo_lanzamiento, // Sync proximamente with proximo_lanzamiento
+            productData.nuevo_lanzamiento, productData.descuento_activo, productData.fecha_lanzamiento,
             productData.sku, productData.proveedor_nombre, productData.proveedor_contacto,
             productData.precio_costo, productData.metadata
         ];

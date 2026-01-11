@@ -184,13 +184,13 @@ export default function HomepageManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="font-display text-3xl tracking-[0.08em] uppercase text-white flex items-center gap-3">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <h1 className="font-display text-2xl md:text-3xl tracking-[0.08em] uppercase text-white flex items-center gap-3">
           <Layout className="w-6 h-6 text-white/70" /> Inicio
         </h1>
         <button 
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-2 px-5 py-3 bg-accent text-ink rounded-2xl transition shadow-[0_18px_50px_-30px_rgba(183,255,42,0.6)] hover:brightness-95 active:scale-[0.99]"
+          className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-accent text-ink rounded-2xl transition shadow-[0_18px_50px_-30px_rgba(183,255,42,0.6)] hover:brightness-95 active:scale-[0.99]"
         >
           <Plus className="w-4 h-4" />
           <span className="text-[10px] font-black uppercase tracking-[0.28em]">Añadir Sección</span>

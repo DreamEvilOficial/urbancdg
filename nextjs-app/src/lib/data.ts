@@ -12,6 +12,9 @@ function mapProduct(p: any): Producto {
     activo: !!p.activo,
     destacado: !!p.destacado,
     top: !!p.top,
+    nuevo_lanzamiento: !!p.nuevo_lanzamiento,
+    proximo_lanzamiento: !!p.proximamente, // Note: DB column is proximamente, interface likely expects proximo_lanzamiento or similar. Let's check type Producto.
+    descuento_activo: !!p.descuento_activo,
     imagenes: safeParse(p.imagenes, []),
     variantes: safeParse(p.variantes, []),
     dimensiones: safeParse(p.dimensiones, null),
@@ -33,6 +36,9 @@ export async function getProducts(options: {
   active?: boolean;
   destacado?: boolean;
   top?: boolean;
+  nuevo?: boolean;
+  proximamente?: boolean;
+  descuento?: boolean;
   limit?: number;
   category_slug?: string;
   slug?: string;
@@ -52,6 +58,19 @@ export async function getProducts(options: {
     query += ' AND top = 1';
   }
   
+  if (options.nuevo) {
+    query += ' AND nuevo_lanzamiento = 1';
+    // Optional: date check if needed
+  }
+
+  if (options.proximamente) {
+    query += ' AND proximamente = 1';
+  }
+
+  if (options.descuento) {
+    query += ' AND descuento_activo = 1';
+  }
+
   if (options.slug) {
     query += ' AND slug = ?';
     params.push(options.slug);

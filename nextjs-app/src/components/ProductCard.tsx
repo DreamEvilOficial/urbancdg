@@ -1,14 +1,72 @@
 'use client'
 
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { type Producto } from '@/lib/supabase'
 import { useCartStore } from '@/store/cartStore'
-import { ShoppingBag, ShoppingCart, Bookmark } from 'lucide-react'
+import { ShoppingBag, ShoppingCart, Bookmark, Clock } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import VariantModal from './VariantModal'
 // import { motion } from 'framer-motion'
+
+function CountdownTimer({ targetDate }: { targetDate: string }) {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+  const [isExpired, setIsExpired] = useState(false)
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const difference = +new Date(targetDate) - +new Date()
+      
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60)
+        })
+      } else {
+        setIsExpired(true)
+      }
+    }
+
+    calculateTimeLeft()
+    const timer = setInterval(calculateTimeLeft, 1000)
+
+    return () => clearInterval(timer)
+  }, [targetDate])
+
+  if (isExpired) {
+    return (
+      <div className="text-center">
+        <span className="text-green-500 font-black text-lg tracking-widest">¡DISPONIBLE!</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="w-full text-center">
+      <div className="flex items-center justify-center gap-2 mb-2 text-white/60 text-[10px] font-bold uppercase tracking-[0.2em]">
+        <Clock className="w-3 h-3" /> Lanzamiento en
+      </div>
+      <div className="grid grid-cols-4 gap-1">
+        {[
+          { label: 'DÍAS', value: timeLeft.days },
+          { label: 'HRS', value: timeLeft.hours },
+          { label: 'MIN', value: timeLeft.minutes },
+          { label: 'SEG', value: timeLeft.seconds }
+        ].map((item, i) => (
+          <div key={i} className="flex flex-col items-center bg-white/5 rounded-lg p-1.5 border border-white/5">
+            <span className="text-lg md:text-xl font-black text-white leading-none">
+              {String(item.value).padStart(2, '0')}
+            </span>
+            <span className="text-[8px] font-bold text-white/40 mt-1">{item.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 interface Etiqueta {
   id: string
@@ -190,6 +248,11 @@ function ProductCard({ producto }: ProductCardProps) {
 
   const upcomingContent = (
     <div className="flex flex-col flex-grow items-center justify-center p-4">
+       {(producto as any).fecha_lanzamiento ? (
+         <div className="w-full mb-3">
+           <CountdownTimer targetDate={(producto as any).fecha_lanzamiento} />
+         </div>
+       ) : null}
        <button 
         type="button"
         disabled
@@ -234,16 +297,14 @@ function ProductCard({ producto }: ProductCardProps) {
             {/* El precio original ahora se muestra al lado del precio actual en el div de abajo */}
             
             <div className="flex items-baseline gap-2 mb-1">
-              <p className="text-xl md:text-2xl font-bold text-white">
-                $ <span suppressHydrationWarning>{formattedPrice}</span>
-              </p>
-              {formattedOriginalPrice && hasDiscount ? (
+              {formattedOriginalPrice && hasDiscount && (
                 <p className="text-sm md:text-base font-medium text-gray-500 line-through">
                   $ <span suppressHydrationWarning>{formattedOriginalPrice}</span>
                 </p>
-              ) : (
-                <div className="h-[1.5em]" /> /* Espacio reservado para mantener la alineación */
               )}
+              <p className="text-xl md:text-2xl font-bold text-white">
+                $ <span suppressHydrationWarning>{formattedPrice}</span>
+              </p>
             </div>
 
             {/* Precio con transferencia */}
@@ -308,6 +369,13 @@ function ProductCard({ producto }: ProductCardProps) {
 
   return (
     <div className={`bg-black border rounded-xl md:rounded-2xl overflow-hidden group transition w-full relative flex flex-col h-full hover:z-30 border-white/10 hover:border-white/20 shadow-lg shadow-black/50`}>
+      {/* Badge NUEVO */}
+      {(producto as any).nuevo_lanzamiento && !isProximoLanzamiento && (
+        <div className={`absolute ${hasDiscount ? 'top-10' : 'top-3'} left-3 z-30 bg-green-500 text-black text-[10px] md:text-xs font-black px-2.5 py-1 rounded-sm shadow-lg border border-white/20`}>
+          NUEVO
+        </div>
+      )}
+
       {/* Badge de Descuento arriba a la izquierda */}
       {hasDiscount && !isProximoLanzamiento && (
         <div className="absolute top-3 left-3 z-30 bg-white text-black text-[10px] md:text-xs font-black px-2.5 py-1 rounded-sm shadow-lg border border-white/20">
@@ -316,7 +384,11 @@ function ProductCard({ producto }: ProductCardProps) {
       )}
       {/* Badge TOP Minimalista */}
       {isTopProduct && (
-        <div className={`absolute ${hasDiscount ? 'top-10' : 'top-3'} left-3 z-20 bg-black text-white border border-white/20 px-3 py-1 rounded-sm text-xs font-black flex items-center gap-1 shadow-lg backdrop-blur-md`}>
+        <div className={`absolute ${
+          hasDiscount 
+            ? ((producto as any).nuevo_lanzamiento ? 'top-[4.5rem]' : 'top-10')
+            : ((producto as any).nuevo_lanzamiento ? 'top-10' : 'top-3')
+        } left-3 z-20 bg-black text-white border border-white/20 px-3 py-1 rounded-sm text-xs font-black flex items-center gap-1 shadow-lg backdrop-blur-md`}>
           TOP PICK
         </div>
       )}

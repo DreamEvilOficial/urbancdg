@@ -28,6 +28,24 @@ export default function AdminPage() {
   const [user, setUser] = useState<any>(null)
   const [activeTab, setActiveTab] = useState('productos')
   const [sidebarOpen, setSidebarOpen] = useState(true)
+
+  // Auto-close sidebar on mobile on mount
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false)
+      } else {
+        setSidebarOpen(true)
+      }
+    }
+
+    // Set initial state
+    handleResize()
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   const [requireLogin, setRequireLogin] = useState(false)
   const [loginLoading, setLoginLoading] = useState(false)
   const [loginData, setLoginData] = useState({ username: '', password: '' })
@@ -171,11 +189,17 @@ export default function AdminPage() {
         destacado: data.destacado || false,
         top: data.top || false,
         proximo_lanzamiento: data.proximo_lanzamiento || false,
+        proximamente: data.proximo_lanzamiento || false,
         nuevo_lanzamiento: data.nuevo_lanzamiento || false,
+        descuento_activo: data.descuento_activo || false,
+        fecha_lanzamiento: data.fecha_lanzamiento || null,
         imagen_url: data.imagen_url || '',
         imagenes: data.imagenes || [],
         variantes: data.variantes || [],
         sku: data.sku || null,
+        proveedor_nombre: data.proveedor_nombre || null,
+        proveedor_contacto: data.proveedor_contacto || null,
+        precio_costo: data.precio_costo ? Number(data.precio_costo) : null,
         slug,
         stock_actual: totalStock,
         stock_minimo: data.stock_minimo ? Number(data.stock_minimo) : 5,
@@ -304,7 +328,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="flex h-screen bg-transparent overflow-hidden">
+    <div className="flex h-[100dvh] bg-transparent overflow-hidden">
       <style dangerouslySetInnerHTML={{
         __html: `
           input[type="text"],
@@ -335,11 +359,19 @@ export default function AdminPage() {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile Header */}
-        <header className="lg:hidden bg-[#05060a]/70 backdrop-blur-2xl border-b border-white/10 p-4 flex items-center justify-between">
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-white/70 hover:text-white transition-colors">
-            {sidebarOpen ? <X /> : <Menu />}
-          </button>
-          <span className="font-display tracking-[0.08em] uppercase text-white">{storeName}</span>
+        <header className="lg:hidden bg-[#05060a]/80 backdrop-blur-xl border-b border-white/10 p-4 flex items-center justify-between sticky top-0 z-40">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setSidebarOpen(!sidebarOpen)} 
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+            >
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+            <div>
+              <h1 className="text-sm font-black uppercase tracking-widest text-white">Admin Panel</h1>
+              <p className="text-[10px] font-mono text-white/40">{storeName}</p>
+            </div>
+          </div>
         </header>
         {/* Overlay para cerrar al tocar afuera */}
         {sidebarOpen && (
@@ -349,7 +381,7 @@ export default function AdminPage() {
           />
         )}
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8" style={{ maxHeight: '100vh' }}>
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           {activeTab === 'productos' && (
             showProductForm ? (
               <ProductForm 

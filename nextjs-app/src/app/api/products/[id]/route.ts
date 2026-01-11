@@ -15,7 +15,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         activo: product.activo === true || product.activo === 1 || product.activo === 'true',
         destacado: product.destacado === true || product.destacado === 1 || product.destacado === 'true',
         top: product.top === true || product.top === 1 || product.top === 'true',
-        proximo_lanzamiento: product.proximo_lanzamiento === true || product.proximo_lanzamiento === 1 || product.proximo_lanzamiento === 'true',
+        proximo_lanzamiento: product.proximo_lanzamiento === true || product.proximo_lanzamiento === 1 || product.proximo_lanzamiento === 'true' || product.proximamente === true || product.proximamente === 1 || product.proximamente === 'true',
+        proximamente: product.proximamente === true || product.proximamente === 1 || product.proximamente === 'true' || product.proximo_lanzamiento === true || product.proximo_lanzamiento === 1 || product.proximo_lanzamiento === 'true',
         nuevo_lanzamiento: product.nuevo_lanzamiento === true || product.nuevo_lanzamiento === 1 || product.nuevo_lanzamiento === 'true',
         imagenes: product.imagenes ? (typeof product.imagenes === 'string' ? JSON.parse(product.imagenes) : product.imagenes) : [],
         variantes: product.variantes ? (typeof product.variantes === 'string' ? JSON.parse(product.variantes) : product.variantes) : [],
@@ -71,13 +72,14 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
          if (match && match[1]) {
              const missingCol = match[1];
              // Only allow adding specific known flags to prevent abuse
-             const allowedCols = ['nuevo_lanzamiento', 'proximo_lanzamiento', 'top', 'destacado', 'activo'];
+             const allowedCols = ['nuevo_lanzamiento', 'proximo_lanzamiento', 'proximamente', 'top', 'destacado', 'activo', 'descuento_activo', 'fecha_lanzamiento'];
              
              if (allowedCols.includes(missingCol)) {
                  try {
                      console.log(`Auto-adding missing column: ${missingCol}`);
                      // Use raw SQL to add column
-                     await db.raw(`ALTER TABLE productos ADD COLUMN ${missingCol} BOOLEAN DEFAULT FALSE`);
+                     const type = missingCol === 'fecha_lanzamiento' ? 'TIMESTAMP' : 'BOOLEAN DEFAULT FALSE';
+                     await db.raw(`ALTER TABLE productos ADD COLUMN ${missingCol} ${type}`);
                      
                      // Retry original update with updated_at
                      const result = await db.run(`UPDATE productos SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, values);

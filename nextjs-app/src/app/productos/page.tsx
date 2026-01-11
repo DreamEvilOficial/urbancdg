@@ -97,11 +97,25 @@ function ProductosContent() {
 
     // 2. Special URL Filters
     if (filter === 'descuentos') {
-      result = result.filter(p => (p.precio_original && p.precio_original > p.precio))
+      result = result.filter(p => (p as any).descuento_activo)
     } else if (filter === 'nuevos') {
-      result = result.filter(p => (p as any).nuevo_lanzamiento)
+      result = result.filter(p => {
+        if (!(p as any).nuevo_lanzamiento) return false
+        // Check date if present (<= 30 days since launch)
+        if ((p as any).fecha_lanzamiento) {
+           const launchDate = new Date((p as any).fecha_lanzamiento)
+           const now = new Date()
+           const diffTime = Math.abs(now.getTime() - launchDate.getTime())
+           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+           // If launch date is in future, it's upcoming, not new (unless manually flagged?)
+           // Usually "New" means recently released.
+           if (launchDate > now) return false // It's upcoming
+           return diffDays <= 30
+        }
+        return true
+      })
     } else if (filter === 'proximamente') {
-      result = result.filter(p => (p as any).proximo_lanzamiento)
+      result = result.filter(p => ((p as any).proximo_lanzamiento || (p as any).proximamente))
     }
 
     // 3. User UI Filters

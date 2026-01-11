@@ -125,24 +125,24 @@ export default function OrderManagement() {
   )
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl tracking-[0.08em] uppercase text-white flex items-center gap-3">
-            Ventas <span className="text-white/40 text-base font-sans font-black tracking-[0.25em]">/ Admin</span>
+          <h1 className="font-display text-2xl md:text-3xl tracking-[0.08em] uppercase text-white flex items-center gap-3">
+            Ventas <span className="text-white/40 text-xs md:text-base font-sans font-black tracking-[0.25em]">/ Admin</span>
           </h1>
-          <p className="text-white/45 text-sm mt-1">Control total de pedidos y pagos de la tienda</p>
+          <p className="text-white/45 text-xs md:text-sm mt-1">Control total de pedidos y pagos de la tienda</p>
         </div>
         
-        <div className="flex items-center gap-2 bg-[#06070c]/70 backdrop-blur-2xl p-1.5 rounded-2xl border border-white/10">
+        <div className="flex overflow-x-auto pb-2 md:pb-0 gap-2 no-scrollbar">
           {['todos', 'pendiente', 'enviado'].map(s => (
             <button 
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all uppercase tracking-[0.25em] ${
+              className={`flex-shrink-0 px-4 py-2 rounded-xl text-[10px] font-black transition-all uppercase tracking-[0.25em] border border-transparent ${
                 statusFilter === s
                   ? 'bg-accent text-ink shadow-[0_18px_50px_-30px_rgba(183,255,42,0.6)]'
-                  : 'text-white/45 hover:text-white hover:bg-white/[0.03]'
+                  : 'bg-white/[0.03] text-white/45 hover:text-white hover:bg-white/[0.06] border-white/5'
               }`}
             >
               {s}
@@ -154,25 +154,28 @@ export default function OrderManagement() {
       {/* Buscador y Filtros */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
         <div className="md:col-span-8 relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/35 group-focus-within:text-accent transition-colors" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/35 w-5 h-5 group-focus-within:text-accent transition-colors" />
           <input
             type="text"
-            placeholder="Buscar por orden, cliente o email..."
+            placeholder="Buscar por orden, cliente..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 bg-white/[0.03] border border-white/10 rounded-2xl focus:border-accent/40 outline-none transition-all shadow-[0_20px_70px_-60px_rgba(0,0,0,0.9)] hover:border-white/20"
+            className="w-full pl-12 pr-4 py-3 md:py-4 bg-white/[0.03] border border-white/10 rounded-2xl focus:border-accent/40 outline-none transition-all shadow-[0_20px_70px_-60px_rgba(0,0,0,0.9)] hover:border-white/20 text-sm md:text-base"
           />
         </div>
         <div className="md:col-span-4">
-          <select
-            value={methodFilter}
-            onChange={(e) => setMethodFilter(e.target.value)}
-            className="w-full px-4 py-4 bg-white/[0.03] border border-white/10 rounded-2xl focus:border-accent/40 outline-none appearance-none cursor-pointer font-bold text-sm transition hover:border-white/20"
-          >
-            <option value="todos">Todos los pagos</option>
-            <option value="mercadopago">Mercado Pago</option>
-            <option value="transferencia">Transferencia</option>
-          </select>
+          <div className="relative">
+            <select
+              value={methodFilter}
+              onChange={(e) => setMethodFilter(e.target.value)}
+              className="w-full px-4 py-3 md:py-4 bg-white/[0.03] border border-white/10 rounded-2xl focus:border-accent/40 outline-none appearance-none cursor-pointer font-bold text-sm md:text-base transition hover:border-white/20 text-white/70"
+            >
+              <option value="todos">Todos los pagos</option>
+              <option value="mercadopago">Mercado Pago</option>
+              <option value="transferencia">Transferencia</option>
+            </select>
+            <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 w-5 h-5 text-white/30 pointer-events-none" />
+          </div>
         </div>
       </div>
 
@@ -183,25 +186,25 @@ export default function OrderManagement() {
             <div 
               key={orden.id} 
               onClick={() => { setSelectedOrder(orden); setShowModal(true); }}
-              className="group bg-[#06070c]/70 backdrop-blur-2xl border border-white/10 p-6 rounded-[28px] hover:border-white/20 transition-all cursor-pointer shadow-[0_30px_120px_-90px_rgba(0,0,0,0.9)] hover:bg-white/[0.02] relative overflow-hidden"
+              className="group bg-[#06070c]/70 backdrop-blur-2xl border border-white/10 p-5 rounded-[28px] hover:border-white/20 transition-all cursor-pointer shadow-[0_30px_120px_-90px_rgba(0,0,0,0.9)] hover:bg-white/[0.02] relative overflow-hidden active:scale-[0.98]"
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-                <div className="flex items-center gap-5">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${orden.estado === 'completado' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-white/[0.03] text-white/35 group-hover:bg-accent/15 group-hover:text-accent'}`}>
-                    <Package className="w-6 h-6" />
+                <div className="flex items-start md:items-center gap-5">
+                  <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-colors flex-shrink-0 ${orden.estado === 'completado' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-white/[0.03] text-white/35 group-hover:bg-accent/15 group-hover:text-accent'}`}>
+                    <Package className="w-5 h-5 md:w-6 md:h-6" />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                       <span className="text-white font-black text-lg">#{orden.numero_orden}</span>
-                       <span className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-[0.22em] ${resolveStatusPillClass(orden.estado)}`}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                       <span className="text-white font-black text-base md:text-lg">#{orden.numero_orden}</span>
+                       <span className={`text-[9px] md:text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-[0.22em] ${resolveStatusPillClass(orden.estado)}`}>
                         {orden.estado}
                        </span>
                     </div>
-                    <p className="text-white/55 font-bold text-sm mt-0.5">{orden.cliente_nombre}</p>
+                    <p className="text-white/55 font-bold text-xs md:text-sm truncate">{orden.cliente_nombre}</p>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-8">
+                <div className="flex items-center justify-between md:justify-end gap-4 md:gap-8 border-t border-white/5 md:border-0 pt-4 md:pt-0">
                   <div className="hidden lg:block text-center">
                     <p className="text-[10px] text-white/35 uppercase font-black tracking-[0.32em] mb-1">Método</p>
                     <div className="flex items-center gap-2 text-sm font-black text-white">
@@ -210,16 +213,16 @@ export default function OrderManagement() {
                     </div>
                   </div>
 
-                  <div className="text-center">
-                    <p className="text-[10px] text-white/35 uppercase font-black tracking-[0.32em] mb-1">Fecha</p>
-                    <p className="text-sm font-black text-white">
+                  <div className="text-left md:text-center">
+                    <p className="text-[9px] md:text-[10px] text-white/35 uppercase font-black tracking-[0.32em] mb-1">Fecha</p>
+                    <p className="text-xs md:text-sm font-black text-white">
                       {new Date(orden.created_at).toLocaleDateString('es-AR')}
                     </p>
                   </div>
 
                   <div className="text-right">
-                    <p className="text-[10px] text-white/35 uppercase font-black tracking-[0.32em] mb-1">Total</p>
-                    <p className="text-xl font-black text-white">${orden.total.toLocaleString()}</p>
+                    <p className="text-[9px] md:text-[10px] text-white/35 uppercase font-black tracking-[0.32em] mb-1">Total</p>
+                    <p className="text-lg md:text-xl font-black text-white">${orden.total.toLocaleString()}</p>
                   </div>
 
                   <div className="pl-4 border-l border-white/10 hidden md:block">
@@ -232,46 +235,46 @@ export default function OrderManagement() {
         ) : (
           <div className="py-20 text-center bg-[#06070c]/70 rounded-[28px] border border-dashed border-white/15">
             <Info className="w-12 h-12 text-white/20 mx-auto mb-4" />
-            <p className="text-white/55 font-black">No se encontraron ventas con esos filtros</p>
+            <p className="text-white/55 font-black">No se encontraron ventas</p>
           </div>
         )}
       </div>
 
       {/* MODAL DE DETALLE PROFESIONAL */}
       {showModal && selectedOrder && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[100] p-4 overflow-y-auto animate-in fade-in zoom-in duration-300">
-          <div className="bg-[#06070c] rounded-[40px] w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-white/10">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[100] p-0 md:p-4 animate-in fade-in zoom-in duration-300">
+          <div className="bg-[#06070c] md:rounded-[40px] w-full max-w-4xl h-full md:h-auto md:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border-0 md:border border-white/10">
             {/* Header Modal */}
-            <div className="p-8 border-b border-white/10 flex items-center justify-between flex-shrink-0 bg-white/[0.02]">
+            <div className="p-6 md:p-8 border-b border-white/10 flex items-center justify-between flex-shrink-0 bg-white/[0.02]">
                <div>
-                  <div className="flex items-center gap-3">
-                    <h2 className="font-display text-3xl tracking-[0.06em] uppercase text-white">Orden #{selectedOrder.numero_orden}</h2>
-                    <span className={`px-4 py-1 rounded-full text-xs font-black uppercase tracking-[0.2em] ${resolveStatusPillClass(selectedOrder.estado)}`}>
+                  <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+                    <h2 className="font-display text-2xl md:text-3xl tracking-[0.06em] uppercase text-white">Orden #{selectedOrder.numero_orden}</h2>
+                    <span className={`self-start px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] ${resolveStatusPillClass(selectedOrder.estado)}`}>
                       {selectedOrder.estado}
                     </span>
                   </div>
-                  <p className="text-white/45 font-bold mt-1">{new Date(selectedOrder.created_at).toLocaleString('es-AR')}</p>
+                  <p className="text-white/45 font-bold mt-1 text-xs md:text-sm">{new Date(selectedOrder.created_at).toLocaleString('es-AR')}</p>
                </div>
-               <button onClick={() => setShowModal(false)} className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:bg-accent hover:text-ink hover:border-accent/40 transition-all text-white/70">
-                 <XCircle className="w-6 h-6" />
+               <button onClick={() => setShowModal(false)} className="w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/10 flex items-center justify-center hover:bg-accent hover:text-ink hover:border-accent/40 transition-all text-white/70">
+                 <XCircle className="w-5 h-5 md:w-6 md:h-6" />
                </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
                 
                 {/* Columna Izquierda: Cliente y Envío */}
-                <div className="space-y-10">
+                <div className="space-y-8 md:space-y-10">
                    <section>
-                      <h3 className="text-xs font-black text-white/40 uppercase tracking-[0.32em] mb-6 flex items-center gap-2">
+                      <h3 className="text-xs font-black text-white/40 uppercase tracking-[0.32em] mb-4 md:mb-6 flex items-center gap-2">
                         <User className="w-4 h-4" /> Comprador
                       </h3>
                       <div className="space-y-4">
                         <div className="flex items-center gap-4 bg-white/[0.03] border border-white/10 p-4 rounded-2xl">
-                           <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center text-ink shadow-[0_18px_50px_-30px_rgba(183,255,42,0.5)] font-black">CN</div>
-                           <div>
-                              <p className="text-sm font-black text-white uppercase">{selectedOrder.cliente_nombre}</p>
-                              <p className="text-xs text-white/45 flex items-center gap-1 font-bold"><Mail className="w-3 h-3" /> {selectedOrder.cliente_email}</p>
+                           <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center text-ink shadow-[0_18px_50px_-30px_rgba(183,255,42,0.5)] font-black text-sm">CN</div>
+                           <div className="overflow-hidden">
+                              <p className="text-sm font-black text-white uppercase truncate">{selectedOrder.cliente_nombre}</p>
+                              <p className="text-xs text-white/45 flex items-center gap-1 font-bold truncate"><Mail className="w-3 h-3 flex-shrink-0" /> {selectedOrder.cliente_email}</p>
                            </div>
                         </div>
                         {selectedOrder.cliente_telefono && (

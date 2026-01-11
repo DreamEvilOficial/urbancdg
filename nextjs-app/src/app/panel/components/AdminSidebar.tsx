@@ -12,6 +12,7 @@ import {
   Layout,
   DollarSign,
   MessageSquare,
+  X
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { authAPI } from "@/lib/supabase";
@@ -79,31 +80,41 @@ export default function AdminSidebar({
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#05060a]/75 backdrop-blur-2xl border-r border-white/10 transform transition-transform duration-300 ease-in-out ${
+      className={`fixed inset-y-0 left-0 z-[60] w-[280px] bg-[#05060a]/95 backdrop-blur-2xl border-r border-white/10 transform transition-transform duration-300 ease-spring ${
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      } lg:relative lg:translate-x-0 flex flex-col h-screen`}
+      } lg:relative lg:translate-x-0 flex flex-col h-[100dvh] shadow-[10px_0_30px_-10px_rgba(0,0,0,0.5)] lg:shadow-none`}
     >
-      <div className="p-4 border-b border-white/10 flex-shrink-0 relative overflow-hidden">
+      <div className="p-6 border-b border-white/10 flex-shrink-0 relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-16 left-8 h-28 w-28 rounded-full bg-accent/14 blur-2xl" />
-          <div className="absolute -bottom-16 right-6 h-28 w-28 rounded-full bg-accent2/12 blur-2xl" />
+          <div className="absolute -top-24 -left-24 h-48 w-48 rounded-full bg-accent/10 blur-[60px]" />
+          <div className="absolute top-1/2 -right-24 h-48 w-48 rounded-full bg-blue-500/10 blur-[60px]" />
         </div>
 
         <div className="relative">
-          <div className="flex items-center justify-between gap-2 text-white mb-1">
-            <div className="flex items-center gap-2">
-              <LayoutDashboard className="w-5 h-5 text-white" />
+          <div className="flex items-center justify-between gap-2 text-white mb-2">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-accent to-accent/50 flex items-center justify-center text-black shadow-lg shadow-accent/20">
+                <LayoutDashboard className="w-5 h-5" />
+              </div>
               <h2 className="font-display text-xl tracking-[0.08em] uppercase">Admin</h2>
             </div>
-            <span className="text-[9px] font-mono text-white/30 bg-white/5 px-1.5 py-0.5 rounded border border-white/5">
-              {version}
-            </span>
+            <div className="flex items-center gap-2">
+                <span className="text-[9px] font-mono text-white/30 bg-white/5 px-2 py-1 rounded-lg border border-white/5">
+                {version}
+                </span>
+                <button 
+                    onClick={onNavigate}
+                    className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+                >
+                    <X className="w-5 h-5" />
+                </button>
+            </div>
           </div>
-          <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/45 truncate">{storeName}</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/45 truncate pl-1">{storeName}</p>
         </div>
       </div>
 
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto min-h-0 flex flex-col" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto min-h-0 flex flex-col custom-scrollbar">
         <SidebarItem
           id="home"
           icon={Layout}

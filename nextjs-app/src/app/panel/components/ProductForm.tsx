@@ -50,7 +50,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
         subcategoria_id: producto.subcategoria_id || '',
         destacado: producto.destacado || false,
         top: producto.top || false,
-        proximo_lanzamiento: producto.proximo_lanzamiento || false,
+        proximo_lanzamiento: producto.proximo_lanzamiento || (producto as any).proximamente || false,
         nuevo_lanzamiento: producto.nuevo_lanzamiento || false,
         imagen_url: producto.imagen_url || '',
         imagenes: producto.imagenes || [],
@@ -158,23 +158,23 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
   return (
     <div className="bg-black min-h-screen text-white">
       {/* Header Fijo */}
-      <div className="sticky top-0 z-50 bg-[#06070c] border-b border-white/10 px-8 py-5 flex justify-between items-center shadow-sm shadow-black/50">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-white text-black rounded-xl flex items-center justify-center font-bold">
+      <div className="sticky top-0 z-50 bg-[#06070c] border-b border-white/10 px-4 py-4 lg:px-8 lg:py-5 flex justify-between items-center shadow-sm shadow-black/50">
+        <div className="flex items-center gap-3 lg:gap-4">
+          <div className="w-8 h-8 lg:w-10 lg:h-10 bg-white text-black rounded-lg lg:rounded-xl flex items-center justify-center font-bold text-xs lg:text-base">
             {producto ? 'EP' : 'NP'}
           </div>
           <div>
-            <h2 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400">Panel de Control</h2>
-            <h1 className="text-xl font-bold text-white leading-tight">
-              {producto ? 'Editando Producto' : 'Nuevo Producto / Registro'}
+            <h2 className="text-[10px] lg:text-sm font-black uppercase tracking-[0.2em] text-gray-400 hidden sm:block">Panel de Control</h2>
+            <h1 className="text-base lg:text-xl font-bold text-white leading-tight">
+              {producto ? 'Editando' : 'Nuevo'}
             </h1>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 lg:gap-3">
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-2.5 text-sm font-bold text-gray-400 hover:text-white transition-colors uppercase tracking-widest"
+            className="px-3 lg:px-6 py-2 lg:py-2.5 text-xs lg:text-sm font-bold text-gray-400 hover:text-white transition-colors uppercase tracking-widest"
           >
             Atrás
           </button>
@@ -182,28 +182,28 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
             type="button"
             onClick={handleSubmit}
             disabled={loading}
-            className="px-8 py-2.5 bg-white text-black rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-200 transition-all flex items-center gap-2 shadow-xl shadow-white/5"
+            className="px-4 lg:px-8 py-2 lg:py-2.5 bg-white text-black rounded-lg lg:rounded-xl font-black text-[10px] lg:text-xs uppercase tracking-widest hover:bg-gray-200 transition-all flex items-center gap-2 shadow-xl shadow-white/5"
           >
-            {loading ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-black/20 border-t-black" /> : 'Guardar Producto'}
+            {loading ? <div className="animate-spin rounded-full h-3 w-3 lg:h-4 lg:w-4 border-2 border-black/20 border-t-black" /> : 'Guardar'}
           </button>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto p-10">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+      <div className="max-w-6xl mx-auto p-4 lg:p-10">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
           
           {/* Columna Izquierda: Info Principal */}
-          <div className="lg:col-span-8 space-y-8">
+          <div className="lg:col-span-8 space-y-6 lg:space-y-8">
             
             {/* Sección 1: Datos Básicos */}
-            <div className="bg-[#06070c] rounded-[32px] p-8 border border-white/10 shadow-sm space-y-6">
+            <div className="bg-[#06070c] rounded-[20px] lg:rounded-[32px] p-5 lg:p-8 border border-white/10 shadow-sm space-y-6">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-1.5 h-1.5 bg-white rounded-full" />
                 <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Información General</h3>
               </div>
               
-              <div className="grid grid-cols-2 gap-6">
-                <div className="col-span-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
                   <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Nombre Comercial</label>
                   <input 
                     value={formData.nombre}
@@ -252,6 +252,80 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                 </div>
               </div>
 
+              {/* Visibilidad y Lanzamiento */}
+              <div className="p-6 bg-[#111] rounded-3xl border border-white/5 space-y-4">
+                 <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Visibilidad y Lanzamiento</h4>
+                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <label className="flex items-center gap-3 p-3 bg-black rounded-xl border border-white/5 cursor-pointer hover:border-white/20 transition">
+                      <input 
+                        type="checkbox" 
+                        checked={formData.descuento_activo}
+                        onChange={e => setFormData({...formData, descuento_activo: e.target.checked})}
+                        className="w-4 h-4 rounded border-gray-600 text-pink-500 focus:ring-pink-500 bg-gray-900"
+                      />
+                      <span className="text-xs font-bold text-white">Oferta Activa</span>
+                    </label>
+
+                    <label className="flex items-center gap-3 p-3 bg-black rounded-xl border border-white/5 cursor-pointer hover:border-white/20 transition">
+                      <input 
+                        type="checkbox" 
+                        checked={formData.nuevo_lanzamiento}
+                        onChange={e => setFormData({...formData, nuevo_lanzamiento: e.target.checked})}
+                        className="w-4 h-4 rounded border-gray-600 text-green-500 focus:ring-green-500 bg-gray-900"
+                      />
+                      <span className="text-xs font-bold text-white">Nuevo</span>
+                    </label>
+                    
+                    <label className="flex items-center gap-3 p-3 bg-black rounded-xl border border-white/5 cursor-pointer hover:border-white/20 transition">
+                      <input 
+                        type="checkbox" 
+                        checked={formData.proximo_lanzamiento}
+                        onChange={e => setFormData({
+                            ...formData, 
+                            proximo_lanzamiento: e.target.checked,
+                            // Sync legacy column in form state so it gets sent to API
+                            // Note: 'proximamente' isn't explicitly in formData type above but will be merged
+                            ...({ proximamente: e.target.checked } as any)
+                        })}
+                        className="w-4 h-4 rounded border-gray-600 text-blue-500 focus:ring-blue-500 bg-gray-900"
+                      />
+                      <span className="text-xs font-bold text-white">Próximamente</span>
+                    </label>
+
+                    <label className="flex items-center gap-3 p-3 bg-black rounded-xl border border-white/5 cursor-pointer hover:border-white/20 transition">
+                      <input 
+                        type="checkbox" 
+                        checked={formData.destacado}
+                        onChange={e => setFormData({...formData, destacado: e.target.checked})}
+                        className="w-4 h-4 rounded border-gray-600 text-yellow-500 focus:ring-yellow-500 bg-gray-900"
+                      />
+                      <span className="text-xs font-bold text-white">Destacado</span>
+                    </label>
+
+                    <label className="flex items-center gap-3 p-3 bg-black rounded-xl border border-white/5 cursor-pointer hover:border-white/20 transition">
+                      <input 
+                        type="checkbox" 
+                        checked={formData.top}
+                        onChange={e => setFormData({...formData, top: e.target.checked})}
+                        className="w-4 h-4 rounded border-gray-600 text-purple-500 focus:ring-purple-500 bg-gray-900"
+                      />
+                      <span className="text-xs font-bold text-white">Top Pick</span>
+                    </label>
+                 </div>
+                 
+                 {formData.proximo_lanzamiento && (
+                   <div className="pt-2 animate-in fade-in slide-in-from-top-2">
+                     <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Fecha de Lanzamiento (Para Timer)</label>
+                     <input 
+                        type="datetime-local"
+                        value={formData.fecha_lanzamiento}
+                        onChange={e => setFormData({...formData, fecha_lanzamiento: e.target.value})}
+                        className="w-full bg-black border border-white/10 p-4 rounded-2xl text-sm font-bold text-white focus:border-white transition-all outline-none"
+                     />
+                   </div>
+                 )}
+              </div>
+
               <div>
                 <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Descripción del Producto</label>
                 <textarea 
@@ -270,7 +344,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                 <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Proveedor y Análisis de Costos</h3>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Nombre del Proveedor</label>
                   <input 
@@ -343,7 +417,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                 <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Configuración de Precios</h3>
               </div>
 
-              <div className="grid grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Precio Final</label>
                   <div className="relative">

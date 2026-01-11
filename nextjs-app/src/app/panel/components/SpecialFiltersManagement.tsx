@@ -99,13 +99,13 @@ export default function SpecialFiltersManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-white">Filtros Especiales</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <h1 className="text-2xl md:text-3xl font-bold text-white uppercase tracking-wider">Filtros Especiales</h1>
         <button
           onClick={() => { setIsCreating(true); setEditingId(null); setFormData({ nombre: '', clave: '', imagen_url: '', activo: true, orden: filtros.length }); }}
-          className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-200 transition font-bold"
+          className="w-full md:w-auto flex items-center justify-center gap-2 bg-white text-black px-6 py-3 rounded-xl hover:bg-gray-200 transition font-bold shadow-[0_10px_20px_-10px_rgba(255,255,255,0.3)] active:scale-95"
         >
-          <Plus className="w-4 h-4" /> Nuevo Filtro
+          <Plus className="w-5 h-5" /> Nuevo Filtro
         </button>
       </div>
 
