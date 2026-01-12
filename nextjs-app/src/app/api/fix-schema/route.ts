@@ -109,6 +109,22 @@ export async function GET() {
             ALTER TABLE productos ADD COLUMN precio_costo NUMERIC(10,2);
         END IF;
 
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'imagen_url') THEN
+            ALTER TABLE productos ADD COLUMN imagen_url TEXT;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'sku') THEN
+            ALTER TABLE productos ADD COLUMN sku TEXT;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'metadata') THEN
+            ALTER TABLE productos ADD COLUMN metadata JSONB DEFAULT '{}';
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'stock_minimo') THEN
+            ALTER TABLE productos ADD COLUMN stock_minimo INTEGER DEFAULT 0;
+        END IF;
+
       END $$;
     `;
 
