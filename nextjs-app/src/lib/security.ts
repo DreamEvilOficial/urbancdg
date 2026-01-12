@@ -112,3 +112,43 @@ export function validateSecurityInput(input: string): { valid: boolean; error?: 
 
   return { valid: true };
 }
+
+/**
+ * Sanitiza nombres de archivo para subidas
+ * Permite solo alfanuméricos, guiones y puntos
+ */
+export function sanitizeFilename(filename: string): string {
+  if (!filename) return 'file';
+  // Obtener extensión y nombre base
+  const parts = filename.split('.');
+  const ext = parts.length > 1 ? parts.pop() : '';
+  const name = parts.join('.');
+  
+  const safeName = name
+    .replace(/[^a-z0-9\-_]/gi, '-') // Reemplazar caracteres raros
+    .replace(/-+/g, '-') // Eliminar guiones repetidos
+    .toLowerCase();
+    
+  const safeExt = ext ? `.${ext.replace(/[^a-z0-9]/gi, '').toLowerCase()}` : '';
+  
+  return (safeName || 'file') + safeExt;
+}
+
+/**
+ * Wrapper seguro para leer de localStorage
+ * Maneja SSR (window undefined) y errores de parseo
+ */
+export function sanitizeLocalStorage(key: string): any {
+  if (typeof window === 'undefined') return null;
+  try {
+    const item = localStorage.getItem(key);
+    if (!item) return null;
+    try {
+      return JSON.parse(item);
+    } catch {
+      return item;
+    }
+  } catch (e) {
+    return null;
+  }
+}
