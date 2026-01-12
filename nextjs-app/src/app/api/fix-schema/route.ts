@@ -184,6 +184,9 @@ export async function GET() {
             created_at TIMESTAMPTZ DEFAULT NOW()
         );
 
+        -- 10. ACTUALIZACIÓN DE STOCK PARA PRUEBAS (SOLO SI ES BAJO)
+        UPDATE productos SET stock_actual = 100 WHERE stock_actual < 10;
+
       END $$;
     `;
 
