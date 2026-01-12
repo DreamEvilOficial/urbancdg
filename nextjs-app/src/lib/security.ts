@@ -52,7 +52,7 @@ export function decrypt(text: string): string {
     
     const decipher = crypto.createDecipheriv('aes-256-cbc', key as any, iv as any);
     const decrypted = Buffer.concat([
-      decipher.update(encryptedText) as any,
+      decipher.update(encryptedText as any) as any,
       decipher.final() as any
     ]);
     return decrypted.toString('utf8');
