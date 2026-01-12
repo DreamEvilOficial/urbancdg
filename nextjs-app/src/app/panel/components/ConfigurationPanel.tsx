@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import NextImage from 'next/image'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
 import { Save, Trash2, Plus, X } from 'lucide-react'
@@ -382,7 +383,7 @@ export default function ConfigurationPanel() {
             
             {config.logo_url ? (
               <div className="flex items-center gap-4 p-4 border border-white/10 rounded-2xl bg-white/[0.03]">
-                <Image 
+                <NextImage 
                   src={config.logo_url} 
                   alt="Logo" 
                   width={0} 

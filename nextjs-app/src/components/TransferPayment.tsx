@@ -20,6 +20,7 @@ interface PaymentConfig {
   banco: string
   whatsapp: string
   mensaje_transferencia: string
+  instagram?: string
 }
 
 export default function TransferPayment({ orderTotal, orderItems, orderNumber, customer, onClose }: TransferPaymentProps) {
@@ -49,7 +50,8 @@ export default function TransferPayment({ orderTotal, orderItems, orderNumber, c
         titular: tiendaConfig.titular_cuenta || tiendaConfig.nombre_tienda || 'Tienda',
         banco: tiendaConfig.banco || 'Mercado Pago',
         whatsapp: tiendaConfig.whatsapp_comprobante || tiendaConfig.whatsapp || tiendaConfig.telefono || '',
-        mensaje_transferencia: 'Gracias por tu compra. Confirmaremos tu pedido al recibir el pago.'
+        mensaje_transferencia: 'Gracias por tu compra. Confirmaremos tu pedido al recibir el pago.',
+        instagram: tiendaConfig.instagram || '@urban.cdg'
       })
     } catch (error) {
       console.error('Error al cargar configuración:', error)
@@ -100,6 +102,12 @@ ${config.mensaje_transferencia || ''}
 
     const whatsappUrl = `https://wa.me/${config.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`
     window.open(whatsappUrl, '_blank')
+  }
+
+  const handleSendInstagram = () => {
+    if (!config) return
+    const username = (config.instagram || 'urban.cdg').replace('@', '')
+    window.open(`https://instagram.com/${username}`, '_blank')
   }
 
   const handleOverlayClick = (e: React.MouseEvent) => {

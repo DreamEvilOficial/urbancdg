@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 
 export default function Hero() {
   const [heroBannerUrl, setHeroBannerUrl] = useState('')
@@ -32,10 +33,15 @@ export default function Hero() {
 
   return (
     <div className="w-full">
-      <img 
+      <Image 
         src={heroBannerUrl} 
         alt="Banner principal" 
-        className="w-full h-auto object-cover"
+        width={0}
+        height={0}
+        sizes="100vw"
+        style={{ width: '100%', height: 'auto' }}
+        className="object-cover"
+        priority
       />
     </div>
   )

@@ -95,6 +95,7 @@ export interface Orden {
   estado: string
   mercadopago_payment_id?: number
   notas?: string
+  items?: any[]
   created_at: string
 }
 

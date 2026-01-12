@@ -60,6 +60,29 @@ export default function FeaturedProductsManagement() {
     }
   }
 
+  async function updateDate(id: string, date: string) {
+    try {
+      setProducts(products.map(p => {
+        if (p.id === id) {
+          return { ...p, fecha_lanzamiento: date }
+        }
+        return p
+      }))
+      
+      const res = await fetch(`/api/products/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fecha_lanzamiento: date })
+      })
+      
+      if (!res.ok) throw new Error('Error al actualizar fecha')
+      toast.success('Fecha actualizada')
+    } catch (error) {
+      toast.error('Error al actualizar fecha')
+      fetchProducts()
+    }
+  }
+
   const filteredProducts = products.filter(p => 
     p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
     (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()))

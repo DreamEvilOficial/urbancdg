@@ -106,6 +106,8 @@ export default function ProductDetailPage() {
     precioCuotas: producto ? Math.round(producto.precio / 6) : 0
   }), [producto?.precio])
 
+  const discountPercent = producto ? (producto.descuento_porcentaje || (producto.precio_original && producto.precio_original > producto.precio ? Math.round(((producto.precio_original - producto.precio) / producto.precio_original) * 100) : 0)) : 0
+
   if (loading) return <div className="min-h-screen bg-transparent flex items-center justify-center"><div className="w-8 h-8 border-2 border-white/10 border-t-white rounded-full animate-spin" /></div>
   if (!producto) return <div className="min-h-screen bg-transparent flex items-center justify-center text-xs font-black uppercase tracking-widest text-white/60">Producto no hallado</div>
 

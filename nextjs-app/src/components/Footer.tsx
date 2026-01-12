@@ -3,6 +3,7 @@
 import { Mail, Phone, MapPin, Instagram, Facebook, Twitter, ShieldCheck, CreditCard, Truck } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { sanitizeURL } from '@/lib/security'
 
 export default function Footer() {
@@ -59,7 +60,15 @@ export default function Footer() {
           {/* Brand & Logo */}
           <div className="md:col-span-5 space-y-8">
             <Link href="/" className="inline-block group">
-              <img src={config.logo_url} alt={config.nombre_tienda} className="h-16 md:h-20 w-auto object-contain transition-transform duration-500 group-hover:scale-105" />
+              <Image 
+                src={config.logo_url} 
+                alt={config.nombre_tienda} 
+                width={0} 
+                height={0} 
+                sizes="100vw"
+                style={{ width: 'auto', height: '80px' }}
+                className="h-16 md:h-20 w-auto object-contain transition-transform duration-500 group-hover:scale-105" 
+              />
             </Link>
             <p className="text-white/55 text-xs font-medium leading-relaxed max-w-sm uppercase tracking-widest italic">{config.brand_tagline}</p>
             
@@ -144,7 +153,14 @@ export default function Footer() {
             © {new Date().getFullYear()} {config.nombre_tienda}. Todos los derechos reservados.
           </p>
           <div className="flex items-center gap-6">
-             <img src="https://static.wattpad.com/img/badges/v2/certified-fanatic.png" className="h-4 grayscale opacity-40" alt="" />
+             <Image 
+               src="https://static.wattpad.com/img/badges/v2/certified-fanatic.png" 
+               width={100} 
+               height={20} 
+               className="h-4 w-auto grayscale opacity-40" 
+               alt="" 
+               unoptimized 
+             />
              <p className="text-[8px] font-black text-white/40 uppercase tracking-wider">Desarrollado por Marcos Peiti</p>
           </div>
         </div>
