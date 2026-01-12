@@ -194,7 +194,7 @@ export default function AdminSidebar({
         </div>
 
         {/* Cuenta y configuración */}
-        <div className="space-y-1">
+        <div className="space-y-1 mt-auto">
           <div className="px-3 mb-2">
             <h3 className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Cuenta y configuración</h3>
             <p className="text-[9px] text-white/20 font-medium mt-0.5">Ajustes personales y del sistema</p>
@@ -213,15 +213,12 @@ export default function AdminSidebar({
             activeTab={activeTab}
             setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
           />
-        </div>
-        
-        <div className="pt-4 border-t border-white/10 mt-auto">
           <button
             onClick={async () => {
               await authAPI.signOut();
               router.push("/panel");
             }}
-            className="w-full flex items-center gap-3 px-3 py-2 text-red-300/90 hover:bg-red-500/10 hover:text-red-200 rounded-lg transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2 mt-2 text-red-300/90 hover:bg-red-500/10 hover:text-red-200 rounded-lg transition-colors"
           >
             <LogOut className="w-4 h-4" />
             <span className="font-black text-[11px] uppercase tracking-[0.22em]">Cerrar Sesión</span>

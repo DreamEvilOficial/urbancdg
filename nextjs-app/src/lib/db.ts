@@ -69,10 +69,11 @@ class Database {
   /**
    * Ejecuta una consulta y devuelve todas las filas
    */
-  async all<T = any>(sql: string, params: any[] = []): Promise<T[]> {
-    if (pool) {
+  async all<T = any>(sql: string, params: any[] = [], client: any = null): Promise<T[]> {
+    const executor = client || pool;
+    if (executor) {
       try {
-        const result = await pool.query(normalizeSql(sql), params);
+        const result = await executor.query(normalizeSql(sql), params);
         return result.rows as T[];
       } catch (err: any) {
         console.error('❌ Postgres Pool Error (all):', err.message, { sql, params });
@@ -81,17 +82,21 @@ class Database {
     }
 
     // Fallback a Supabase PostgREST (Limitado a consultas simples)
-    console.warn('⚠️ Usando fallback de Supabase PostgREST para SELECT');
-    return this.fallbackSelect<T>(sql, params);
+    if (!client) {
+      console.warn('⚠️ Usando fallback de Supabase PostgREST para SELECT');
+      return this.fallbackSelect<T>(sql, params);
+    }
+    return [];
   }
 
   /**
    * Ejecuta una consulta y devuelve una sola fila
    */
-  async get<T = any>(sql: string, params: any[] = []): Promise<T | undefined> {
-    if (pool) {
+  async get<T = any>(sql: string, params: any[] = [], client: any = null): Promise<T | undefined> {
+    const executor = client || pool;
+    if (executor) {
       try {
-        const result = await pool.query(normalizeSql(sql), params);
+        const result = await executor.query(normalizeSql(sql), params);
         return (result.rows[0] as T) || undefined;
       } catch (err: any) {
         console.error('❌ Postgres Pool Error (get):', err.message, { sql, params });
@@ -99,15 +104,19 @@ class Database {
       }
     }
 
-    const rows = await this.fallbackSelect<T>(sql, params);
-    return rows[0];
+    if (!client) {
+      const rows = await this.fallbackSelect<T>(sql, params);
+      return rows[0];
+    }
+    return undefined;
   }
 
   /**
    * Ejecuta una operación de escritura (INSERT, UPDATE, DELETE)
    */
-  async run(sql: string, params: any[] = []): Promise<{ id: any, changes: number }> {
-    if (pool) {
+  async run(sql: string, params: any[] = [], client: any = null): Promise<{ id: any, changes: number }> {
+    const executor = client || pool;
+    if (executor) {
       try {
         const normalized = normalizeSql(sql);
         // Si es un INSERT, intentamos obtener el ID retornado
@@ -115,7 +124,7 @@ class Database {
           ? `${normalized} RETURNING id` 
           : normalized;
           
-        const result = await pool.query(finalSql, params);
+        const result = await executor.query(finalSql, params);
         return {
           id: result.rows[0]?.id || null,
           changes: result.rowCount || 0
@@ -126,8 +135,11 @@ class Database {
       }
     }
 
-    console.warn('⚠️ Usando fallback de Supabase PostgREST para DML');
-    return this.fallbackDml(sql, params);
+    if (!client) {
+      console.warn('⚠️ Usando fallback de Supabase PostgREST para DML');
+      return this.fallbackDml(sql, params);
+    }
+    return { id: null, changes: 0 };
   }
 
   /**

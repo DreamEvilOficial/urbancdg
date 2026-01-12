@@ -126,9 +126,13 @@ export default function Cart({ onClose }: CartProps) {
                 >
                   <div className="relative w-20 h-24 bg-white/5 rounded-xl overflow-hidden shrink-0 group">
                     <img 
-                      src={item.imagen_url || '/proximamente.png'} 
+                      src={item.imagen_url && item.imagen_url !== '' ? item.imagen_url : '/proximamente.png'} 
                       alt={item.nombre} 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      onError={(e) => {
+                         const target = e.target as HTMLImageElement;
+                         target.src = '/proximamente.png';
+                      }} 
                     />
                   </div>
                   
@@ -208,7 +212,7 @@ export default function Cart({ onClose }: CartProps) {
                   >
                     <div className="relative aspect-[3/4] rounded-2xl overflow-hidden mb-2 border border-white/10 group-hover:border-accent/30 transition-colors">
                       <img 
-                        src={prod.imagen_url || (prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : '/proximamente.png')} 
+                        src={prod.imagen_url || prod.imagenes?.[0] || '/proximamente.png'} 
                         alt={prod.nombre} 
                         className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" 
                         onError={(e) => {

@@ -72,6 +72,23 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
     }
   }, [producto])
 
+  // Cálculo automático de descuento
+  useEffect(() => {
+    const precio = parseFloat(formData.precio)
+    const precioOriginal = parseFloat(formData.precio_original)
+
+    if (!isNaN(precio) && !isNaN(precioOriginal) && precioOriginal > 0) {
+      if (precio < precioOriginal) {
+        const descuento = ((precioOriginal - precio) / precioOriginal) * 100
+        setFormData(prev => ({ ...prev, descuento_porcentaje: descuento.toFixed(2) }))
+      } else {
+        setFormData(prev => ({ ...prev, descuento_porcentaje: '0' }))
+      }
+    } else {
+      setFormData(prev => ({ ...prev, descuento_porcentaje: '0' }))
+    }
+  }, [formData.precio, formData.precio_original])
+
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -277,7 +294,16 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                       <input 
                         type="checkbox" 
                         checked={formData.descuento_activo}
-                        onChange={e => setFormData({...formData, descuento_activo: e.target.checked})}
+                        onChange={e => {
+                          const isChecked = e.target.checked;
+                          setFormData(prev => ({
+                            ...prev, 
+                            descuento_activo: isChecked,
+                            // If activating, copy current price to original. If deactivating, maybe restore? 
+                            // User request: "cuando tilde en oferta... aparezca el precio del producto, el precio en descuento"
+                            precio_original: isChecked ? prev.precio : prev.precio_original
+                          }))
+                        }}
                         className="w-5 h-5 rounded border-gray-600 text-pink-500 focus:ring-pink-500 bg-gray-900 mb-1"
                       />
                       <span className="text-xl group-hover:scale-110 transition-transform">🏷️</span>
@@ -345,6 +371,47 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                      />
                    </div>
                  )}
+
+                 {formData.descuento_activo && (
+                   <div className="pt-4 mt-4 border-t border-white/5 animate-in fade-in slide-in-from-top-2">
+                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Precio Original</label>
+                          <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 font-bold">$</span>
+                            <input 
+                              type="number"
+                              value={formData.precio_original}
+                              onChange={e => setFormData({...formData, precio_original: e.target.value})}
+                              className="w-full bg-black border border-white/10 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold text-white/70 focus:border-white transition-all outline-none"
+                              placeholder="0.00"
+                              required={formData.descuento_activo}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-black uppercase text-pink-500 tracking-widest mb-2 px-1">Precio Oferta</label>
+                          <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-500 font-bold">$</span>
+                            <input 
+                              type="number"
+                              value={formData.precio}
+                              onChange={e => setFormData({...formData, precio: e.target.value})}
+                              className="w-full bg-pink-500/10 border border-pink-500/50 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold text-white focus:bg-pink-500/20 transition-all outline-none"
+                              placeholder="0.00"
+                              required={formData.descuento_activo}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Descuento</label>
+                          <div className="bg-white text-black h-[54px] rounded-2xl flex items-center justify-center font-black text-xl">
+                            {formData.descuento_porcentaje}% OFF
+                          </div>
+                        </div>
+                     </div>
+                   </div>
+                 )}
               </div>
 
               <div>
@@ -358,131 +425,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
               </div>
             </div>
 
-            {/* Nueva Sección: Proveedor y Costos */}
-            <div className="bg-[#06070c] rounded-[32px] p-8 border border-white/10 shadow-sm space-y-6">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-1.5 h-1.5 bg-white rounded-full" />
-                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Proveedor y Análisis de Costos</h3>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Nombre del Proveedor</label>
-                  <input 
-                    value={formData.proveedor_nombre}
-                    onChange={e => setFormData({...formData, proveedor_nombre: e.target.value})}
-                    className="w-full bg-[#111] border border-white/5 p-4 rounded-2xl text-sm font-bold focus:bg-black focus:border-white text-white transition-all outline-none"
-                    placeholder="Ej: Textil Avellaneda"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Contacto / Redes</label>
-                  <input 
-                    value={formData.proveedor_contacto}
-                    onChange={e => setFormData({...formData, proveedor_contacto: e.target.value})}
-                    className="w-full bg-[#111] border border-white/5 p-4 rounded-2xl text-sm font-bold focus:bg-black focus:border-white text-white transition-all outline-none"
-                    placeholder="WhatsApp, IG o Teléfono"
-                  />
-                </div>
-              </div>
-
-              <div className="p-6 bg-[#111] rounded-3xl border border-white/5 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Costo de Compra (Unitario)</label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 font-bold">$</span>
-                      <input 
-                        type="number"
-                        value={formData.precio_costo}
-                        onChange={e => setFormData({...formData, precio_costo: e.target.value})}
-                        className="w-full bg-[#06070c] border border-transparent pl-8 pr-4 py-4 rounded-2xl text-sm font-bold focus:border-white text-white transition-all outline-none"
-                        placeholder="0.00"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col justify-end gap-2">
-                    <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest px-1">Ganancia Estimada</label>
-                    <div className="flex items-center gap-4">
-                      {formData.precio && formData.precio_costo && Number(formData.precio_costo) > 0 ? (
-                        <>
-                          <div className="flex-1 bg-white text-black p-4 rounded-2xl flex flex-col">
-                            <span className="text-[8px] font-black uppercase text-gray-400 tracking-widest">Utilidad Neta</span>
-                            <span className="text-lg font-black tracking-tight">
-                              ${(Number(formData.precio) - Number(formData.precio_costo)).toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="flex-1 bg-emerald-500 text-white p-4 rounded-2xl flex flex-col">
-                            <span className="text-[8px] font-black uppercase text-gray-300 tracking-widest">Margen</span>
-                            <span className="text-lg font-black tracking-tight">
-                              {Math.round(((Number(formData.precio) - Number(formData.precio_costo)) / Number(formData.precio_costo)) * 100)}%
-                            </span>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex-1 bg-white/5 p-4 rounded-2xl text-[10px] font-black uppercase text-gray-400 text-center tracking-widest">
-                          Ingresa costo y precio para calcular
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Sección 2: Precios */}
-            <div className="bg-[#06070c] rounded-[32px] p-8 border border-white/10 shadow-sm space-y-6">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-1.5 h-1.5 bg-white rounded-full" />
-                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Configuración de Precios</h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Precio Final</label>
-                  <input 
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formData.precio}
-                    onChange={e => {
-                      const val = e.target.value;
-                      if (parseFloat(val) < 0) return;
-                      setFormData({...formData, precio: val})
-                    }}
-                    className="w-full bg-[#111] border border-white/5 p-4 rounded-2xl text-sm font-bold placeholder:text-white/20 focus:bg-black focus:border-white text-white transition-all outline-none"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Precio Original</label>
-                  <input 
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formData.precio_original}
-                    onChange={e => {
-                      const val = e.target.value;
-                      if (parseFloat(val) < 0) return;
-                      setFormData({...formData, precio_original: val})
-                    }}
-                    className="w-full bg-[#111] border border-white/5 p-4 rounded-2xl text-sm font-bold placeholder:text-white/20 focus:bg-black focus:border-white text-white transition-all outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Descuento (%)</label>
-                  <div className="relative">
-                    <input 
-                      value={formData.descuento_porcentaje}
-                      readOnly
-                      className="w-full bg-[#111] border border-white/5 p-4 rounded-2xl text-sm font-bold placeholder:text-white/20 text-white/50 cursor-not-allowed outline-none"
-                    />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 text-xs font-black">%</span>
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* Sección 3: Variantes y Stock */}
             <div className="bg-[#06070c] rounded-[32px] p-8 border border-white/10 shadow-sm space-y-6">

@@ -53,126 +53,49 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     });
     values.push(id);
 
-    try {
-      // 1. First attempt: try to update, including updated_at
-      const result = await db.run(`UPDATE productos SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, values);
-      
-      if (result.changes === 0) {
-         return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-      }
-    } catch (dbErr: any) {
-      console.error('Database Update Error (Attempt 1):', dbErr.message);
-      
-      const errorMessage = dbErr.message.toLowerCase();
+    // Use transaction for atomicity and logging
+    await db.transaction(async (tx) => {
+        // Ensure logs table exists
+        await db.run(`
+            CREATE TABLE IF NOT EXISTS admin_logs (
+                id SERIAL PRIMARY KEY,
+                action TEXT NOT NULL,
+                details TEXT,
+                target_id TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `, [], tx);
 
-      // 2. Auto-fix: Add missing columns if detected (Postgres specific)
-      // Error: column "nuevo_lanzamiento" does not exist
-      if (errorMessage.includes('column') && errorMessage.includes('does not exist')) {
-            // Improve regex to handle "column "name" of relation "table" does not exist"
-            const match = errorMessage.match(/column "([^"]+)"/);
-            if (match && match[1]) {
-                const missingCol = match[1];
-                // Only allow adding specific known flags to prevent abuse
-                const allowedCols = [
-                    'nuevo_lanzamiento', 'proximo_lanzamiento', 'proximamente', 
-                    'top', 'destacado', 'activo', 'descuento_activo', 'fecha_lanzamiento',
-                    'sku', 'proveedor_nombre', 'proveedor_contacto', 'precio_costo'
-                ];
-                
-                if (allowedCols.includes(missingCol)) {
-                    try {
-                        console.log(`Auto-adding missing column: ${missingCol}`);
-                        // Use raw SQL to add column
-                        let type = 'BOOLEAN DEFAULT FALSE';
-                        if (missingCol === 'fecha_lanzamiento') type = 'TIMESTAMP';
-                        else if (['sku', 'proveedor_nombre', 'proveedor_contacto'].includes(missingCol)) type = 'TEXT';
-                        else if (missingCol === 'precio_costo') type = 'NUMERIC';
+        // Update Product
+        const result = await db.run(`UPDATE productos SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, values, tx);
+        
+        if (result.changes === 0) {
+             throw new Error('PRODUCT_NOT_FOUND');
+        }
 
-                        await db.raw(`ALTER TABLE productos ADD COLUMN ${missingCol} ${type}`);
-                        
-                        // Retry original update with updated_at
-                        const result = await db.run(`UPDATE productos SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, values);
-                        return NextResponse.json(result);
-                    } catch (alterErr) {
-                        console.error('Failed to auto-add column:', alterErr);
-                        // Continue to fallback
-                    }
-                }
-            }
-         }
-      
-      // 3. Retry Logic: Handle specific column errors (Fallback)
-      // If error is about a missing column, try to remove that column from the update
-      if (errorMessage.includes('no such column') || errorMessage.includes('has no column') || errorMessage.includes('does not exist')) {
-          // Extract column name from error message if possible, or fallback to generic retry
-          // Simple fallback: Retry WITHOUT updated_at first
-          try {
-             const resultRetry = await db.run(`UPDATE productos SET ${setClause} WHERE id = ?`, values);
-             if (resultRetry.changes === 0) {
-                return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-             }
-             // Success on retry
-             return NextResponse.json({ success: true, warning: 'Updated with limited columns' });
-          } catch (retryErr: any) {
-             // If it still fails, it might be one of the dynamic keys. 
-             // We can't easily guess which one, but we can log it.
-             console.error('Database Update Error (Retry 1):', retryErr.message);
-
-             // FINAL ATTEMPT: Filter out known problematic columns like 'descuento_porcentaje' if present in keys
-             const problematicColumns = ['descuento_porcentaje', 'precio_original', 'imagen_url', 'categoria_slug', 'subcategoria_slug'];
-             
-             // Also filter out the specific column that caused the error if identified
-             if (errorMessage.includes('column') && errorMessage.includes('does not exist')) {
-                 const match = errorMessage.match(/column "([^"]+)"/);
-                 if (match && match[1]) {
-                     problematicColumns.push(match[1]);
-                 }
-             }
-
-             const safeKeys = keys.filter(k => !problematicColumns.includes(k));
-             
-             if (safeKeys.length < keys.length) {
-                 const safeSetClause = safeKeys.map(key => `${key} = ?`).join(', ');
-                 const safeValues = safeKeys.map(key => {
-                    const val = updates[key];
-                    if (typeof val === 'object' && val !== null) return JSON.stringify(val);
-                    return val;
-                 });
-                 safeValues.push(id);
-                 
-                 try {
-                     await db.run(`UPDATE productos SET ${safeSetClause} WHERE id = ?`, safeValues);
-                     // Success on final retry
-                     return NextResponse.json({ success: true });
-                 } catch (finalErr: any) {
-                     return NextResponse.json({ 
-                        error: 'Error de base de datos al guardar', 
-                        details: finalErr.message 
-                     }, { status: 500 });
-                 }
-             } else {
-                 return NextResponse.json({ 
-                    error: 'Error de base de datos al guardar', 
-                    details: retryErr.message 
-                 }, { status: 500 });
-             }
-          }
-      } else {
-        // Other DB error
-        return NextResponse.json({ 
-            error: 'Error de base de datos al guardar', 
-            details: dbErr.message 
-        }, { status: 500 });
-      }
-    }
+        // Log operation
+        let logDetails = `Updated fields: ${keys.join(', ')}`;
+        if (updates.descuento_porcentaje) {
+            logDetails += `. Discount: ${updates.descuento_porcentaje}%`;
+        }
+        if (updates.precio) {
+            logDetails += `. Price: ${updates.precio}`;
+        }
+        
+        await db.run(`INSERT INTO admin_logs (action, details, target_id) VALUES (?, ?, ?)`, 
+            ['PRODUCT_UPDATE', logDetails, id], tx);
+    });
 
     // fetch updated
     const updated = await db.get('SELECT * FROM productos WHERE id = ?', [id]);
-     return NextResponse.json(updated);
+    return NextResponse.json(updated);
 
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: 'Failed to update' }, { status: 500 });
+  } catch (err: any) {
+    console.error('Update Error:', err);
+    if (err.message === 'PRODUCT_NOT_FOUND') {
+        return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Failed to update', details: err.message }, { status: 500 });
   }
 }
 

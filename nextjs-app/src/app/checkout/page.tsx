@@ -146,7 +146,7 @@ export default function CheckoutPage() {
             </form>
           </div>
 
-          <div className="lg:col-span-5">
+          <div className="xl:col-span-5 w-full">
              <div className="bg-white text-black p-5 rounded-[30px] shadow-2xl">
                 <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Resumen de Compra</h3>
                 <div className="space-y-2 mb-4">
