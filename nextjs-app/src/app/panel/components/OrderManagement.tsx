@@ -40,6 +40,7 @@ export default function OrderManagement() {
   const [methodFilter, setMethodFilter] = useState('todos')
   const [selectedOrder, setSelectedOrder] = useState<Orden | null>(null)
   const [showModal, setShowModal] = useState(false)
+  const [trackingData, setTrackingData] = useState({ code: '', url: '' })
 
   useEffect(() => {
     cargarOrdenes()
@@ -47,6 +48,15 @@ export default function OrderManagement() {
     const interval = setInterval(cargarOrdenes, 30000) // Poll every 30s instead
     return () => clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    if (selectedOrder) {
+      setTrackingData({
+        code: (selectedOrder as any).tracking_code || '',
+        url: (selectedOrder as any).tracking_url || ''
+      })
+    }
+  }, [selectedOrder])
 
   async function cargarOrdenes() {
     try {
@@ -77,6 +87,27 @@ export default function OrderManagement() {
       }
     } catch (error: any) {
       toast.error('Error al actualizar')
+    }
+  }
+
+  async function actualizarSeguimiento() {
+    if (!selectedOrder) return
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          id: selectedOrder.id, 
+          tracking_code: trackingData.code,
+          tracking_url: trackingData.url
+        })
+      })
+      if (!res.ok) throw new Error('Error al actualizar seguimiento')
+      
+      toast.success('Información de seguimiento actualizada')
+      cargarOrdenes()
+    } catch (error: any) {
+      toast.error(error.message)
     }
   }
 
@@ -133,21 +164,36 @@ export default function OrderManagement() {
           </h1>
           <p className="text-white/45 text-xs md:text-sm mt-1">Control total de pedidos y pagos de la tienda</p>
         </div>
+
+      <div className="flex overflow-x-auto pb-2 md:pb-0 gap-2 no-scrollbar">
+        {['todos', 'pendiente', 'enviado', 'completado', 'cancelado'].map(s => (
+          <button 
+            key={s}
+            onClick={() => setStatusFilter(s)}
+            className={`flex-shrink-0 px-4 py-2 rounded-xl text-[10px] font-black transition-all uppercase tracking-[0.25em] border border-transparent ${
+              statusFilter === s
+                ? 'bg-accent text-ink shadow-[0_18px_50px_-30px_rgba(183,255,42,0.6)]'
+                : 'bg-white/[0.03] text-white/45 hover:text-white hover:bg-white/[0.06] border-white/5'
+            }`}
+          >
+            {s}
+          </button>
+        ))}
+      </div>
         
-        <div className="flex overflow-x-auto pb-2 md:pb-0 gap-2 no-scrollbar">
-          {['todos', 'pendiente', 'enviado'].map(s => (
-            <button 
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`flex-shrink-0 px-4 py-2 rounded-xl text-[10px] font-black transition-all uppercase tracking-[0.25em] border border-transparent ${
-                statusFilter === s
-                  ? 'bg-accent text-ink shadow-[0_18px_50px_-30px_rgba(183,255,42,0.6)]'
-                  : 'bg-white/[0.03] text-white/45 hover:text-white hover:bg-white/[0.06] border-white/5'
-              }`}
-            >
-              {s}
-            </button>
-          ))}
+        <div className="flex gap-4">
+           <div className="bg-emerald-500/10 border border-emerald-500/20 px-6 py-3 rounded-[24px] text-right">
+              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400 opacity-70">Total Ventas</p>
+              <p className="text-2xl font-black text-white tracking-tighter">
+                ${ordenes.filter(o => o.estado === 'completado').reduce((acc, o) => acc + o.total, 0).toLocaleString()}
+              </p>
+           </div>
+           <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-[24px] text-right">
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Pedidos Hoy</p>
+              <p className="text-2xl font-black text-white tracking-tighter">
+                {ordenes.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString()).length}
+              </p>
+           </div>
         </div>
       </div>
 
@@ -304,6 +350,40 @@ export default function OrderManagement() {
                               <p className="text-xs font-black text-white">{selectedOrder.provincia || '-'}</p>
                            </div>
                         </div>
+                      </div>
+                   </section>
+
+                   <section>
+                      <h3 className="text-xs font-black text-white/40 uppercase tracking-[0.32em] mb-6 flex items-center gap-2">
+                        <Truck className="w-4 h-4" /> Seguimiento
+                      </h3>
+                      <div className="bg-white/[0.03] border border-white/10 p-6 rounded-3xl space-y-4">
+                        <div>
+                          <p className="text-[10px] text-white/35 font-black uppercase tracking-widest mb-2">Código de Seguimiento</p>
+                          <input 
+                            type="text" 
+                            value={trackingData.code}
+                            onChange={(e) => setTrackingData({...trackingData, code: e.target.value})}
+                            placeholder="Ej: AR123456789"
+                            className="w-full bg-black/40 border border-white/10 p-3 rounded-xl text-sm font-bold text-white outline-none focus:border-accent/50"
+                          />
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-white/35 font-black uppercase tracking-widest mb-2">URL de Seguimiento</p>
+                          <input 
+                            type="text" 
+                            value={trackingData.url}
+                            onChange={(e) => setTrackingData({...trackingData, url: e.target.value})}
+                            placeholder="https://correo.com/track/..."
+                            className="w-full bg-black/40 border border-white/10 p-3 rounded-xl text-sm font-bold text-white outline-none focus:border-accent/50"
+                          />
+                        </div>
+                        <button 
+                          onClick={actualizarSeguimiento}
+                          className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                        >
+                          Actualizar Seguimiento
+                        </button>
                       </div>
                    </section>
                 </div>

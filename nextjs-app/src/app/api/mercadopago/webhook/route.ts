@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import db from '@/lib/db'
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,30 +33,21 @@ export async function POST(request: NextRequest) {
       }
 
       const paymentData = await res.json()
-      const { status, external_reference, transaction_details, date_approved } = paymentData
+      const { status, external_reference, status_detail } = paymentData
       const orderId = external_reference
 
-      console.log(`Payment ${id} status: ${status}, order: ${orderId}`)
+      console.log(`Payment ${id} status: ${status}, detail: ${status_detail}, order: ${orderId}`)
 
       if (orderId && status === 'approved') {
-        // Update order in Supabase
-        const { error } = await supabase
-          .from('ordenes')
-          .update({
-            estado: 'completado', // Map to "Completado"
-            pago_id: id,
-            pago_estado: status,
-            pago_metodo: 'mercadopago',
-            updated_at: new Date().toISOString(),
-            // Factura simulation
-            factura_url: `https://api.mercadopago.com/v1/payments/${id}/ticket` // Not a real legal invoice, but a receipt
-          })
-          .eq('id', orderId)
-
-        if (error) {
-          console.error('Error updating order:', error)
-          return NextResponse.json({ status: 'error', message: 'DB update failed' }, { status: 500 })
-        }
+        // Update order in database using db utility
+        await db.run(
+          `UPDATE ordenes SET 
+            estado = $1, 
+            mercadopago_payment_id = $2, 
+            updated_at = CURRENT_TIMESTAMP 
+           WHERE id = $3 OR numero_orden = $3`,
+          ['completado', id, orderId]
+        )
         
         console.log(`Order ${orderId} updated to completed`)
       }

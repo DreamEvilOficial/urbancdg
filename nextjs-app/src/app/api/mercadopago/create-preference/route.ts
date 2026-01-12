@@ -28,19 +28,18 @@ export async function POST(request: NextRequest) {
     const notificationUrlObj = new URL('api/mercadopago/webhook', base)
     
     // Validar precios contra la base de datos
-    const { supabase } = await import('@/lib/supabase')
+    const db = (await import('@/lib/db')).default
     const validatedItems = []
     
     for (const item of items) {
       if (!item.id) continue // Skip invalid items
 
-      const { data: product, error } = await supabase
-        .from('productos')
-        .select('id, nombre, precio, activo')
-        .eq('id', item.id)
-        .single()
+      const product = await db.get(
+        'SELECT id, nombre, precio, activo FROM productos WHERE id = ?',
+        [item.id]
+      )
         
-      if (error || !product || !product.activo) {
+      if (!product || !product.activo) {
         throw new Error(`Producto no disponible: ${item.title}`)
       }
 

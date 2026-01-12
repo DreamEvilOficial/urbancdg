@@ -42,7 +42,7 @@ export async function POST(req: Request) {
         const body = await req.json();
         console.log('[orders:POST] Received body:', JSON.stringify(body, null, 2));
 
-        const { items, cliente, total, subtotal, envio, notas, metodo_pago, cliente_nombre, cliente_email, cliente_telefono } = body;
+        const { items, total, subtotal, envio, descuento, notas, metodo_pago, cliente_nombre, cliente_email, cliente_telefono, direccion_envio } = body;
 
         // 1. Validaciones básicas
         if (!items || !Array.isArray(items) || items.length === 0) {
@@ -50,9 +50,10 @@ export async function POST(req: Request) {
         }
 
         // Normalizar y sanitizar datos del cliente
-        const nombre = sanitizeInput(cliente?.nombre || cliente_nombre || '');
-        const email = sanitizeInput(cliente?.email || cliente_email || '');
-        const telefono = sanitizeInput(cliente?.telefono || cliente_telefono || '');
+        const nombre = sanitizeInput(cliente_nombre || '');
+        const email = sanitizeInput(cliente_email || '');
+        const telefono = sanitizeInput(cliente_telefono || '');
+        const direccion = sanitizeInput(direccion_envio || '');
         const notasSeguras = sanitizeInput(notas || '');
         const metodoPagoSeguro = sanitizeInput(metodo_pago || 'transferencia');
 
@@ -62,16 +63,16 @@ export async function POST(req: Request) {
 
         // Generar IDs
         const orderId = uuidv4();
-        const numeroOrden = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        const numeroOrden = body.numero_orden || `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
         // 2. Ejecutar transacción
         const result = await db.transaction(async (client) => {
             // A. Crear la orden principal
             const insertOrderQuery = `
                 INSERT INTO ordenes (
-                    id, numero_orden, cliente_nombre, cliente_email, cliente_telefono,
-                    subtotal, total, envio, estado, metodo_pago, notas
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                    id, numero_orden, cliente_nombre, cliente_email, cliente_telefono, direccion_envio,
+                    subtotal, total, envio, descuento, estado, metodo_pago, notas
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             `;
             
             await client.query(insertOrderQuery, [
@@ -80,9 +81,11 @@ export async function POST(req: Request) {
                 nombre, 
                 email || null, 
                 telefono || null,
+                direccion || null,
                 subtotal || total || 0, 
                 total || 0, 
                 envio || 0, 
+                descuento || 0,
                 'pendiente', 
                 metodoPagoSeguro, 
                 notasSeguras
@@ -167,13 +170,22 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
     try {
         const body = await req.json();
-        const { id, estado } = body;
+        const { id, estado, tracking_code, tracking_url } = body;
 
-        if (!id || !estado) {
-            return NextResponse.json({ error: 'ID and estado are required' }, { status: 400 });
+        if (!id) {
+            return NextResponse.json({ error: 'ID is required' }, { status: 400 });
         }
 
-        await db.run('UPDATE ordenes SET estado = ? WHERE id = ?', [estado, id]);
+        if (estado) {
+            await db.run('UPDATE ordenes SET estado = ? WHERE id = ?', [estado, id]);
+        }
+
+        if (tracking_code !== undefined || tracking_url !== undefined) {
+            await db.run(
+                'UPDATE ordenes SET tracking_code = ?, tracking_url = ? WHERE id = ?',
+                [tracking_code || null, tracking_url || null, id]
+            );
+        }
 
         return NextResponse.json({ success: true });
     } catch (err: any) {

@@ -22,7 +22,8 @@ export default function PaymentPage() {
   const [config, setConfig] = useState<any>({})
 
   const isBank = paymentMethod === 'transferencia'
-  const payableTotal = Math.round((deliveryData?.finalTotal || 0) * (isBank ? 0.9 : 1))
+  const discountAmount = isBank ? Math.round(deliveryData?.finalTotal * 0.1) : 0
+  const payableTotal = (deliveryData?.finalTotal || 0) - discountAmount
 
   useEffect(() => {
     const loadConfig = async () => {
@@ -59,9 +60,11 @@ export default function PaymentPage() {
         direccion_envio: direccionCompleta,
         envio: deliveryData.shippingCost,
         subtotal: total(),
+        descuento: discountAmount,
         total: payableTotal,
         estado: 'pendiente',
-        notas: `Método: ${paymentMethod === 'mercadopago' ? 'MP' : 'Transferencia'}\nDNI: ${deliveryData.formData.dniCuit}\nNota: ${orderNote}`,
+        metodo_pago: paymentMethod,
+        notas: `DNI: ${deliveryData.formData.dniCuit}\nNota: ${orderNote}`,
         items: items // Fix: Send items to API
       })
       
@@ -74,7 +77,12 @@ export default function PaymentPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            items: items.map(i => ({ title: i.nombre, unit_price: i.precio, quantity: i.cantidad })),
+            items: items.map(i => ({ 
+              id: i.id, // Incluir ID para validación en el servidor
+              title: i.nombre, 
+              unit_price: i.precio, 
+              quantity: i.cantidad 
+            })),
             shippingCost: deliveryData.shippingCost || 0,
             ordenId: orden.id,
             payer: { email: dummyEmail, name: deliveryData.formData.nombre }
@@ -156,7 +164,7 @@ export default function PaymentPage() {
                <div className="space-y-2 border-t border-black/5 pt-4">
                   <div className="flex justify-between text-[9px] font-bold opacity-40 uppercase"><span>Subtotal</span><span>${total().toLocaleString()}</span></div>
                   <div className="flex justify-between text-[9px] font-bold opacity-40 uppercase"><span>Envío</span><span>${deliveryData.shippingCost.toLocaleString()}</span></div>
-                  {isBank && <div className="flex justify-between text-[9px] font-black text-green-600 uppercase"><span>10% OFF</span><span>- ${Math.round(deliveryData.finalTotal * 0.1).toLocaleString()}</span></div>}
+                  {isBank && <div className="flex justify-between text-[9px] font-black text-green-600 uppercase"><span>10% OFF</span><span>- ${discountAmount.toLocaleString()}</span></div>}
                   <div className="flex justify-between items-end pt-2 border-t border-black/5 mt-2">
                     <span className="font-black text-sm uppercase">Total</span>
                     <span className="text-4xl font-black tracking-tighter leading-none">${payableTotal.toLocaleString()}</span>
@@ -171,6 +179,7 @@ export default function PaymentPage() {
         <TransferPayment
           orderTotal={payableTotal}
           orderItems={items}
+          orderId={createdOrder?.id}
           orderNumber={createdOrder?.numero_orden}
           customer={{ nombre: deliveryData?.formData?.nombre, apellido: deliveryData?.formData?.apellido }}
           onClose={() => setShowTransferModal(false)}

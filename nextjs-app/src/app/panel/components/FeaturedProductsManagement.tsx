@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Star, TrendingUp, Sparkles, Clock, Tag } from 'lucide-react'
+import { Search, Star, TrendingUp, Sparkles, Clock, Tag, X, Save, DollarSign, Percent } from 'lucide-react'
 import { Producto } from '@/lib/supabase'
 import toast from 'react-hot-toast'
 
@@ -9,6 +9,23 @@ export default function FeaturedProductsManagement() {
   const [products, setProducts] = useState<Producto[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+
+  // Modal States
+  const [proximoModalOpen, setProximoModalOpen] = useState(false)
+  const [ofertaModalOpen, setOfertaModalOpen] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<Producto | null>(null)
+  
+  // Proximo State
+  const [tempDate, setTempDate] = useState('')
+  const [tempProximoActive, setTempProximoActive] = useState(false)
+
+  // Oferta State
+  const [tempOfertaActive, setTempOfertaActive] = useState(false)
+  const [tempPrices, setTempPrices] = useState({
+    original: 0,
+    current: 0,
+    discount: 0
+  })
 
   useEffect(() => {
     fetchProducts()
@@ -26,13 +43,13 @@ export default function FeaturedProductsManagement() {
     }
   }
 
-  async function toggleField(id: string, field: string, currentValue: boolean) {
+  async function toggleField(id: string, field: keyof Producto, currentValue: boolean) {
     const newValue = !currentValue
     
     // Handle specific logic for proximamente to ensure legacy column is also updated
-    const updates: any = { [field]: newValue }
+    const updates = { [field]: newValue } as Partial<Producto>
     if (field === 'proximamente') {
-        updates['proximo_lanzamiento'] = newValue
+        updates.proximo_lanzamiento = newValue
     }
 
     try {
@@ -60,27 +77,101 @@ export default function FeaturedProductsManagement() {
     }
   }
 
-  async function updateDate(id: string, date: string) {
-    try {
-      setProducts(products.map(p => {
-        if (p.id === id) {
-          return { ...p, fecha_lanzamiento: date }
-        }
-        return p
-      }))
-      
-      const res = await fetch(`/api/products/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fecha_lanzamiento: date })
-      })
-      
-      if (!res.ok) throw new Error('Error al actualizar fecha')
-      toast.success('Fecha actualizada')
-    } catch (error) {
-      toast.error('Error al actualizar fecha')
-      fetchProducts()
+  function openProximoModal(product: Producto) {
+    setSelectedProduct(product)
+    setTempProximoActive(!!(product.proximo_lanzamiento || product.proximamente))
+    setTempDate(product.fecha_lanzamiento ? new Date(product.fecha_lanzamiento).toISOString().slice(0, 16) : '')
+    setProximoModalOpen(true)
+  }
+
+  function openOfertaModal(product: Producto) {
+    setSelectedProduct(product)
+    setTempOfertaActive(!!product.descuento_activo)
+    setTempPrices({
+        original: product.precio_original || product.precio || 0,
+        current: product.precio || 0,
+        discount: product.descuento_porcentaje || 0
+    })
+    setOfertaModalOpen(true)
+  }
+
+  async function handleSaveProximo() {
+    if (!selectedProduct) return
+    
+    const updates = {
+        proximo_lanzamiento: tempProximoActive,
+        proximamente: tempProximoActive,
+        fecha_lanzamiento: tempDate || null
     }
+
+    try {
+        const res = await fetch(`/api/products/${selectedProduct.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updates)
+        })
+
+        if (!res.ok) throw new Error('Error al actualizar')
+
+        setProducts(products.map(p => {
+            if (p.id === selectedProduct.id) {
+                return { ...p, ...updates }
+            }
+            return p
+        }))
+
+        toast.success('Lanzamiento actualizado')
+        setProximoModalOpen(false)
+    } catch (error) {
+        toast.error('Error al actualizar')
+    }
+  }
+
+  async function handleSaveOferta() {
+    if (!selectedProduct) return
+    
+    const updates = {
+        descuento_activo: tempOfertaActive,
+        precio: tempPrices.current,
+        precio_original: tempPrices.original,
+        descuento_porcentaje: tempPrices.discount
+    }
+
+    try {
+        const res = await fetch(`/api/products/${selectedProduct.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updates)
+        })
+
+        if (!res.ok) throw new Error('Error al actualizar')
+
+        setProducts(products.map(p => {
+            if (p.id === selectedProduct.id) {
+                return { ...p, ...updates }
+            }
+            return p
+        }))
+
+        toast.success('Oferta actualizada')
+        setOfertaModalOpen(false)
+    } catch (error) {
+        toast.error('Error al actualizar')
+    }
+  }
+
+  function updatePriceFromDiscount(discount: number) {
+     const original = tempPrices.original
+     if (original <= 0) return
+     const current = Math.round(original - (original * discount / 100))
+     setTempPrices(prev => ({ ...prev, discount, current }))
+  }
+
+  function updateDiscountFromPrice(current: number) {
+      const original = tempPrices.original
+      if (original <= 0) return
+      const discount = Math.round(((original - current) / original) * 100)
+      setTempPrices(prev => ({ ...prev, current, discount: Math.max(0, discount) }))
   }
 
   const filteredProducts = products.filter(p => 
@@ -116,6 +207,7 @@ export default function FeaturedProductsManagement() {
             <thead className="bg-white/5 text-white font-black uppercase tracking-wider text-[10px]">
                 <tr>
                 <th className="p-4">Producto</th>
+                <th className="p-4 text-center">Oferta</th>
                 <th className="p-4 text-center">Destacado</th>
                 <th className="p-4 text-center">Top</th>
                 <th className="p-4 text-center">Nuevo</th>
@@ -148,6 +240,15 @@ export default function FeaturedProductsManagement() {
                         </td>
                         <td className="p-4 text-center">
                         <button 
+                            onClick={() => openOfertaModal(product)} 
+                            className={`p-3 rounded-lg transition-all active:scale-95 ${product.descuento_activo ? 'bg-pink-500/20 text-pink-400 shadow-[0_0_15px_-5px_rgba(236,72,153,0.5)]' : 'text-white/20 hover:text-white/50 hover:bg-white/5'}`}
+                            title="Gestionar Oferta"
+                        >
+                            <Tag className="w-5 h-5" />
+                        </button>
+                        </td>
+                        <td className="p-4 text-center">
+                        <button 
                             onClick={() => toggleField(product.id, 'destacado', !!product.destacado)} 
                             className={`p-3 rounded-lg transition-all active:scale-95 ${product.destacado ? 'bg-yellow-500/20 text-yellow-400 shadow-[0_0_15px_-5px_rgba(250,204,21,0.5)]' : 'text-white/20 hover:text-white/50 hover:bg-white/5'}`}
                             title="Alternar Destacado"
@@ -166,8 +267,8 @@ export default function FeaturedProductsManagement() {
                         </td>
                         <td className="p-4 text-center">
                         <button 
-                            onClick={() => toggleField(product.id, 'nuevo_lanzamiento', !!(product as any).nuevo_lanzamiento)} 
-                            className={`p-3 rounded-lg transition-all active:scale-95 ${(product as any).nuevo_lanzamiento ? 'bg-green-500/20 text-green-400 shadow-[0_0_15px_-5px_rgba(74,222,128,0.5)]' : 'text-white/20 hover:text-white/50 hover:bg-white/5'}`}
+                            onClick={() => toggleField(product.id, 'nuevo_lanzamiento', !!product.nuevo_lanzamiento)} 
+                            className={`p-3 rounded-lg transition-all active:scale-95 ${product.nuevo_lanzamiento ? 'bg-green-500/20 text-green-400 shadow-[0_0_15px_-5px_rgba(74,222,128,0.5)]' : 'text-white/20 hover:text-white/50 hover:bg-white/5'}`}
                             title="Alternar Nuevo Lanzamiento"
                         >
                             <Sparkles className="w-5 h-5" />
@@ -175,9 +276,9 @@ export default function FeaturedProductsManagement() {
                         </td>
                         <td className="p-4 text-center">
                         <button 
-                            onClick={() => toggleField(product.id, 'proximamente', !!((product as any).proximo_lanzamiento || (product as any).proximamente))} 
-                            className={`p-3 rounded-lg transition-all active:scale-95 ${(product as any).proximo_lanzamiento || (product as any).proximamente ? 'bg-blue-500/20 text-blue-400 shadow-[0_0_15px_-5px_rgba(96,165,250,0.5)]' : 'text-white/20 hover:text-white/50 hover:bg-white/5'}`}
-                            title="Alternar Próximamente"
+                            onClick={() => openProximoModal(product)} 
+                            className={`p-3 rounded-lg transition-all active:scale-95 ${product.proximo_lanzamiento || product.proximamente ? 'bg-blue-500/20 text-blue-400 shadow-[0_0_15px_-5px_rgba(96,165,250,0.5)]' : 'text-white/20 hover:text-white/50 hover:bg-white/5'}`}
+                            title="Gestionar Próximamente"
                         >
                             <Clock className="w-5 h-5" />
                         </button>
@@ -210,7 +311,13 @@ export default function FeaturedProductsManagement() {
                             </div>
                         </div>
                         
-                        <div className="grid grid-cols-4 gap-2">
+                        <div className="grid grid-cols-5 gap-2">
+                            <button 
+                                onClick={() => openOfertaModal(product)} 
+                                className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all ${product.descuento_activo ? 'bg-pink-500/10 text-pink-400 border border-pink-500/20' : 'bg-white/5 text-white/20 border border-white/5'}`}
+                            >
+                                <Tag className="w-4 h-4" />
+                            </button>
                             <button 
                                 onClick={() => toggleField(product.id, 'destacado', !!product.destacado)} 
                                 className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all ${product.destacado ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : 'bg-white/5 text-white/20 border border-white/5'}`}
@@ -224,34 +331,167 @@ export default function FeaturedProductsManagement() {
                                 <TrendingUp className="w-4 h-4" />
                             </button>
                             <button 
-                                onClick={() => toggleField(product.id, 'nuevo_lanzamiento', !!(product as any).nuevo_lanzamiento)} 
-                                className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all ${(product as any).nuevo_lanzamiento ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-white/5 text-white/20 border border-white/5'}`}
+                                onClick={() => toggleField(product.id, 'nuevo_lanzamiento', !!product.nuevo_lanzamiento)} 
+                                className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all ${product.nuevo_lanzamiento ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-white/5 text-white/20 border border-white/5'}`}
                             >
                                 <Sparkles className="w-4 h-4" />
                             </button>
                             <button 
-                                onClick={() => toggleField(product.id, 'proximamente', !!((product as any).proximo_lanzamiento || (product as any).proximamente))} 
-                                className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all ${(product as any).proximo_lanzamiento || (product as any).proximamente ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-white/5 text-white/20 border border-white/5'}`}
+                                onClick={() => openProximoModal(product)} 
+                                className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all ${product.proximo_lanzamiento || product.proximamente ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-white/5 text-white/20 border border-white/5'}`}
                             >
                                 <Clock className="w-4 h-4" />
                             </button>
                         </div>
-                        {((product as any).proximo_lanzamiento || (product as any).proximamente) && (
-                            <div className="mt-3 pt-3 border-t border-white/5 animate-in fade-in slide-in-from-top-2">
-                                <label className="block text-[9px] font-black uppercase text-white/40 tracking-widest mb-2">Fecha de Lanzamiento</label>
-                                <input 
-                                    type="datetime-local"
-                                    value={(product as any).fecha_lanzamiento ? new Date((product as any).fecha_lanzamiento).toISOString().slice(0, 16) : ''}
-                                    onChange={(e) => updateDate(product.id, e.target.value)}
-                                    className="w-full bg-black/50 border border-white/10 p-3 rounded-xl text-xs font-bold text-white focus:border-blue-500 transition-all outline-none"
-                                />
-                            </div>
-                        )}
                     </div>
                 )
             })}
         </div>
       </div>
+
+      {/* Proximo Modal */}
+      {proximoModalOpen && selectedProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-[#0f0f0f] border border-white/10 rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-6 relative">
+                <button 
+                    onClick={() => setProximoModalOpen(false)}
+                    className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors"
+                >
+                    <X className="w-5 h-5" />
+                </button>
+                
+                <div className="text-center space-y-2">
+                    <div className="w-12 h-12 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center mx-auto mb-4">
+                        <Clock className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-xl font-black uppercase text-white tracking-wider">Próximo Lanzamiento</h3>
+                    <p className="text-white/50 text-xs">Configura la fecha de disponibilidad</p>
+                </div>
+
+                <div className="space-y-4">
+                    <label className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 cursor-pointer hover:bg-white/10 transition">
+                        <span className="font-bold text-sm text-white">Activar Próximamente</span>
+                        <div className={`w-12 h-6 rounded-full p-1 transition-colors ${tempProximoActive ? 'bg-blue-500' : 'bg-white/10'}`}>
+                            <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${tempProximoActive ? 'translate-x-6' : 'translate-x-0'}`} />
+                        </div>
+                        <input type="checkbox" className="hidden" checked={tempProximoActive} onChange={e => setTempProximoActive(e.target.checked)} />
+                    </label>
+
+                    {tempProximoActive && (
+                        <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                            <label className="text-[10px] font-black uppercase text-white/40 tracking-widest px-1">Fecha y Hora</label>
+                            <input 
+                                type="datetime-local"
+                                value={tempDate}
+                                onChange={e => setTempDate(e.target.value)}
+                                className="w-full bg-black border border-white/10 p-4 rounded-2xl text-sm font-bold text-white focus:border-blue-500 transition-all outline-none"
+                            />
+                        </div>
+                    )}
+                </div>
+
+                <button 
+                    onClick={handleSaveProximo}
+                    className="w-full py-4 bg-white text-black rounded-2xl font-black uppercase tracking-widest hover:brightness-90 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                    <Save className="w-4 h-4" /> Guardar Cambios
+                </button>
+            </div>
+        </div>
+      )}
+
+      {/* Oferta Modal */}
+      {ofertaModalOpen && selectedProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-[#0f0f0f] border border-white/10 rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-6 relative">
+                <button 
+                    onClick={() => setOfertaModalOpen(false)}
+                    className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors"
+                >
+                    <X className="w-5 h-5" />
+                </button>
+                
+                <div className="text-center space-y-2">
+                    <div className="w-12 h-12 rounded-full bg-pink-500/20 text-pink-400 flex items-center justify-center mx-auto mb-4">
+                        <Tag className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-xl font-black uppercase text-white tracking-wider">Oferta Especial</h3>
+                    <p className="text-white/50 text-xs">Configura precios y descuentos</p>
+                </div>
+
+                <div className="space-y-4">
+                    <label className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 cursor-pointer hover:bg-white/10 transition">
+                        <span className="font-bold text-sm text-white">Activar Oferta</span>
+                        <div className={`w-12 h-6 rounded-full p-1 transition-colors ${tempOfertaActive ? 'bg-pink-500' : 'bg-white/10'}`}>
+                            <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${tempOfertaActive ? 'translate-x-6' : 'translate-x-0'}`} />
+                        </div>
+                        <input type="checkbox" className="hidden" checked={tempOfertaActive} onChange={e => setTempOfertaActive(e.target.checked)} />
+                    </label>
+
+                    {tempOfertaActive && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-white/40 tracking-widest px-1">Precio Original</label>
+                                <div className="relative">
+                                    <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                                    <input 
+                                        type="number"
+                                        value={tempPrices.original}
+                                        onChange={e => {
+                                            const val = Number(e.target.value)
+                                            setTempPrices(p => ({ ...p, original: val }))
+                                            if (val > 0 && tempPrices.current > 0) {
+                                                 const discount = Math.round(((val - tempPrices.current) / val) * 100)
+                                                 setTempPrices(p => ({ ...p, original: val, discount: Math.max(0, discount) }))
+                                            }
+                                        }}
+                                        className="w-full bg-black border border-white/10 pl-10 pr-4 py-4 rounded-2xl text-sm font-bold text-white focus:border-pink-500 transition-all outline-none"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-white/40 tracking-widest px-1">Precio Oferta</label>
+                                    <div className="relative">
+                                        <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                                        <input 
+                                            type="number"
+                                            value={tempPrices.current}
+                                            onChange={e => updateDiscountFromPrice(Number(e.target.value))}
+                                            className="w-full bg-black border border-white/10 pl-10 pr-4 py-4 rounded-2xl text-sm font-bold text-white focus:border-pink-500 transition-all outline-none"
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-white/40 tracking-widest px-1">Descuento</label>
+                                    <div className="relative">
+                                        <Percent className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                                        <input 
+                                            type="number"
+                                            value={tempPrices.discount}
+                                            onChange={e => updatePriceFromDiscount(Number(e.target.value))}
+                                            className="w-full bg-black border border-white/10 pl-10 pr-4 py-4 rounded-2xl text-sm font-bold text-white focus:border-pink-500 transition-all outline-none"
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <button 
+                    onClick={handleSaveOferta}
+                    className="w-full py-4 bg-white text-black rounded-2xl font-black uppercase tracking-widest hover:brightness-90 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                    <Save className="w-4 h-4" /> Guardar Cambios
+                </button>
+            </div>
+        </div>
+      )}
     </div>
   )
 }

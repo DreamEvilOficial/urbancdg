@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react'
 import { Copy, Check, Send, Instagram } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
+import { useCartStore } from '@/store/cartStore'
 
 interface TransferPaymentProps {
   orderTotal: number
   orderItems: any[]
+  orderId?: string
   orderNumber?: string
   customer?: { nombre?: string; apellido?: string }
   onClose: () => void
@@ -23,7 +25,7 @@ interface PaymentConfig {
   instagram?: string
 }
 
-export default function TransferPayment({ orderTotal, orderItems, orderNumber, customer, onClose }: TransferPaymentProps) {
+export default function TransferPayment({ orderTotal, orderItems, orderId, orderNumber, customer, onClose }: TransferPaymentProps) {
   const [mounted, setMounted] = useState(false)
   const [config, setConfig] = useState<PaymentConfig | null>(null)
   const [copied, setCopied] = useState<{ [key: string]: boolean }>({})
@@ -110,193 +112,85 @@ ${config.mensaje_transferencia || ''}
     window.open(`https://instagram.com/${username}`, '_blank')
   }
 
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    // Modal no se cierra al hacer click en el fondo
-    // if (e.target === e.currentTarget) {
-    //   onClose()
-    // }
-  }
-
-  if (!mounted || loading) {
-    return (
-      <div className="modal-overlay" onClick={handleOverlayClick}>
-        <div className="modal-content glass-card" onClick={(e) => e.stopPropagation()}>
-          <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-secondary">Cargando datos...</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (!config) {
-    return (
-      <div className="modal-overlay" onClick={handleOverlayClick}>
-        <div className="modal-content glass-card" onClick={(e) => e.stopPropagation()}>
-          <div className="modal-header">
-            <h2 className="text-2xl font-bold">Error</h2>
-            <button onClick={onClose} className="close-btn">✕</button>
-          </div>
-          <div className="modal-body">
-            <p className="text-center text-secondary">
-              No se pudo cargar la configuración de pago.
-            </p>
-          </div>
-        </div>
-      </div>
-    )
+  const handleFinish = () => {
+    // Limpiar carrito y redirigir
+    const cartStore = (window as any).cartStore || useCartStore.getState()
+    if (cartStore && cartStore.clearCart) {
+      cartStore.clearCart()
+    }
+    onClose()
+    window.location.href = `/success?orden=${orderId || orderNumber || ''}`
   }
 
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="modal-content glass-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '550px', maxHeight: '90vh', overflowY: 'auto', zoom: 0.85 }}>
-        <div className="modal-header" style={{ padding: '1rem' }}>
-          <h2 className="text-xl font-bold text-white">💳 Pago por Transferencia</h2>
-          <button onClick={onClose} className="close-btn">✕</button>
-        </div>
+      <div className="modal-content glass-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '550px', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div className="p-6 md:p-8">
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white">
+                Pago por <span className="text-pink-500">Transferencia</span>
+              </h2>
+              <p className="text-white/40 text-xs font-bold uppercase tracking-widest mt-1">Orden #{orderNumber}</p>
+            </div>
+            <button onClick={onClose} className="text-white/20 hover:text-white transition-colors">✕</button>
+          </div>
 
-        <div className="modal-body" style={{ padding: '1rem' }}>
-          {/* Resumen del pedido */}
-          <div className="mb-3 p-3 rounded-lg" style={{ background: 'var(--glass-bg)' }}>
-            <h3 className="font-bold mb-2 text-white text-sm">📦 Resumen del Pedido</h3>
-            <div className="space-y-2 mb-2">
-              {orderItems.map((item, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <Image 
-                    src={item.imagen_url || '/proximamente.png'} 
-                    alt={item.nombre}
-                    width={48}
-                    height={48}
-                    className="object-cover rounded-md"
-                    unoptimized
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-medium text-sm truncate">{item.nombre}</p>
-                    <div className="flex gap-2 text-xs text-gray-300">
-                      {item.talle && <span>Talle: {item.talle}</span>}
-                      {item.color && <span>Color: {item.color}</span>}
-                    </div>
-                    <p className="text-xs text-gray-400">x{item.cantidad}</p>
+          <div className="space-y-6">
+            {/* Datos bancarios */}
+            <div className="grid gap-3">
+              {[
+                { label: 'Alias', value: config.alias, copyable: true },
+                { label: 'CVU', value: config.cvu, copyable: true },
+                { label: 'Titular', value: config.titular },
+                { label: 'Banco', value: config.banco },
+              ].map((item, i) => item.value && (
+                <div key={i} className="bg-white/[0.03] border border-white/10 p-4 rounded-2xl flex items-center justify-between group hover:border-white/20 transition-all">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-1">{item.label}</p>
+                    <p className="font-bold text-white tracking-wide">{item.value}</p>
                   </div>
-                  <span className="font-semibold text-white text-sm">${(item.precio * item.cantidad).toLocaleString()}</span>
+                  {item.copyable && (
+                    <button 
+                      onClick={() => copyToClipboard(item.value, item.label.toLowerCase())}
+                      className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-white text-white hover:text-black transition-all"
+                    >
+                      {copied[item.label.toLowerCase()] ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
-            <div className="pt-2">
-              <div className="flex justify-between font-bold">
-                <span className="text-white">Total:</span>
-                <span className="text-white">$<span suppressHydrationWarning>{orderTotal.toLocaleString()}</span></span>
+
+            {/* Total */}
+            <div className="bg-white text-black p-6 rounded-3xl flex items-center justify-between shadow-2xl">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Monto a transferir</p>
+                <p className="text-3xl font-black tracking-tighter">${orderTotal.toLocaleString()}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Descuento aplicado</p>
+                <p className="text-xs font-black text-green-600">10% OFF EXTRA</p>
               </div>
             </div>
-          </div>
 
-          {/* Datos bancarios */}
-          <div className="space-y-2">
-            <h3 className="font-bold text-white text-sm mb-2">💰 Datos para Transferencia</h3>
-
-            {/* CVU */}
-            {config.cvu && (
-              <div className="p-2 rounded-lg" style={{ background: 'var(--glass-bg)' }}>
-                <label className="text-xs font-semibold text-white block mb-1">CVU</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={config.cvu}
-                    readOnly
-                    className="form-input flex-1 font-mono"
-                  />
-                  <button
-                    onClick={() => copyToClipboard(config.cvu, 'cvu')}
-                    className="icon-btn"
-                    title="Copiar CVU"
-                  >
-                    {copied.cvu ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Alias */}
-            {config.alias && (
-              <div className="p-2 rounded-lg" style={{ background: 'var(--glass-bg)' }}>
-                <label className="text-xs font-semibold text-white block mb-1">Alias</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={config.alias}
-                    readOnly
-                    className="form-input flex-1"
-                  />
-                  <button
-                    onClick={() => copyToClipboard(config.alias, 'alias')}
-                    className="icon-btn"
-                    title="Copiar Alias"
-                  >
-                    {copied.alias ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Titular */}
-            {config.titular && (
-              <div className="p-2 rounded-lg" style={{ background: 'var(--glass-bg)' }}>
-                <label className="text-xs font-semibold text-white block mb-1">Titular</label>
-                <input
-                  type="text"
-                  value={config.titular}
-                  readOnly
-                  className="form-input w-full"
-                />
-              </div>
-            )}
-
-            {/* Banco */}
-            {config.banco && (
-              <div className="p-2 rounded-lg" style={{ background: 'var(--glass-bg)' }}>
-                <label className="text-xs font-semibold text-white block mb-1">Banco</label>
-                <input
-                  type="text"
-                  value={config.banco}
-                  readOnly
-                  className="form-input w-full"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Instrucciones */}
-          <div className="mt-3 p-2 rounded-lg bg-blue-500/10">
-            <h4 className="font-bold mb-1 text-blue-300 text-xs">📝 Instrucciones</h4>
-            <ol className="text-xs space-y-0.5 text-blue-200">
-              <li>1. Realiza la transferencia por el monto total</li>
-              <li>2. Guarda el comprobante de pago</li>
-              <li>3. Envíanos el comprobante por WhatsApp o Instagram</li>
-              <li>4. Incluye tu número de orden o nombre completo</li>
-            </ol>
-          </div>
-
-          <div className="space-y-2 mt-3">
-            {/* Botón de WhatsApp */}
-            <button
-              onClick={handleSendWhatsApp}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-bold text-sm transition shadow-lg bg-[#25D366] hover:bg-[#20BA5A] text-black"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-              </svg>
-              Enviar Comprobante por WhatsApp
-            </button>
-
-            {/* Botón de Instagram */}
-            <button
-              onClick={handleSendInstagram}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-bold text-sm transition shadow-lg bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 hover:brightness-110 text-white"
-            >
-              <Instagram className="w-5 h-5" />
-              Enviar Comprobante por Instagram
-            </button>
+            {/* Acciones */}
+            <div className="space-y-3 pt-2">
+              <button
+                onClick={handleSendWhatsApp}
+                className="w-full bg-[#25D366] text-black py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-3 shadow-lg shadow-[#25D366]/20"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                ENVIAR COMPROBANTE
+              </button>
+              
+              <button
+                onClick={handleFinish}
+                className="w-full bg-white/5 text-white/50 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-white hover:text-black transition-all"
+              >
+                YA REALICÉ EL PAGO
+              </button>
+            </div>
           </div>
         </div>
       </div>

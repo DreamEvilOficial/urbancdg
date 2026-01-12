@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { CheckCircle, Home, ShoppingBag } from 'lucide-react'
+import { CheckCircle, Home, ShoppingBag, Truck } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import ReviewForm from '@/components/ReviewForm'
@@ -114,13 +114,20 @@ function SuccessContent() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-center gap-4 mb-16">
+        <div className="flex flex-wrap justify-center gap-4 mb-16">
           <Link 
             href="/" 
             className="flex items-center gap-2 px-6 py-3 bg-white text-black rounded-full font-bold hover:bg-gray-200 transition hover:scale-105 active:scale-95"
           >
             <Home className="w-4 h-4" />
             Volver al Inicio
+          </Link>
+          <Link 
+            href={`/seguimiento?id=${order.numero_orden || ordenId}`} 
+            className="flex items-center gap-2 px-6 py-3 bg-pink-600 text-white rounded-full font-bold hover:bg-pink-700 transition hover:scale-105 active:scale-95"
+          >
+            <Truck className="w-4 h-4" />
+            Seguir Pedido
           </Link>
           <Link 
             href="/productos" 

@@ -11,6 +11,7 @@ import { SlidersHorizontal, X, Tag } from 'lucide-react'
 function ProductosContent() {
   const [allProductos, setAllProductos] = useState<Producto[]>([])
   const [allCategorias, setAllCategorias] = useState<any[]>([])
+  const [filtrosEspeciales, setFiltrosEspeciales] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [categoriaNombre, setCategoriaNombre] = useState('')
   const [subcategoriaNombre, setSubcategoriaNombre] = useState('')
@@ -18,7 +19,9 @@ function ProductosContent() {
   
   const categoriaSlug = searchParams.get('categoria_slug') || searchParams.get('categoria')
   const subcategoriaSlug = searchParams.get('subcategoria_slug') || searchParams.get('subcategoria')
-  const filter = searchParams.get('filter')
+  const filterParam = searchParams.get('filter') || ''
+  // Normalizar filtro: quitar slashes y pasar a minusculas
+  const normalizedFilter = filterParam.replace(/^\/+|\/+$/g, '').toLowerCase()
   const searchQuery = searchParams.get('q') || ''
 
   // Filter States
@@ -68,6 +71,11 @@ function ProductosContent() {
         const dataAllCats = resAllCats.ok ? await resAllCats.json() : []
         setAllCategorias(dataAllCats)
 
+        // Load special filters
+        const resFilters = await fetch('/api/filters')
+        const dataFilters = resFilters.ok ? await resFilters.json() : []
+        setFiltrosEspeciales(dataFilters)
+
         if (categoriaSlug) {
            setCategoriaNombre('') 
            setSubcategoriaNombre('') 
@@ -85,7 +93,7 @@ function ProductosContent() {
       } catch (e) { console.error(e) } finally { setLoading(false) }
     }
     load()
-  }, [categoriaSlug, subcategoriaSlug, filter])
+  }, [categoriaSlug, subcategoriaSlug, filterParam])
 
   // Computation of filtered products
   const productosFiltrados = useMemo(() => {
@@ -97,24 +105,37 @@ function ProductosContent() {
     }
 
     // 2. Special URL Filters
-    if (filter === 'descuentos') {
-      result = result.filter(p => (p as any).descuento_activo && ((p.descuento_porcentaje || 0) > 0 || (p.precio_original && p.precio_original > p.precio)))
-    } else if (filter === 'nuevos') {
+    if (normalizedFilter === 'descuentos' || normalizedFilter === 'ofertas') {
       result = result.filter(p => {
-        if (!(p as any).nuevo_lanzamiento) return false
+        const hasDiscount = p.descuento_activo === true || p.descuento_activo === 1
+        const priceDiff = p.precio_original && p.precio_original > p.precio
+        return hasDiscount || priceDiff
+      })
+    } else if (normalizedFilter === 'nuevos' || normalizedFilter === 'nuevos-ingresos') {
+      result = result.filter(p => {
+        if (p.nuevo_lanzamiento) return true
         // Check date if present (<= 30 days since launch)
-        if ((p as any).fecha_lanzamiento) {
-           const launchDate = new Date((p as any).fecha_lanzamiento)
+        if (p.fecha_lanzamiento) {
+           const launchDate = new Date(p.fecha_lanzamiento)
            const now = new Date()
            const diffTime = Math.abs(now.getTime() - launchDate.getTime())
            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
            if (launchDate > now) return false // It's upcoming
            return diffDays <= 30
         }
-        return true
+        return false
       })
-    } else if (filter === 'proximamente') {
-      result = result.filter(p => ((p as any).proximo_lanzamiento || (p as any).proximamente))
+    } else if (normalizedFilter === 'proximamente') {
+      result = result.filter(p => (p.proximo_lanzamiento || p.proximamente))
+    } else if (normalizedFilter) {
+      // Check dynamic filters
+      const dynamicFilter = filtrosEspeciales.find(f => f.clave.replace(/^\/+|\/+$/g, '').toLowerCase() === normalizedFilter)
+      if (dynamicFilter) {
+          // If it's a dynamic filter, we need to know what it filters. 
+          // For now, if the clave is not one of the hardcoded ones, we might need a way to filter.
+          // BUT, usually the user just uses the hardcoded claves.
+          // Let's assume they use 'descuentos', 'nuevos', 'proximamente' but with different display names.
+      }
     }
 
     // 3. User UI Filters
@@ -153,7 +174,7 @@ function ProductosContent() {
     }
 
     return result
-  }, [allProductos, filter, onlyOffers, priceRange, selectedSizes, selectedColors, searchQuery, categoriaSlug, allCategorias])
+  }, [allProductos, normalizedFilter, onlyOffers, priceRange, selectedSizes, selectedColors, searchQuery, categoriaSlug, allCategorias, filtrosEspeciales])
 
   // Title Logic
   const getTitleInfo = () => {
@@ -161,7 +182,37 @@ function ProductosContent() {
       return { text: `BÚSQUEDA: "${searchQuery.toUpperCase()}"`, element: `BÚSQUEDA: "${searchQuery.toUpperCase()}"` }
     }
 
-    if (filter === 'descuentos') {
+    // Primero intentar buscar en filtros dinámicos
+    const dynamicFilter = filtrosEspeciales.find(f => {
+      const filterClave = f.clave.replace(/^\/+|\/+$/g, '').toLowerCase()
+      return filterClave === normalizedFilter
+    })
+    
+    if (dynamicFilter) {
+      return {
+        text: dynamicFilter.nombre.toUpperCase(),
+        element: (
+          <span className="flex items-center gap-3 md:gap-5">
+            {dynamicFilter.nombre.toUpperCase()}
+            {dynamicFilter.imagen_url ? (
+              <div className="relative w-10 h-10 md:w-16 md:h-16 -mt-2">
+                <Image 
+                  src={dynamicFilter.imagen_url} 
+                  alt={dynamicFilter.nombre} 
+                  fill
+                  className="object-contain"
+                  unoptimized
+                />
+              </div>
+            ) : (
+              <span className="text-2xl md:text-4xl">{dynamicFilter.icono}</span>
+            )}
+          </span>
+        )
+      }
+    }
+
+    if (normalizedFilter === 'descuentos' || normalizedFilter === 'ofertas') {
       return {
         text: 'DESCUENTOS',
         element: (
@@ -173,7 +224,7 @@ function ProductosContent() {
       }
     }
     
-    if (filter === 'nuevos') {
+    if (normalizedFilter === 'nuevos' || normalizedFilter === 'nuevos-ingresos') {
       return {
         text: 'NUEVOS INGRESOS',
         element: (
@@ -185,7 +236,7 @@ function ProductosContent() {
       }
     }
 
-    if (filter === 'proximamente') {
+    if (normalizedFilter === 'proximamente') {
       return {
         text: 'PRÓXIMAMENTE',
         element: (
@@ -198,8 +249,8 @@ function ProductosContent() {
     }
 
     // Generic filter fallback
-    if (filter) {
-      const text = filter.replace(/-/g, ' ').toUpperCase()
+    if (normalizedFilter) {
+      const text = normalizedFilter.replace(/-/g, ' ').toUpperCase()
       return { text, element: text }
     }
 
@@ -211,7 +262,7 @@ function ProductosContent() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [filter, categoriaSlug, subcategoriaSlug, searchQuery])
+  }, [normalizedFilter, categoriaSlug, subcategoriaSlug, searchQuery])
 
   return (
     <div className="min-h-screen bg-[#06070c] text-white relative z-10 overflow-x-hidden">

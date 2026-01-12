@@ -20,9 +20,11 @@ export function encrypt(text: string): string {
   try {
     const iv = crypto.randomBytes(IV_LENGTH);
     const key = getKey();
-    const cipher = crypto.createCipheriv('aes-256-cbc', key as any, iv as any);
-    let encrypted = cipher.update(text);
-    encrypted = Buffer.concat([encrypted, cipher.final()] as any);
+    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+    const encrypted = Buffer.concat([
+      cipher.update(text, 'utf8'),
+      cipher.final()
+    ]);
     return iv.toString('hex') + ':' + encrypted.toString('hex');
   } catch (error) {
     console.error('Encryption error:', error);
@@ -48,10 +50,12 @@ export function decrypt(text: string): string {
     const encryptedText = Buffer.from(textParts.join(':'), 'hex');
     const key = getKey();
     
-    const decipher = crypto.createDecipheriv('aes-256-cbc', key as any, iv as any);
-    let decrypted = decipher.update(encryptedText);
-    decrypted = Buffer.concat([decrypted, decipher.final()] as any);
-    return decrypted.toString();
+    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+    const decrypted = Buffer.concat([
+      decipher.update(encryptedText),
+      decipher.final()
+    ]);
+    return decrypted.toString('utf8');
   } catch (error) {
     console.error('Decryption error:', error);
     return text; // Return original if fail (might be already plain)
