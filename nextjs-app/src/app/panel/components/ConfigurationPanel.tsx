@@ -382,7 +382,15 @@ export default function ConfigurationPanel() {
             
             {config.logo_url ? (
               <div className="flex items-center gap-4 p-4 border border-white/10 rounded-2xl bg-white/[0.03]">
-                <img src={config.logo_url} alt="Logo" className="h-16 w-auto object-contain bg-white/5 border border-white/10 p-2 rounded-xl" />
+                <Image 
+                  src={config.logo_url} 
+                  alt="Logo" 
+                  width={0} 
+                  height={0} 
+                  sizes="100vw"
+                  style={{ width: 'auto', height: '64px' }}
+                  className="h-16 w-auto object-contain bg-white/5 border border-white/10 p-2 rounded-xl" 
+                />
                 <div className="flex-1">
                   <p className="text-sm text-white/55 font-bold">Logo actual</p>
                 </div>
