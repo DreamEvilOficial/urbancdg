@@ -122,6 +122,25 @@ ${config.mensaje_transferencia || ''}
     window.location.href = `/success?orden=${orderId || orderNumber || ''}`
   }
 
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose()
+    }
+  }
+
+  if (loading || !config) {
+    return (
+      <div className="modal-overlay">
+        <div className="modal-content glass-card flex items-center justify-center p-12">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-8 h-8 border-4 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-white/50 text-xs font-bold uppercase tracking-widest">Cargando datos...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="modal-content glass-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '550px', maxHeight: '90vh', overflowY: 'auto' }}>

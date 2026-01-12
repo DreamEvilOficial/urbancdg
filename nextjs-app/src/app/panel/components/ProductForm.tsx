@@ -54,7 +54,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
         top: producto.top || false,
         proximo_lanzamiento: producto.proximo_lanzamiento || (producto as any).proximamente || false,
         nuevo_lanzamiento: producto.nuevo_lanzamiento || false,
-        descuento_activo: producto.descuento_activo || false,
+        descuento_activo: !!producto.descuento_activo,
         imagen_url: producto.imagen_url || '',
         imagenes: producto.imagenes || [],
         variantes: (producto.variantes || []).map(v => ({

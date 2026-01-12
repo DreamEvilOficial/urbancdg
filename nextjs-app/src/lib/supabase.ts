@@ -42,10 +42,10 @@ export interface Producto {
   proximo_lanzamiento?: boolean
   proximamente?: boolean
   nuevo_lanzamiento?: boolean
-  descuento_activo?: boolean
-  fecha_lanzamiento?: string
-  sku?: string
-  peso?: number
+  descuento_activo?: boolean | number
+  fecha_lanzamiento?: string | null
+  sku?: string | null
+  peso?: number | null
   dimensiones?: any
   proveedor_nombre?: string
   proveedor_contacto?: string
@@ -91,8 +91,10 @@ export interface Orden {
   direccion_envio?: string
   envio?: number
   subtotal?: number
+  descuento?: number
   total: number
   estado: string
+  metodo_pago?: string
   mercadopago_payment_id?: number
   notas?: string
   items?: any[]
