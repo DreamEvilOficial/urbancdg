@@ -65,6 +65,22 @@ export async function GET() {
             ALTER TABLE productos ADD COLUMN descuento_activo BOOLEAN DEFAULT FALSE;
         END IF;
 
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'descuento_porcentaje') THEN
+            ALTER TABLE productos ADD COLUMN descuento_porcentaje NUMERIC(5,2) DEFAULT 0;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'precio_original') THEN
+            ALTER TABLE productos ADD COLUMN precio_original NUMERIC(10,2);
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'top') THEN
+            ALTER TABLE productos ADD COLUMN top BOOLEAN DEFAULT FALSE;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'subcategoria_id') THEN
+            ALTER TABLE productos ADD COLUMN subcategoria_id UUID REFERENCES subcategorias(id) ON DELETE SET NULL;
+        END IF;
+
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'nuevo_lanzamiento') THEN
             ALTER TABLE productos ADD COLUMN nuevo_lanzamiento BOOLEAN DEFAULT FALSE;
         END IF;

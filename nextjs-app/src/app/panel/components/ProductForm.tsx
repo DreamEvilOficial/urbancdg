@@ -256,6 +256,22 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                     placeholder="ELEG-PUFF-001"
                   />
                 </div>
+                {!formData.descuento_activo && (
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Precio</label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 font-bold">$</span>
+                      <input 
+                        type="number"
+                        value={formData.precio}
+                        onChange={e => setFormData({...formData, precio: e.target.value})}
+                        className="w-full bg-[#111] border border-white/5 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold placeholder:text-white/20 focus:bg-black focus:border-white text-white transition-all outline-none"
+                        placeholder="0.00"
+                        required={!formData.descuento_activo}
+                      />
+                    </div>
+                  </div>
+                )}
                 <div>
                   <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Categoría</label>
                   <select
