@@ -152,3 +152,21 @@ export function sanitizeLocalStorage(key: string): any {
     return null;
   }
 }
+
+/**
+ * Sanitiza precios para asegurar que sean números positivos
+ * Elimina caracteres no numéricos excepto punto decimal
+ */
+export function sanitizePrice(price: string | number): number {
+  if (typeof price === 'number') {
+    return Math.max(0, price);
+  }
+  
+  if (typeof price !== 'string') return 0;
+  
+  // Remover todo excepto números y puntos
+  const clean = price.replace(/[^0-9.]/g, '');
+  const val = parseFloat(clean);
+  
+  return isNaN(val) ? 0 : Math.max(0, val);
+}

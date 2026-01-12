@@ -88,11 +88,19 @@ export async function POST(request: Request) {
         const body = await request.json();
         const id = body.id || uuidv4();
         
+        // Sanitización de inputs
+        const nombreSafe = sanitizeInput(body.nombre || '');
+        const slugSafe = body.slug ? sanitizeInput(body.slug) : nombreSafe.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        const descripcionSafe = sanitizeRichText(body.descripcion || '');
+        const proveedorNombreSafe = sanitizeInput(body.proveedor_nombre || '');
+        const proveedorContactoSafe = sanitizeInput(body.proveedor_contacto || '');
+        const skuSafe = sanitizeInput(body.sku || '');
+
         const productData = {
             id,
-            nombre: body.nombre,
-            slug: body.slug || body.nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-            descripcion: body.descripcion,
+            nombre: nombreSafe,
+            slug: slugSafe,
+            descripcion: descripcionSafe,
             precio: body.precio || 0,
             precio_original: body.precio_original,
             descuento_porcentaje: body.descuento_porcentaje || 0,
@@ -110,9 +118,9 @@ export async function POST(request: Request) {
             nuevo_lanzamiento: body.nuevo_lanzamiento || false,
             descuento_activo: body.descuento_activo || false,
             fecha_lanzamiento: body.fecha_lanzamiento || null,
-            sku: body.sku,
-            proveedor_nombre: body.proveedor_nombre,
-            proveedor_contacto: body.proveedor_contacto,
+            sku: skuSafe,
+            proveedor_nombre: proveedorNombreSafe,
+            proveedor_contacto: proveedorContactoSafe,
             precio_costo: body.precio_costo,
             metadata: JSON.stringify(body.metadata || {})
         };

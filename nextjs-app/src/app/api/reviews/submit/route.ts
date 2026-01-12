@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { sanitizeInput, sanitizeRichText } from '@/lib/security'
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,7 +19,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Calificación inválida' }, { status: 400 })
     }
     
-    const text = String(comentario || '').trim()
+    // Sanitización de seguridad
+    const text = sanitizeRichText(String(comentario || ''));
+    const cleanNombre = sanitizeInput(String(nombre || 'Cliente'));
+    const cleanEmail = sanitizeInput(String(email || ''));
+    const cleanOrden = sanitizeInput(String(numeroOrden));
+
     if (text.length > 500) { 
       return NextResponse.json({ error: 'Comentario demasiado largo' }, { status: 400 })
     }
@@ -67,11 +73,11 @@ export async function POST(req: NextRequest) {
       .from('resenas')
       .insert({
         producto_id: productoId,
-        cliente_nombre: nombre || 'Cliente',
-        cliente_email: email || null,
+        cliente_nombre: cleanNombre,
+        cliente_email: cleanEmail || null,
         calificacion: cleanRating,
         comentario: text,
-        numero_orden: numeroOrden,
+        numero_orden: cleanOrden,
         verificado,
         aprobado
       });

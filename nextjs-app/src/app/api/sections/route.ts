@@ -22,6 +22,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Tipo y título son obligatorios' }, { status: 400 });
     }
 
+    const tituloSanitizado = sanitizeInput(titulo);
+    const subtituloSanitizado = subtitulo ? sanitizeInput(subtitulo) : '';
+    const gifUrlSanitizado = gif_url ? sanitizeInput(gif_url) : '';
+
     const sql = `
       INSERT INTO homepage_sections (tipo, referencia_id, titulo, subtitulo, gif_url, orden, activo) 
       VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -31,9 +35,9 @@ export async function POST(req: Request) {
     const result = await db.run(sql, [
       tipo, 
       referencia_id || '', // Evitar nulos si no se envía
-      titulo, 
-      subtitulo || '', 
-      gif_url || '', 
+      tituloSanitizado, 
+      subtituloSanitizado, 
+      gifUrlSanitizado, 
       orden || 0, 
       activo ?? true
     ]);
