@@ -216,7 +216,7 @@ export default function AdminSidebar({
           <button
             onClick={async () => {
               await authAPI.signOut();
-              router.push("/panel");
+              window.location.reload();
             }}
             className="w-full flex items-center gap-3 px-3 py-2 mt-2 text-red-300/90 hover:bg-red-500/10 hover:text-red-200 rounded-lg transition-colors"
           >
