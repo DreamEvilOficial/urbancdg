@@ -13,9 +13,11 @@ export async function middleware(request: NextRequest) {
     default-src 'self';
     script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.supabase.co https://*.stripe.com;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-    img-src 'self' blob: data: https://*.supabase.co https://*.stripe.com;
+    img-src 'self' blob: data: https://*.supabase.co https://*.stripe.com https://media.discordapp.net https://*.discordapp.net https://static.wattpad.com https://*.wattpad.com;
     font-src 'self' data: https://fonts.gstatic.com;
     connect-src 'self' https://*.supabase.co https://*.stripe.com;
+    frame-src 'self' https://www.youtube.com https://youtube.com;
+    child-src 'self' https://www.youtube.com https://youtube.com;
     object-src 'none';
     base-uri 'self';
     form-action 'self';

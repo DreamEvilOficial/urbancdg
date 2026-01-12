@@ -10,15 +10,33 @@ const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   images: {
-    remotePatterns: supabaseHost ? [
-      {
+    remotePatterns: [
+      ...(supabaseHost ? [{
         protocol: 'https',
         hostname: supabaseHost,
         port: '',
         pathname: '/storage/v1/object/public/**',
+      }] : []),
+      {
+        protocol: 'https',
+        hostname: 'media.discordapp.net',
+        port: '',
+        pathname: '/**',
       },
-    ] : [],
-    domains: supabaseHost ? [supabaseHost] : [],
+      {
+        protocol: 'https',
+        hostname: 'static.wattpad.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.discordapp.net',
+        port: '',
+        pathname: '/**',
+      }
+    ],
+    domains: supabaseHost ? [supabaseHost, 'media.discordapp.net', 'static.wattpad.com'] : ['media.discordapp.net', 'static.wattpad.com'],
   },
   async headers() {
     return [
