@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
+import { sanitizeInput } from '@/lib/security';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,10 +49,12 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'La orden debe tener al menos un producto.' }, { status: 400 });
         }
 
-        // Normalizar datos del cliente
-        const nombre = cliente?.nombre || cliente_nombre;
-        const email = cliente?.email || cliente_email;
-        const telefono = cliente?.telefono || cliente_telefono;
+        // Normalizar y sanitizar datos del cliente
+        const nombre = sanitizeInput(cliente?.nombre || cliente_nombre || '');
+        const email = sanitizeInput(cliente?.email || cliente_email || '');
+        const telefono = sanitizeInput(cliente?.telefono || cliente_telefono || '');
+        const notasSeguras = sanitizeInput(notas || '');
+        const metodoPagoSeguro = sanitizeInput(metodo_pago || 'transferencia');
 
         if (!nombre) {
             return NextResponse.json({ error: 'El nombre del cliente es obligatorio.' }, { status: 400 });
@@ -81,8 +84,8 @@ export async function POST(req: Request) {
                 total || 0, 
                 envio || 0, 
                 'pendiente', 
-                metodo_pago || 'transferencia', 
-                notas || ''
+                metodoPagoSeguro, 
+                notasSeguras
             ]);
 
             // B. Procesar items

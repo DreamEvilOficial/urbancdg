@@ -326,11 +326,11 @@ export default function Navbar() {
                 if (filtro.imagen_url) {
                   iconElement = <img src={filtro.imagen_url} alt={filtro.nombre} className="w-5 h-5 object-contain" />
                 } else if (filtro.clave === 'descuentos') {
-                  iconElement = <Image src="/Discount Icon.gif" alt="Descuento" width={20} height={20} className="w-5 h-5" unoptimized />
+                  iconElement = <Image src="/discount-icon.gif" alt="Descuento" width={20} height={20} className="w-5 h-5" unoptimized />
                 } else if (filtro.clave === 'nuevos') {
-                  iconElement = <Image src="/New label.gif" alt="Nuevo" width={20} height={20} className="w-5 h-5" unoptimized />
+                  iconElement = <Image src="/new-label.gif" alt="Nuevo" width={20} height={20} className="w-5 h-5" unoptimized />
                 } else if (filtro.clave === 'proximamente') {
-                  iconElement = <Image src="/Fire.gif" alt="Próximamente" width={20} height={20} className="w-5 h-5" unoptimized />
+                  iconElement = <Image src="/fire.gif" alt="Próximamente" width={20} height={20} className="w-5 h-5" unoptimized />
                 } else {
                   iconElement = <span className="text-base">{filtro.icono}</span>
                 }
@@ -428,11 +428,11 @@ export default function Navbar() {
                   if (filtro.imagen_url) {
                     iconElement = <img src={filtro.imagen_url} alt={filtro.nombre} className="w-5 h-5 object-contain" />
                   } else if (filtro.clave === 'descuentos') {
-                    iconElement = <Image src="/Discount Icon.gif" alt="Descuento" width={20} height={20} className="w-5 h-5" unoptimized />
+                    iconElement = <Image src="/discount-icon.gif" alt="Descuento" width={20} height={20} className="w-5 h-5" unoptimized />
                   } else if (filtro.clave === 'nuevos') {
-                    iconElement = <Image src="/New label.gif" alt="Nuevo" width={20} height={20} className="w-5 h-5" unoptimized />
+                    iconElement = <Image src="/new-label.gif" alt="Nuevo" width={20} height={20} className="w-5 h-5" unoptimized />
                   } else if (filtro.clave === 'proximamente') {
-                    iconElement = <Image src="/Fire.gif" alt="Próximamente" width={20} height={20} className="w-5 h-5" unoptimized />
+                    iconElement = <Image src="/fire.gif" alt="Próximamente" width={20} height={20} className="w-5 h-5" unoptimized />
                   } else {
                     iconElement = <span className="text-base">{filtro.icono}</span>
                   }

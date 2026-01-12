@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { cookies } from 'next/headers';
+import { sanitizeInput } from '@/lib/security';
 
 const SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET || 'secret-key-urban-cdg');
 
@@ -17,8 +18,10 @@ export async function PUT(req: Request) {
     const { nombre } = body;
 
     if (!nombre) return NextResponse.json({ error: 'Nombre es requerido' }, { status: 400 });
+    
+    const nombreSanitizado = sanitizeInput(nombre);
 
-    await db.run('UPDATE usuarios SET nombre = ? WHERE id = ?', [nombre, userId]);
+    await db.run('UPDATE usuarios SET nombre = ? WHERE id = ?', [nombreSanitizado, userId]);
 
     return NextResponse.json({ success: true });
   } catch (error) {

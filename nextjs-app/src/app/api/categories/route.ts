@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { sanitizeInput } from '@/lib/security';
 
 export async function GET() {
   try {
@@ -30,6 +31,9 @@ export async function POST(req: Request) {
         if (!nombre || !slug) {
             return NextResponse.json({ error: 'Nombre y slug son requeridos' }, { status: 400 });
         }
+        
+        const nombreSanitizado = sanitizeInput(nombre);
+        const slugSanitizado = sanitizeInput(slug);
 
         const sql = `
             INSERT INTO categorias (nombre, slug, orden, activo) 
@@ -38,8 +42,8 @@ export async function POST(req: Request) {
         `;
         
         const result = await db.run(sql, [
-            nombre, 
-            slug, 
+            nombreSanitizado, 
+            slugSanitizado, 
             orden || 0, 
             activo ?? true
         ]);
@@ -59,6 +63,9 @@ export async function PUT(req: Request) {
         if (!id) {
             return NextResponse.json({ error: 'ID es requerido' }, { status: 400 });
         }
+        
+        const nombreSanitizado = nombre ? sanitizeInput(nombre) : nombre;
+        const slugSanitizado = slug ? sanitizeInput(slug) : slug;
 
         const sql = `
             UPDATE categorias 
@@ -66,7 +73,7 @@ export async function PUT(req: Request) {
             WHERE id = ?
         `;
 
-        await db.run(sql, [nombre, slug, orden, activo, id]);
+        await db.run(sql, [nombreSanitizado, slugSanitizado, orden, activo, id]);
 
         return NextResponse.json({ success: true });
     } catch (err: any) {

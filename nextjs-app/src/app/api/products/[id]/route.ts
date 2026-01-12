@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { sanitizeInput, sanitizeRichText } from '@/lib/security';
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   const id = params.id;
@@ -44,7 +45,19 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
     const setClause = keys.map(key => `${key} = ?`).join(', ');
     const values = keys.map(key => {
-        const val = updates[key];
+        let val = updates[key];
+        
+        // Sanitize string inputs
+        if (typeof val === 'string') {
+            if (key === 'descripcion' || key === 'description') {
+                val = sanitizeRichText(val);
+            } else if (key !== 'imagenes' && key !== 'variantes' && key !== 'metadata' && key !== 'dimensiones') {
+                // Don't strict sanitize JSON strings, they are parsed later or handled as objects
+                // If it's a regular text field, sanitize it
+                val = sanitizeInput(val);
+            }
+        }
+
         // Handle arrays/objects for JSON columns
         if (typeof val === 'object' && val !== null) {
           return JSON.stringify(val);

@@ -236,7 +236,8 @@ function ProductCard({ producto }: ProductCardProps) {
         cantidad: 1,
         imagen_url: productImage,
         talle,
-        color
+        color,
+        stock: producto.stock_actual
       })
       toast.success(`✅ ${productName} (${talle}, ${color}) agregado al carrito`)
       window.dispatchEvent(new Event('cartUpdated'))

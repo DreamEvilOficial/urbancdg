@@ -242,7 +242,7 @@ export default function HomepageManagement() {
             />
             <div className="relative">
               <input 
-                type="text" placeholder="URL de GIF de ícono (ej: /Fire.gif)" className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl text-sm font-bold outline-none transition hover:border-white/20 focus:border-accent/40 pr-12"
+                type="text" placeholder="URL de GIF de ícono (ej: /fire.gif)" className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl text-sm font-bold outline-none transition hover:border-white/20 focus:border-accent/40 pr-12"
                 value={newSection.gif_url}
                 onChange={e => setNewSection({...newSection, gif_url: e.target.value})}
               />

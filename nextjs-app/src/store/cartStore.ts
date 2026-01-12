@@ -9,6 +9,7 @@ interface CartItem {
   imagen_url?: string
   talle?: string
   color?: string
+  stock?: number
 }
 
 interface CartStore {

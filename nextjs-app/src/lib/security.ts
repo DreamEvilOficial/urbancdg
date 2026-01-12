@@ -1,265 +1,114 @@
-/**
- * Utilidades de Seguridad
- * Funciones para sanitización, validación y protección contra ataques comunes
- */
+import crypto from 'crypto';
 
-/**
- * Sanitiza texto para prevenir XSS
- * Elimina tags HTML y caracteres peligrosos
- */
-export function sanitizeText(text: string): string {
-  if (!text) return ''
-  
-  return text
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .replace(/\//g, '&#x2F;')
-    .trim()
+// Use a consistent secret or fallback. In production, this MUST be in .env
+// This key handles the requirement for "AES-256" encryption of sensitive data
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'urban-cdg-secure-key-256-bit-v1'; 
+const IV_LENGTH = 16; // AES block size
+
+// Helper to ensure key is correct length (32 bytes for AES-256)
+function getKey(): Buffer {
+  return crypto.createHash('sha256').update(String(ENCRYPTION_KEY)).digest();
 }
 
 /**
- * Sanitiza HTML para prevenir inyección de scripts
- * Permite solo tags seguros básicos
+ * Cifra un texto usando AES-256-CBC
+ * @param text Texto plano a cifrar
+ * @returns Texto cifrado en formato IV:Encrypted (Hex)
  */
-export function sanitizeHTML(html: string): string {
-  if (!html) return ''
-  
-  // Lista blanca de tags permitidos
-  const allowedTags = ['b', 'i', 'em', 'strong', 'p', 'br', 'span']
-  
-  // Remover scripts y eventos
-  let cleaned = html
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
-    .replace(/javascript:/gi, '')
-    
-  return cleaned
-}
-
-/**
- * Valida email
- */
-export function validateEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email)
-}
-
-/**
- * Valida teléfono (formato internacional)
- */
-export function validatePhone(phone: string): boolean {
-  const phoneRegex = /^[\d\s\-\+\(\)]{8,20}$/
-  return phoneRegex.test(phone)
-}
-
-/**
- * Valida URL
- */
-export function validateURL(url: string): boolean {
+export function encrypt(text: string): string {
+  if (!text) return text;
   try {
-    const urlObj = new URL(url)
-    return urlObj.protocol === 'http:' || urlObj.protocol === 'https:'
-  } catch {
-    return false
+    const iv = crypto.randomBytes(IV_LENGTH);
+    const key = getKey();
+    const cipher = crypto.createCipheriv('aes-256-cbc', key as any, iv as any);
+    let encrypted = cipher.update(text);
+    encrypted = Buffer.concat([encrypted, cipher.final()] as any);
+    return iv.toString('hex') + ':' + encrypted.toString('hex');
+  } catch (error) {
+    console.error('Encryption error:', error);
+    // En caso de error, devolvemos el original o lanzamos error según criticidad
+    // Para seguridad, mejor fallar que guardar plano
+    throw new Error('Encryption failed');
   }
 }
 
 /**
- * Sanitiza URL para prevenir inyección
+ * Descifra un texto cifrado con encrypt()
+ * @param text Texto cifrado (IV:Encrypted)
+ * @returns Texto plano
+ */
+export function decrypt(text: string): string {
+  if (!text || !text.includes(':')) return text;
+  try {
+    const textParts = text.split(':');
+    const ivString = textParts.shift();
+    if (!ivString) throw new Error('Invalid IV');
+    
+    const iv = Buffer.from(ivString, 'hex');
+    const encryptedText = Buffer.from(textParts.join(':'), 'hex');
+    const key = getKey();
+    
+    const decipher = crypto.createDecipheriv('aes-256-cbc', key as any, iv as any);
+    let decrypted = decipher.update(encryptedText);
+    decrypted = Buffer.concat([decrypted, decipher.final()] as any);
+    return decrypted.toString();
+  } catch (error) {
+    console.error('Decryption error:', error);
+    return text; // Return original if fail (might be already plain)
+  }
+}
+
+/**
+ * Sanitiza entradas de usuario para prevenir XSS y Script Injection
+ * Modo estricto: Elimina TODAS las etiquetas HTML
+ */
+export function sanitizeInput(input: string): string {
+  if (typeof input !== 'string') return input;
+  return input
+    .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gm, "") // Eliminar scripts
+    .replace(/<[^>]+>/g, '') // Eliminar tags HTML (strip tags)
+    .replace(/javascript:/gi, '') // Eliminar protocolo javascript
+    .replace(/on\w+=/gi, '') // Eliminar eventos (onclick, etc)
+    .trim();
+}
+
+/**
+ * Sanitiza texto enriquecido (permite HTML seguro, elimina scripts/eventos)
+ */
+export function sanitizeRichText(input: string): string {
+  if (typeof input !== 'string') return input;
+  return input
+    .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gm, "") // Eliminar scripts
+    .replace(/javascript:/gi, '') // Eliminar protocolo javascript
+    .replace(/on\w+=/gi, '') // Eliminar eventos (onclick, etc)
+    .trim();
+}
+
+/**
+ * Sanitiza URLs para evitar javascript: y otros protocolos peligrosos
  */
 export function sanitizeURL(url: string): string {
-  if (!url) return ''
-  
-  // Permitir solo http, https y mailto
-  if (!/^(https?:\/\/|mailto:)/.test(url)) {
-    return ''
-  }
-  
-  // Remover javascript: y data:
-  if (/^(javascript:|data:)/i.test(url)) {
-    return ''
-  }
-  
-  return url
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim();
+  if (trimmed.toLowerCase().startsWith('javascript:')) return '#';
+  if (trimmed.toLowerCase().startsWith('data:')) return '#';
+  if (trimmed.toLowerCase().startsWith('vbscript:')) return '#';
+  return trimmed;
 }
 
 /**
- * Valida y sanitiza precio
+ * Valida inputs contra patrones comunes de ataque
  */
-export function sanitizePrice(price: string | number): number {
-  const numPrice = typeof price === 'string' ? parseFloat(price) : price
-  
-  if (isNaN(numPrice) || numPrice < 0) {
-    return 0
+export function validateSecurityInput(input: string): { valid: boolean; error?: string } {
+  // SQL Injection basics (aunque usamos query params, esto ayuda)
+  if (/(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION)\b)/i.test(input)) {
+    return { valid: false, error: 'SQL Keywords detected' };
   }
   
-  // Limitar a 2 decimales
-  return Math.round(numPrice * 100) / 100
-}
-
-/**
- * Valida y sanitiza stock
- */
-export function sanitizeStock(stock: string | number): number {
-  const numStock = typeof stock === 'string' ? parseInt(stock, 10) : stock
-  
-  if (isNaN(numStock) || numStock < 0) {
-    return 0
+  // XSS basics
+  if (/[<>]/.test(input)) {
+    return { valid: false, error: 'HTML Tags detected' };
   }
-  
-  return Math.floor(numStock)
-}
 
-/**
- * Sanitiza nombre de archivo para prevenir path traversal
- */
-export function sanitizeFilename(filename: string): string {
-  return filename
-    .replace(/[^a-zA-Z0-9._-]/g, '_')
-    .replace(/\.{2,}/g, '.')
-    .substring(0, 255)
-}
-
-/**
- * Genera un token aleatorio seguro
- */
-export function generateSecureToken(length: number = 32): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  let token = ''
-  
-  for (let i = 0; i < length; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  
-  return token
-}
-
-/**
- * Rate limiting simple (almacenamiento en memoria)
- * Para producción, usar Redis o similar
- */
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
-
-export function checkRateLimit(
-  identifier: string,
-  maxRequests: number = 10,
-  windowMs: number = 60000
-): { allowed: boolean; remaining: number } {
-  const now = Date.now()
-  const record = rateLimitStore.get(identifier)
-  
-  if (!record || now > record.resetTime) {
-    rateLimitStore.set(identifier, {
-      count: 1,
-      resetTime: now + windowMs
-    })
-    return { allowed: true, remaining: maxRequests - 1 }
-  }
-  
-  if (record.count >= maxRequests) {
-    return { allowed: false, remaining: 0 }
-  }
-  
-  record.count++
-  return { allowed: true, remaining: maxRequests - record.count }
-}
-
-/**
- * Limpia el rate limit store periódicamente
- */
-if (typeof window === 'undefined') {
-  setInterval(() => {
-    const now = Date.now()
-    for (const [key, value] of rateLimitStore.entries()) {
-      if (now > value.resetTime) {
-        rateLimitStore.delete(key)
-      }
-    }
-  }, 60000)
-}
-
-/**
- * Valida estructura de objeto JSON de forma segura
- */
-export function validateJSON(json: string, maxDepth: number = 10): any {
-  try {
-    const parsed = JSON.parse(json)
-    
-    // Verificar profundidad para prevenir ataques de recursión
-    function checkDepth(obj: any, depth: number = 0): boolean {
-      if (depth > maxDepth) return false
-      
-      if (typeof obj === 'object' && obj !== null) {
-        for (const key in obj) {
-          if (!checkDepth(obj[key], depth + 1)) {
-            return false
-          }
-        }
-      }
-      
-      return true
-    }
-    
-    if (!checkDepth(parsed)) {
-      throw new Error('JSON depth exceeded')
-    }
-    
-    return parsed
-  } catch (error) {
-    return null
-  }
-}
-
-/**
- * Previene timing attacks en comparación de strings
- */
-export function secureCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) {
-    return false
-  }
-  
-  let result = 0
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i)
-  }
-  
-  return result === 0
-}
-
-/**
- * Sanitiza datos del localStorage
- */
-export function sanitizeLocalStorage(key: string): any {
-  try {
-    const data = localStorage.getItem(key)
-    if (!data) return null
-    
-    const parsed = validateJSON(data)
-    return parsed
-  } catch (error) {
-    console.error('Error sanitizing localStorage:', error)
-    return null
-  }
-}
-
-/**
- * Guarda datos en localStorage de forma segura
- */
-export function secureLocalStorageSet(key: string, value: any): boolean {
-  try {
-    // Validar tamaño para prevenir ataques de storage
-    const stringified = JSON.stringify(value)
-    if (stringified.length > 5 * 1024 * 1024) { // 5MB limit
-      console.error('Data too large for localStorage')
-      return false
-    }
-    
-    localStorage.setItem(key, stringified)
-    return true
-  } catch (error) {
-    console.error('Error saving to localStorage:', error)
-    return false
-  }
+  return { valid: true };
 }

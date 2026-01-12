@@ -48,6 +48,11 @@ export default function Cart({ onClose }: CartProps) {
   }
 
   const handleUpdateQuantity = (id: string, quantity: number) => {
+    const item = items.find(i => i.id === id);
+    if (item && item.stock !== undefined && quantity > item.stock) {
+        // Optional: Toast warning
+        return; 
+    }
     updateQuantity(id, quantity)
     window.dispatchEvent(new Event('cartUpdated'))
   }
@@ -103,9 +108,9 @@ export default function Cart({ onClose }: CartProps) {
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar overflow-x-hidden">
+        <div className="flex-1 overflow-y-auto custom-scrollbar overflow-x-hidden flex flex-col">
           {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+            <div className="flex flex-col items-center justify-center py-16 px-6 text-center flex-1">
               <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-6 border border-white/10">
                 <Trash2 className="w-8 h-8 text-white/20" />
               </div>
@@ -118,6 +123,7 @@ export default function Cart({ onClose }: CartProps) {
               </button>
             </div>
           ) : (
+            <>
             <div className="p-4 space-y-4">
               {items.map((item) => (
                 <div
@@ -175,7 +181,8 @@ export default function Cart({ onClose }: CartProps) {
                         <span className="w-6 text-center font-bold text-xs text-white">{item.cantidad}</span>
                         <button
                           onClick={() => handleUpdateQuantity(item.id, item.cantidad + 1)}
-                          className="p-1.5 hover:text-accent transition-colors"
+                          className={`p-1.5 hover:text-accent transition-colors ${item.stock && item.cantidad >= item.stock ? 'opacity-30 cursor-not-allowed' : ''}`}
+                          disabled={item.stock !== undefined && item.cantidad >= item.stock}
                         >
                           <Plus className="w-3 h-3" />
                         </button>
@@ -192,74 +199,75 @@ export default function Cart({ onClose }: CartProps) {
                 </div>
               ))}
             </div>
-          )}
 
-          {/* Suggested Products Section - Horizontal Scroll */}
-          {items.length > 0 && suggestedProducts.length > 0 && (
-            <div className="mt-2 py-6 bg-white/[0.02] border-t border-white/10">
-              <div className="px-6 flex items-center justify-between mb-4">
-                <h3 className="text-xs font-black text-white/45 uppercase tracking-[0.35em] flex items-center gap-2">
-                  <span className="text-accent">+</span> Completa el fit
-                </h3>
-              </div>
-              
-              <div className="flex gap-4 overflow-x-auto px-6 pb-2 custom-scrollbar no-scrollbar scroll-smooth">
-                {suggestedProducts.map((prod) => (
-                  <div 
-                    key={prod.id} 
-                    className="flex-shrink-0 w-32 group cursor-pointer"
-                    onClick={() => handleAddSuggested(prod)}
-                  >
-                    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden mb-2 border border-white/10 group-hover:border-accent/30 transition-colors">
-                      <img 
-                        src={prod.imagen_url || prod.imagenes?.[0] || '/proximamente.png'} 
-                        alt={prod.nombre} 
-                        className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" 
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = '/proximamente.png';
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Plus className="w-6 h-6 text-white" />
-                      </div>
-                    </div>
-                    <p className="text-[11px] font-bold text-white truncate px-1">{prod.nombre}</p>
-                    <p className="text-[10px] text-accent font-black px-1">${prod.precio.toLocaleString()}</p>
-                  </div>
-                ))}
-              </div>
+            {/* Footer MOVED HERE - Inside Scrollable, AFTER items */}
+            <div className="p-6 border-t border-white/10 bg-[#07080d]/40 flex-shrink-0 mt-2">
+                <div className="flex justify-between items-end mb-6">
+                <span className="text-white/55 text-sm font-medium">Subtotal</span>
+                <span className="text-3xl font-black text-white tracking-tighter">$<span suppressHydrationWarning>{total().toLocaleString()}</span></span>
+                </div>
+                
+                <div className="space-y-3">
+                <button
+                    onClick={handleCheckout}
+                    className="w-full h-14 flex items-center justify-center gap-3 bg-accent text-ink rounded-2xl font-black text-lg hover:brightness-95 transition-all shadow-xl active:scale-[0.98]"
+                >
+                    <span>Ir al Checkout</span>
+                    <ArrowRight className="w-6 h-6" />
+                </button>
+                
+                <button
+                    onClick={handleClearCart}
+                    className="w-full py-2 text-[11px] text-white/35 hover:text-red-500 font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+                >
+                    <Trash2 className="w-3 h-3" />
+                    Vaciar carrito
+                </button>
+                </div>
             </div>
+
+            {/* Suggested Products Section - MOVED TO BOTTOM */}
+            {suggestedProducts.length > 0 && (
+                <div className="py-6 bg-white/[0.02] border-t border-white/10">
+                <div className="px-6 flex items-center justify-between mb-4">
+                    <h3 className="text-xs font-black text-white/45 uppercase tracking-[0.35em] flex items-center gap-2">
+                    <span className="text-accent">+</span> Completa el fit
+                    </h3>
+                </div>
+                
+                <div className="flex gap-4 overflow-x-auto px-6 pb-2 custom-scrollbar no-scrollbar scroll-smooth">
+                    {suggestedProducts.map((prod) => (
+                    <div 
+                        key={prod.id} 
+                        className="flex-shrink-0 w-32 group cursor-pointer"
+                        onClick={() => handleAddSuggested(prod)}
+                    >
+                        <div className="relative aspect-[3/4] rounded-2xl overflow-hidden mb-2 border border-white/10 group-hover:border-accent/30 transition-colors">
+                        <img 
+                            src={prod.imagen_url || prod.imagenes?.[0] || '/proximamente.png'} 
+                            alt={prod.nombre} 
+                            className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" 
+                            onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/proximamente.png';
+                            }}
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Plus className="w-6 h-6 text-white" />
+                        </div>
+                        </div>
+                        <p className="text-[11px] font-bold text-white truncate px-1">{prod.nombre}</p>
+                        <p className="text-[10px] text-accent font-black px-1">${prod.precio.toLocaleString()}</p>
+                    </div>
+                    ))}
+                </div>
+                </div>
+            )}
+            </>
           )}
         </div>
 
-        {/* Footer - Fixed Bottom */}
-        {items.length > 0 && (
-          <div className="p-6 border-t border-white/10 bg-[#07080d]/70 flex-shrink-0">
-            <div className="flex justify-between items-end mb-6">
-              <span className="text-white/55 text-sm font-medium">Subtotal</span>
-              <span className="text-3xl font-black text-white tracking-tighter">$<span suppressHydrationWarning>{total().toLocaleString()}</span></span>
-            </div>
-            
-            <div className="space-y-3">
-              <button
-                onClick={handleCheckout}
-                className="w-full h-14 flex items-center justify-center gap-3 bg-accent text-ink rounded-2xl font-black text-lg hover:brightness-95 transition-all shadow-xl active:scale-[0.98]"
-              >
-                <span>Ir al Checkout</span>
-                <ArrowRight className="w-6 h-6" />
-              </button>
-              
-              <button
-                onClick={handleClearCart}
-                className="w-full py-2 text-[11px] text-white/35 hover:text-red-500 font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
-              >
-                <Trash2 className="w-3 h-3" />
-                Vaciar carrito
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Removed Fixed Footer */}
       </div>
     </div>
   )

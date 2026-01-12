@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { sanitizeInput } from '@/lib/security';
 
 export async function GET() {
   try {
@@ -51,6 +52,14 @@ export async function PUT(req: Request) {
     
     if (!id) return NextResponse.json({ error: 'ID es requerido' }, { status: 400 });
 
+    const tituloSanitizado = titulo ? sanitizeInput(titulo) : titulo;
+    const subtituloSanitizado = subtitulo ? sanitizeInput(subtitulo) : subtitulo;
+    // gif_url is a URL, sanitizeInput might break it if it has weird chars, but usually URLs are safe from <script>
+    // but better to be safe or validate URL format. For now, strict sanitize as it shouldn't have HTML.
+    // wait, sanitizeInput removes ALL HTML tags. A URL like "https://example.com/image.gif" is fine.
+    // A URL like "javascript:alert(1)" is handled by sanitizeInput (removes javascript:).
+    const gifUrlSanitizado = gif_url ? sanitizeInput(gif_url) : gif_url;
+
     const sql = `
       UPDATE homepage_sections 
       SET tipo = ?, referencia_id = ?, titulo = ?, subtitulo = ?, 
@@ -59,8 +68,8 @@ export async function PUT(req: Request) {
     `;
 
     await db.run(sql, [
-      tipo, referencia_id, titulo, subtitulo, 
-      gif_url, orden, activo, id
+      tipo, referencia_id, tituloSanitizado, subtituloSanitizado, 
+      gifUrlSanitizado, orden, activo, id
     ]);
 
     return NextResponse.json({ success: true });

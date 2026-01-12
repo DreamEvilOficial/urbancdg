@@ -160,12 +160,12 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
       )}`
     : ''
 
-  if (!open) return null
-
   return (
     <div
       ref={containerRef}
       className={`fixed bottom-6 right-6 z-[9999] transition-all duration-500 ease-spring ${
+        !open ? 'opacity-0 pointer-events-none translate-y-10 scale-95' : 'opacity-100 scale-100'
+      } ${
         isFullscreen ? 'inset-0 w-full h-full rounded-none bottom-0 right-0' : (isExpanded ? 'w-[320px]' : 'w-[60px] h-[60px] hover:w-[320px]')
       }`}
       onClick={() => { if (!isExpanded && !isFullscreen) setIsExpanded(true) }}

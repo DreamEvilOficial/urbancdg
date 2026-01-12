@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import db from '@/lib/db'
 import bcrypt from 'bcryptjs'
 import { createClient } from '@supabase/supabase-js'
+import { sanitizeInput } from '@/lib/security'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,31 +29,53 @@ export async function POST(request: Request) {
   try {
     const { username, password } = await request.json()
     const secret = process.env.SUPABASE_SERVICE_ROLE_KEY || 'urban-fallback-secret-2024'
+    
+    // Warn if using fallback secret in production
+    if (process.env.NODE_ENV === 'production' && !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+       console.error('CRITICAL: Using fallback secret in production!');
+    }
 
-    console.log('Intento de login para:', username)
+    const cleanUsername = sanitizeInput(username);
+    console.log('Intento de login para:', cleanUsername)
 
     // Autenticación usando lib/db (con pool de PostgreSQL)
-    const user = await db.get('SELECT * FROM usuarios WHERE (email = ? OR usuario = ?) AND activo = TRUE', [username, username]) as any
+    const user = await db.get('SELECT * FROM usuarios WHERE (email = ? OR usuario = ?) AND activo = TRUE', [cleanUsername, cleanUsername]) as any
 
     if (!user) {
-      console.warn('❌ Usuario no encontrado o inactivo:', username)
+      console.warn('❌ Usuario no encontrado o inactivo:', cleanUsername)
       return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 401 })
     }
 
     // Verificar contraseña (bcrypt o texto plano legacy para migración)
     let validPassword = false
+    let shouldMigratePassword = false;
+
     if (user.contrasena) {
       if (user.contrasena.startsWith('$2a$') || user.contrasena.startsWith('$2b$')) {
         validPassword = bcrypt.compareSync(password, user.contrasena)
       } else {
-        // Texto plano (solo para desarrollo/migración inicial, se recomienda hashear después)
+        // Texto plano (solo para desarrollo/migración inicial)
         validPassword = (password === user.contrasena)
+        if (validPassword) {
+            shouldMigratePassword = true;
+        }
       }
     }
 
     if (!validPassword) {
-      console.warn('❌ Contraseña inválida para:', username)
+      console.warn('❌ Contraseña inválida para:', cleanUsername)
       return NextResponse.json({ error: 'Contraseña incorrecta' }, { status: 401 })
+    }
+    
+    // Migrar contraseña a Bcrypt si estaba en texto plano
+    if (shouldMigratePassword) {
+        try {
+            const hashedPassword = bcrypt.hashSync(password, 10);
+            await db.run('UPDATE usuarios SET contrasena = ? WHERE id = ?', [hashedPassword, user.id]);
+            console.log('🔒 Contraseña migrada a Bcrypt para usuario:', cleanUsername);
+        } catch (err) {
+            console.error('Error migrando contraseña:', err);
+        }
     }
     
     // Mapear usuario para sesión
@@ -83,8 +106,8 @@ export async function POST(request: Request) {
       name: 'admin-session',
       value: cookieValue,
       httpOnly: true,
-      secure: false, // Temporalmente false para asegurar que funcione en localhost sin HTTPS
-      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
       maxAge: 60 * 60 * 24 * 7,
       path: '/',
     })
@@ -94,8 +117,8 @@ export async function POST(request: Request) {
       name: 'admin-auth',
       value: '1',
       httpOnly: false,
-      secure: false, // Localhost fix
-      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
       maxAge: 60 * 60 * 24 * 7,
       path: '/',
     })
