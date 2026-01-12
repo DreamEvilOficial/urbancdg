@@ -125,6 +125,47 @@ export async function GET() {
             ALTER TABLE productos ADD COLUMN stock_minimo INTEGER DEFAULT 0;
         END IF;
 
+        -- 7. Asegurar tabla ORDENES
+        CREATE TABLE IF NOT EXISTS ordenes (
+            id UUID PRIMARY KEY,
+            numero_orden TEXT NOT NULL,
+            cliente_nombre TEXT NOT NULL,
+            cliente_email TEXT,
+            cliente_telefono TEXT,
+            subtotal NUMERIC(10,2) DEFAULT 0,
+            total NUMERIC(10,2) DEFAULT 0,
+            envio NUMERIC(10,2) DEFAULT 0,
+            estado TEXT DEFAULT 'pendiente',
+            metodo_pago TEXT,
+            notas TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            pago_id TEXT,
+            pago_estado TEXT,
+            pago_metodo TEXT,
+            factura_url TEXT
+        );
+
+        -- 8. Asegurar tabla ORDEN_ITEMS
+        CREATE TABLE IF NOT EXISTS orden_items (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            orden_id UUID REFERENCES ordenes(id) ON DELETE CASCADE,
+            producto_id UUID REFERENCES productos(id),
+            cantidad INTEGER DEFAULT 1,
+            precio_unitario NUMERIC(10,2) DEFAULT 0,
+            variante_info JSONB DEFAULT '{}'
+        );
+
+        -- 9. Asegurar tabla ADMIN_LOGS
+        CREATE TABLE IF NOT EXISTS admin_logs (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            action VARCHAR(100) NOT NULL,
+            entity VARCHAR(100) NOT NULL,
+            record_id UUID,
+            details JSONB DEFAULT '{}',
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+
       END $$;
     `;
 

@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { type Producto } from '@/lib/supabase'
 import ProductCard from '@/components/ProductCard'
 import DynamicTitle from '@/components/DynamicTitle'
+import Image from 'next/image'
 import { SlidersHorizontal, X, Tag } from 'lucide-react'
 
 function ProductosContent() {
@@ -84,7 +85,7 @@ function ProductosContent() {
       } catch (e) { console.error(e) } finally { setLoading(false) }
     }
     load()
-  }, [categoriaSlug, subcategoriaSlug])
+  }, [categoriaSlug, subcategoriaSlug, filter])
 
   // Computation of filtered products
   const productosFiltrados = useMemo(() => {
@@ -107,8 +108,6 @@ function ProductosContent() {
            const now = new Date()
            const diffTime = Math.abs(now.getTime() - launchDate.getTime())
            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-           // If launch date is in future, it's upcoming, not new (unless manually flagged?)
-           // Usually "New" means recently released.
            if (launchDate > now) return false // It's upcoming
            return diffDays <= 30
         }
@@ -156,15 +155,59 @@ function ProductosContent() {
     return result
   }, [allProductos, filter, onlyOffers, priceRange, selectedSizes, selectedColors, searchQuery, categoriaSlug, allCategorias])
 
-  const titulo = searchQuery 
-    ? `BÚSQUEDA: "${searchQuery.toUpperCase()}"` 
-    : (filter === 'descuentos' 
-      ? 'DESCUENTOS' 
-      : (filter === 'nuevos' 
-        ? 'NUEVOS INGRESOS' 
-        : (subcategoriaNombre || categoriaNombre || (categoriaSlug ? categoriaSlug.replace(/-/g, ' ') : 'COLECCIÓN')).toUpperCase()
-      )
-    )
+  // Title Logic
+  const getTitleInfo = () => {
+    if (searchQuery) {
+      return { text: `BÚSQUEDA: "${searchQuery.toUpperCase()}"`, element: `BÚSQUEDA: "${searchQuery.toUpperCase()}"` }
+    }
+
+    if (filter === 'descuentos') {
+      return {
+        text: 'DESCUENTOS',
+        element: (
+          <span className="flex items-center gap-3 md:gap-5">
+            DESCUENTOS
+            <Image src="/Discount Icon.gif" alt="Descuento" width={60} height={60} className="w-10 h-10 md:w-16 md:h-16 -mt-2 object-contain" unoptimized />
+          </span>
+        )
+      }
+    }
+    
+    if (filter === 'nuevos') {
+      return {
+        text: 'NUEVOS INGRESOS',
+        element: (
+          <span className="flex items-center gap-3 md:gap-5">
+            NUEVOS INGRESOS
+            <Image src="/New label.gif" alt="Nuevo" width={60} height={60} className="w-10 h-10 md:w-16 md:h-16 -mt-2 object-contain" unoptimized />
+          </span>
+        )
+      }
+    }
+
+    if (filter === 'proximamente') {
+      return {
+        text: 'PRÓXIMAMENTE',
+        element: (
+          <span className="flex items-center gap-3 md:gap-5">
+            PRÓXIMAMENTE
+            <Image src="/Fire.gif" alt="Próximamente" width={60} height={60} className="w-10 h-10 md:w-16 md:h-16 -mt-2 object-contain" unoptimized />
+          </span>
+        )
+      }
+    }
+
+    // Generic filter fallback
+    if (filter) {
+      const text = filter.replace(/-/g, ' ').toUpperCase()
+      return { text, element: text }
+    }
+
+    const text = (subcategoriaNombre || categoriaNombre || (categoriaSlug ? categoriaSlug.replace(/-/g, ' ') : 'COLECCIÓN')).toUpperCase()
+    return { text, element: text }
+  }
+
+  const { text: titleText, element: titleElement } = getTitleInfo()
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -177,14 +220,14 @@ function ProductosContent() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-900/5 rounded-full blur-[150px]" />
       </div>
 
-      <DynamicTitle title={`${titulo} / Urban Indumentaria`} />
+      <DynamicTitle title={`${titleText} / Urban Indumentaria`} />
       
       <div className="max-w-[1400px] mx-auto px-4 md:px-10 pt-16 pb-20 relative z-10">
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12 border-b border-white/5 pb-10">
            <div>
-             <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase italic leading-none">{titulo}</h1>
+             <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase italic leading-none">{titleElement}</h1>
              <div className="text-[10px] font-black text-white/45 uppercase tracking-[0.4em] mt-4 flex items-center gap-3">
                <div className="w-8 h-[1px] bg-white/10" /> EXPLORANDO {productosFiltrados.length} ARTÍCULOS
              </div>
