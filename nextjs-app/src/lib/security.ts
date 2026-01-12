@@ -20,10 +20,10 @@ export function encrypt(text: string): string {
   try {
     const iv = crypto.randomBytes(IV_LENGTH);
     const key = getKey();
-    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+    const cipher = crypto.createCipheriv('aes-256-cbc', key as any, iv);
     const encrypted = Buffer.concat([
-      cipher.update(text, 'utf8'),
-      cipher.final()
+      cipher.update(text, 'utf8') as any,
+      cipher.final() as any
     ]);
     return iv.toString('hex') + ':' + encrypted.toString('hex');
   } catch (error) {
@@ -50,10 +50,10 @@ export function decrypt(text: string): string {
     const encryptedText = Buffer.from(textParts.join(':'), 'hex');
     const key = getKey();
     
-    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+    const decipher = crypto.createDecipheriv('aes-256-cbc', key as any, iv);
     const decrypted = Buffer.concat([
-      decipher.update(encryptedText),
-      decipher.final()
+      decipher.update(encryptedText) as any,
+      decipher.final() as any
     ]);
     return decrypted.toString('utf8');
   } catch (error) {
