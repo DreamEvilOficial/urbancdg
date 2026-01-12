@@ -441,53 +441,44 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Precio Final</label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 font-bold">$</span>
-                    <input 
-                      type="number"
-                      value={formData.precio}
-                      onChange={e => {
-                        const newPrecio = e.target.value
-                        setFormData({...formData, precio: newPrecio})
-                        if (formData.precio_original && Number(formData.precio_original) > 0) {
-                          const descuento = Math.round(((Number(formData.precio_original) - Number(newPrecio)) / Number(formData.precio_original)) * 100)
-                          setFormData(prev => ({...prev, precio: newPrecio, descuento_porcentaje: descuento.toString()}))
-                        }
-                      }}
-                      className="w-full bg-[#111] border border-white/5 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold focus:bg-black focus:border-white text-white transition-all outline-none"
-                      required
-                    />
-                  </div>
+                  <input 
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.precio}
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (parseFloat(val) < 0) return;
+                      setFormData({...formData, precio: val})
+                    }}
+                    className="w-full bg-[#111] border border-white/5 p-4 rounded-2xl text-sm font-bold placeholder:text-white/20 focus:bg-black focus:border-white text-white transition-all outline-none"
+                    required
+                  />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">P. Original</label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 font-bold">$</span>
-                    <input 
-                      type="number"
-                      value={formData.precio_original}
-                      onChange={e => {
-                        const newPrecioOriginal = e.target.value
-                        setFormData({...formData, precio_original: newPrecioOriginal})
-                        if (formData.precio && Number(formData.precio) > 0) {
-                          const descuento = Math.round(((Number(newPrecioOriginal) - Number(formData.precio)) / Number(newPrecioOriginal)) * 100)
-                          setFormData(prev => ({...prev, precio_original: newPrecioOriginal, descuento_porcentaje: descuento.toString()}))
-                        }
-                      }}
-                      className="w-full bg-[#111] border border-white/5 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold focus:bg-black focus:border-white text-white transition-all outline-none"
-                    />
-                  </div>
+                  <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Precio Original</label>
+                  <input 
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.precio_original}
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (parseFloat(val) < 0) return;
+                      setFormData({...formData, precio_original: val})
+                    }}
+                    className="w-full bg-[#111] border border-white/5 p-4 rounded-2xl text-sm font-bold placeholder:text-white/20 focus:bg-black focus:border-white text-white transition-all outline-none"
+                  />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Descuento</label>
+                  <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Descuento (%)</label>
                   <div className="relative">
                     <input 
-                      type="number"
                       value={formData.descuento_porcentaje}
                       readOnly
-                      className="w-full bg-white/5 border border-transparent px-4 py-4 rounded-2xl text-sm font-black text-emerald-400 outline-none cursor-not-allowed"
+                      className="w-full bg-[#111] border border-white/5 p-4 rounded-2xl text-sm font-bold placeholder:text-white/20 text-white/50 cursor-not-allowed outline-none"
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-400 font-black">%</span>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 text-xs font-black">%</span>
                   </div>
                 </div>
               </div>

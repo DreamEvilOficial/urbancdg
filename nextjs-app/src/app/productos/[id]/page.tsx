@@ -157,8 +157,22 @@ export default function ProductDetailPage() {
                <div className="absolute top-0 right-0 p-4 opacity-10 text-accent"><Ticket className="w-24 h-24 rotate-12" /></div>
                <div className="space-y-4">
                   <div>
-                    <span className="text-[8px] font-black text-white/45 uppercase tracking-widest block mb-1">Precio Online</span>
-                    <span className="text-3xl font-black tracking-tighter leading-none text-white">$<span suppressHydrationWarning>{producto.precio.toLocaleString()}</span></span>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[8px] font-black text-white/45 uppercase tracking-widest block">Precio Online</span>
+                      {discountPercent > 0 && (
+                        <span className="bg-white text-black text-[10px] font-black px-2 py-0.5 rounded-sm">
+                          {discountPercent}% OFF
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-3xl font-black tracking-tighter leading-none text-white">$<span suppressHydrationWarning>{producto.precio.toLocaleString()}</span></span>
+                      {producto.precio_original && discountPercent > 0 && (
+                        <span className="text-lg font-bold text-white/30 line-through decoration-white/30">
+                          $<span suppressHydrationWarning>{producto.precio_original.toLocaleString()}</span>
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-3 pt-4 border-t border-white/10">
                     <div className="flex items-center justify-between">

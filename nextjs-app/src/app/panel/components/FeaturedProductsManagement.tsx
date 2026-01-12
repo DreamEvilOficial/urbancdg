@@ -213,6 +213,17 @@ export default function FeaturedProductsManagement() {
                                 <Clock className="w-4 h-4" />
                             </button>
                         </div>
+                        {((product as any).proximo_lanzamiento || (product as any).proximamente) && (
+                            <div className="mt-3 pt-3 border-t border-white/5 animate-in fade-in slide-in-from-top-2">
+                                <label className="block text-[9px] font-black uppercase text-white/40 tracking-widest mb-2">Fecha de Lanzamiento</label>
+                                <input 
+                                    type="datetime-local"
+                                    value={(product as any).fecha_lanzamiento ? new Date((product as any).fecha_lanzamiento).toISOString().slice(0, 16) : ''}
+                                    onChange={(e) => updateDate(product.id, e.target.value)}
+                                    className="w-full bg-black/50 border border-white/10 p-3 rounded-xl text-xs font-bold text-white focus:border-blue-500 transition-all outline-none"
+                                />
+                            </div>
+                        )}
                     </div>
                 )
             })}

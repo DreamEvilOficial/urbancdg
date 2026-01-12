@@ -61,7 +61,8 @@ export default function PaymentPage() {
         subtotal: total(),
         total: payableTotal,
         estado: 'pendiente',
-        notas: `Método: ${paymentMethod === 'mercadopago' ? 'MP' : 'Transferencia'}\nDNI: ${deliveryData.formData.dniCuit}\nNota: ${orderNote}`
+        notas: `Método: ${paymentMethod === 'mercadopago' ? 'MP' : 'Transferencia'}\nDNI: ${deliveryData.formData.dniCuit}\nNota: ${orderNote}`,
+        items: items // Fix: Send items to API
       })
       
       setCreatedOrder(orden)
