@@ -13,7 +13,6 @@ export async function GET(req: Request) {
         if (id) {
             const order = await db.get('SELECT * FROM ordenes WHERE id = ?', [id]);
             if (order) {
-                // Obtener items de la orden
                 const items = await db.all('SELECT * FROM orden_items WHERE orden_id = ?', [id]);
                 order.items = items;
             }
@@ -40,50 +39,84 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
+        console.log('[orders:POST] Received body:', JSON.stringify(body, null, 2));
+
         const { items, cliente, total, subtotal, envio, notas, metodo_pago, cliente_nombre, cliente_email, cliente_telefono } = body;
 
-        if (!items || !items.length) {
-            return NextResponse.json({ error: 'No items in order' }, { status: 400 });
+        // 1. Validaciones básicas
+        if (!items || !Array.isArray(items) || items.length === 0) {
+            return NextResponse.json({ error: 'La orden debe tener al menos un producto.' }, { status: 400 });
         }
 
-        // Extraer datos del cliente (soportar ambos formatos: objeto o campos directos)
+        // Normalizar datos del cliente
         const nombre = cliente?.nombre || cliente_nombre;
         const email = cliente?.email || cliente_email;
         const telefono = cliente?.telefono || cliente_telefono;
 
         if (!nombre) {
-            return NextResponse.json({ error: 'Cliente nombre es requerido' }, { status: 400 });
+            return NextResponse.json({ error: 'El nombre del cliente es obligatorio.' }, { status: 400 });
         }
 
+        // Generar IDs
         const orderId = uuidv4();
         const numeroOrden = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-        // USAR TRANSACCIÓN PARA ASEGURAR INTEGRIDAD
+        // 2. Ejecutar transacción
         const result = await db.transaction(async (client) => {
-            // 1. Crear la orden base
-            await client.query(`
+            // A. Crear la orden principal
+            const insertOrderQuery = `
                 INSERT INTO ordenes (
                     id, numero_orden, cliente_nombre, cliente_email, cliente_telefono,
                     subtotal, total, envio, estado, metodo_pago, notas
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-            `, [
-                orderId, numeroOrden, nombre, email || null, telefono || null,
-                subtotal || total || 0, total || 0, envio || 0, 'pendiente', metodo_pago || 'transferencia', notas || ''
+            `;
+            
+            await client.query(insertOrderQuery, [
+                orderId, 
+                numeroOrden, 
+                nombre, 
+                email || null, 
+                telefono || null,
+                subtotal || total || 0, 
+                total || 0, 
+                envio || 0, 
+                'pendiente', 
+                metodo_pago || 'transferencia', 
+                notas || ''
             ]);
 
-            // 2. Procesar cada item y actualizar stock
+            // B. Procesar items
             for (const item of items) {
-                // Validar stock disponible
-                const productResult = await client.query('SELECT stock_actual, nombre FROM productos WHERE id = $1 FOR UPDATE', [item.producto_id]);
+                // Detectar ID del producto (puede venir como 'id' o 'producto_id')
+                const productId = item.producto_id || item.id;
+                
+                if (!productId) {
+                    throw new Error(`Item sin ID de producto válido: ${JSON.stringify(item)}`);
+                }
+
+                // Bloquear fila del producto para actualizar stock (evita condiciones de carrera)
+                const productResult = await client.query(
+                    'SELECT id, nombre, stock_actual FROM productos WHERE id = $1 FOR UPDATE',
+                    [productId]
+                );
+                
                 const product = productResult.rows[0];
 
                 if (!product) {
-                    throw new Error(`Producto no encontrado ID: ${item.producto_id}`);
+                    throw new Error(`Producto no encontrado (ID: ${productId})`);
                 }
 
-                if (product.stock_actual < item.cantidad) {
-                    throw new Error(`Stock insuficiente para: ${product.nombre}. Disponible: ${product.stock_actual}`);
+                // Validar stock
+                const cantidad = Number(item.cantidad) || 1;
+                if (product.stock_actual < cantidad) {
+                    throw new Error(`Stock insuficiente para "${product.nombre}". Solicitado: ${cantidad}, Disponible: ${product.stock_actual}`);
                 }
+
+                // Construir información de variante
+                const varianteInfo = item.variante || item.variante_info || { 
+                    talle: item.talle, 
+                    color: item.color 
+                };
 
                 // Insertar item de orden
                 await client.query(`
@@ -91,19 +124,25 @@ export async function POST(req: Request) {
                         orden_id, producto_id, cantidad, precio_unitario, variante_info
                     ) VALUES ($1, $2, $3, $4, $5)
                 `, [
-                    orderId, item.producto_id, item.cantidad, item.precio_unitario || item.precio || 0, JSON.stringify(item.variante || item.variante_info || {})
+                    orderId, 
+                    productId, 
+                    cantidad, 
+                    item.precio_unitario || item.precio || 0, 
+                    JSON.stringify(varianteInfo)
                 ]);
 
-                // Descontar stock
+                // Actualizar stock
                 await client.query(`
                     UPDATE productos 
                     SET stock_actual = stock_actual - $1 
                     WHERE id = $2
-                `, [item.cantidad, item.producto_id]);
+                `, [cantidad, productId]);
             }
 
             return { orderId, numeroOrden };
         });
+
+        console.log('[orders:POST] Order created successfully:', result);
 
         return NextResponse.json({ 
             success: true, 
@@ -112,10 +151,12 @@ export async function POST(req: Request) {
         });
 
     } catch (err: any) {
-        console.error('[orders:POST] Transaction failed:', err.message);
+        console.error('[orders:POST] Transaction failed:', err);
+        
+        // Devolver un error JSON limpio
         return NextResponse.json({ 
-            error: 'Failed to process order', 
-            details: err.message 
+            error: err.message || 'Error al procesar la orden', 
+            details: err.stack 
         }, { status: 500 });
     }
 }

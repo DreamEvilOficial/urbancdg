@@ -146,6 +146,19 @@ export async function GET() {
             factura_url TEXT
         );
 
+        -- Asegurar columnas en ORDENES (si la tabla ya existía)
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'ordenes' AND column_name = 'metodo_pago') THEN
+            ALTER TABLE ordenes ADD COLUMN metodo_pago TEXT;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'ordenes' AND column_name = 'notas') THEN
+            ALTER TABLE ordenes ADD COLUMN notas TEXT;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'ordenes' AND column_name = 'envio') THEN
+            ALTER TABLE ordenes ADD COLUMN envio NUMERIC(10,2) DEFAULT 0;
+        END IF;
+
         -- 8. Asegurar tabla ORDEN_ITEMS
         CREATE TABLE IF NOT EXISTS orden_items (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -155,6 +168,11 @@ export async function GET() {
             precio_unitario NUMERIC(10,2) DEFAULT 0,
             variante_info JSONB DEFAULT '{}'
         );
+
+        -- Asegurar columnas en ORDEN_ITEMS
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'orden_items' AND column_name = 'variante_info') THEN
+            ALTER TABLE orden_items ADD COLUMN variante_info JSONB DEFAULT '{}';
+        END IF;
 
         -- 9. Asegurar tabla ADMIN_LOGS
         CREATE TABLE IF NOT EXISTS admin_logs (
