@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
 import { sanitizeInput, sanitizeRichText } from '@/lib/security';
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -86,6 +87,15 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
+        // 1. Verificar autenticación (Refuerzo de seguridad)
+        const cookieStore = cookies();
+        const adminSession = cookieStore.get('admin-session')?.value;
+        const session = cookieStore.get('session')?.value;
+        
+        if (!adminSession && !session) {
+            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        }
+
         const body = await request.json();
         const id = body.id || uuidv4();
         

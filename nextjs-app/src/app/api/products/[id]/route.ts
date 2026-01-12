@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { sanitizeInput, sanitizeRichText } from '@/lib/security';
+import { cookies } from 'next/headers';
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   const id = params.id;
@@ -19,6 +20,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         proximo_lanzamiento: product.proximo_lanzamiento === true || product.proximo_lanzamiento === 1 || product.proximo_lanzamiento === 'true' || product.proximamente === true || product.proximamente === 1 || product.proximamente === 'true',
         proximamente: product.proximamente === true || product.proximamente === 1 || product.proximamente === 'true' || product.proximo_lanzamiento === true || product.proximo_lanzamiento === 1 || product.proximo_lanzamiento === 'true',
         nuevo_lanzamiento: product.nuevo_lanzamiento === true || product.nuevo_lanzamiento === 1 || product.nuevo_lanzamiento === 'true',
+        descuento_activo: product.descuento_activo === true || product.descuento_activo === 1 || product.descuento_activo === 'true',
         imagenes: product.imagenes ? (typeof product.imagenes === 'string' ? JSON.parse(product.imagenes) : product.imagenes) : [],
         variantes: product.variantes ? (typeof product.variantes === 'string' ? JSON.parse(product.variantes) : product.variantes) : [],
         dimensiones: product.dimensiones ? (typeof product.dimensiones === 'string' ? JSON.parse(product.dimensiones) : product.dimensiones) : null,
@@ -27,6 +29,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     
     return NextResponse.json(parsedProduct);
   } catch (err) {
+    console.error('Error fetching product:', err);
     return NextResponse.json({ error: 'Database error' }, { status: 500 });
   }
 }
@@ -34,9 +37,26 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   const id = params.id;
   try {
+    // 1. Verificar autenticación (Refuerzo de seguridad)
+    const cookieStore = cookies();
+    const adminSession = cookieStore.get('admin-session')?.value;
+    const session = cookieStore.get('session')?.value;
+    
+    if (!adminSession && !session) {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
     // 2. Build dynamic update query
     const body = await req.json();
     const { id: bodyId, ...updates } = body;
+    
+    // Si viene 'proximamente', sincronizar con 'proximo_lanzamiento' para evitar inconsistencias
+    if (updates.proximamente !== undefined && updates.proximo_lanzamiento === undefined) {
+        updates.proximo_lanzamiento = updates.proximamente;
+    } else if (updates.proximo_lanzamiento !== undefined && updates.proximamente === undefined) {
+        updates.proximamente = updates.proximo_lanzamiento;
+    }
+
     const keys = Object.keys(updates);
     
     if (keys.length === 0) {
@@ -52,8 +72,6 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
             if (key === 'descripcion' || key === 'description') {
                 val = sanitizeRichText(val);
             } else if (key !== 'imagenes' && key !== 'variantes' && key !== 'metadata' && key !== 'dimensiones') {
-                // Don't strict sanitize JSON strings, they are parsed later or handled as objects
-                // If it's a regular text field, sanitize it
                 val = sanitizeInput(val);
             }
         }
@@ -66,38 +84,53 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     });
     values.push(id);
 
-    // Use transaction for atomicity and logging
-    await db.transaction(async (tx) => {
-        // Ensure logs table exists
-        await db.run(`
-            CREATE TABLE IF NOT EXISTS admin_logs (
-                id SERIAL PRIMARY KEY,
-                action TEXT NOT NULL,
-                details TEXT,
-                target_id TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `, [], tx);
+    // Preparar detalles del log
+    let logDetails = `Updated fields: ${keys.join(', ')}`;
+    if (updates.nombre) logDetails += `. Name: ${updates.nombre}`;
+    if (updates.precio) logDetails += `. Price: ${updates.precio}`;
 
-        // Update Product
-        const result = await db.run(`UPDATE productos SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, values, tx);
-        
-        if (result.changes === 0) {
-             throw new Error('PRODUCT_NOT_FOUND');
-        }
+    // Intentar realizar la operación
+    try {
+        // Primero intentamos con transacción si el pool está disponible
+        await db.transaction(async (tx) => {
+            // Update Product
+            const result = await db.run(`UPDATE productos SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, values, tx);
+            
+            if (result.changes === 0) {
+                 throw new Error('PRODUCT_NOT_FOUND');
+            }
 
-        // Log operation
-        let logDetails = `Updated fields: ${keys.join(', ')}`;
-        if (updates.descuento_porcentaje) {
-            logDetails += `. Discount: ${updates.descuento_porcentaje}%`;
+            // Log operation (Intentamos insertar log, pero no fallamos si falla el log)
+            try {
+                await db.run(`INSERT INTO admin_logs (action, details, target_id) VALUES (?, ?, ?)`, 
+                    ['PRODUCT_UPDATE', logDetails, id], tx);
+            } catch (logErr) {
+                console.warn('Could not write admin log:', logErr);
+            }
+        });
+    } catch (err: any) {
+        // Si el error es que las transacciones no están disponibles (modo fallback), usamos db.run directamente
+        if (err.message?.includes('transacciones requieren una conexión directa') || !process.env.DATABASE_URL) {
+            console.log('Using non-transactional update (fallback mode)');
+            
+            const result = await db.run(`UPDATE productos SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, values);
+            
+            if (result.changes === 0) {
+                 return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+            }
+
+            // Log operation sin transacción
+            try {
+                await db.run(`INSERT INTO admin_logs (action, details, target_id) VALUES (?, ?, ?)`, 
+                    ['PRODUCT_UPDATE', logDetails, id]);
+            } catch (logErr) {
+                console.warn('Could not write admin log (fallback):', logErr);
+            }
+        } else {
+            // Si es otro error, lo relanzamos
+            throw err;
         }
-        if (updates.precio) {
-            logDetails += `. Price: ${updates.precio}`;
-        }
-        
-        await db.run(`INSERT INTO admin_logs (action, details, target_id) VALUES (?, ?, ?)`, 
-            ['PRODUCT_UPDATE', logDetails, id], tx);
-    });
+    }
 
     // fetch updated
     const updated = await db.get('SELECT * FROM productos WHERE id = ?', [id]);
