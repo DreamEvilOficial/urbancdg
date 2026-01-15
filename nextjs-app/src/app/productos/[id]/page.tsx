@@ -227,7 +227,7 @@ export default function ProductDetailPage() {
                   type="button"
                   onClick={() => {
                     if (hasVariants && (!selectedTalle || !selectedColor)) return toast.error('Elige opciones')
-                    if (cantidad > stockDisponible) return toast.error('Sin stock')
+                    if (stockDisponible <= 0 || cantidad > stockDisponible) return toast.error('SIN STOCK')
                     addItem({
                       id: String(producto.id),
                       nombre: producto.nombre,
@@ -243,7 +243,7 @@ export default function ProductDetailPage() {
                   className="flex-1 ml-4 bg-accent text-ink py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:brightness-95 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group disabled:opacity-30"
                 >
                   <ShoppingBag className="w-4 h-4 group-hover:-rotate-12 transition-transform" />
-                  {stockDisponible <= 0 ? 'Sin Stock' : 'Sumar a la bolsa'}
+                  {stockDisponible <= 0 ? 'SIN STOCK' : 'Sumar a la bolsa'}
                 </button>
               </div>
             </div>

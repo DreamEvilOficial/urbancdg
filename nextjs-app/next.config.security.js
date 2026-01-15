@@ -171,7 +171,7 @@ const nextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com https://m.media-amazon.com",
+              "img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com https://m.media-amazon.com https://media.discordapp.net https://*.discordapp.net https://cdn.discordapp.com",
               "font-src 'self' data: https://fonts.gstatic.com",
               "connect-src 'self' https://*.supabase.co https://vercel.live wss://*.supabase.co",
               "frame-src 'self'",

@@ -59,7 +59,7 @@ export async function middleware(request: NextRequest) {
     default-src 'self';
     script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://*.supabase.co https://*.stripe.com;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-    img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com https://*.stripe.com https://media.discordapp.net https://*.discordapp.net https://static.wattpad.com https://*.wattpad.com;
+    img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com https://*.stripe.com https://media.discordapp.net https://*.discordapp.net https://cdn.discordapp.com https://static.wattpad.com https://*.wattpad.com;
     font-src 'self' data: https://fonts.gstatic.com;
     connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.stripe.com;
     frame-src 'self' https://www.youtube.com https://youtube.com;

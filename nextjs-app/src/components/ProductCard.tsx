@@ -216,7 +216,12 @@ function ProductCard({ producto }: ProductCardProps) {
   const handleAddToCart = useCallback((e?: React.MouseEvent) => {
     e?.preventDefault()
     e?.stopPropagation()
-    
+
+    if (!currentStock || currentStock <= 0) {
+      toast.error('SIN STOCK')
+      return
+    }
+
     if (hasVariants) {
       setShowModal(true)
       return
@@ -232,7 +237,7 @@ function ProductCard({ producto }: ProductCardProps) {
     })
     toast.success(`✅ ${productName} agregado al carrito`)
     window.dispatchEvent(new Event('cartUpdated'))
-  }, [hasVariants, addItem, productId, productName, productPrice, productImage, currentStock])
+  }, [currentStock, hasVariants, addItem, productId, productName, productPrice, productImage])
 
   const handleVariantConfirm = useCallback(
     (talle: string, color: string) => {
@@ -320,14 +325,20 @@ function ProductCard({ producto }: ProductCardProps) {
               </p>
             </div>
 
-            {/* Precio con transferencia */}
-            <div className="flex flex-wrap items-center gap-1.5 text-gray-400 text-xs md:text-sm mt-1">
-              <span className="px-1.5 py-0.5 bg-gray-800 rounded text-[10px] md:text-xs font-semibold text-gray-300 border border-gray-700">
-                TRANSF.
-              </span>
-              <span className="font-medium text-white/90">
-                $ <span suppressHydrationWarning>{transferPrice}</span>
-              </span>
+            <div className="flex flex-col gap-1 mt-1">
+              <div className="flex flex-wrap items-center gap-1.5 text-gray-400 text-xs md:text-sm">
+                <span className="px-1.5 py-0.5 bg-gray-800 rounded text-[10px] md:text-xs font-semibold text-gray-300 border border-gray-700">
+                  TRANSF.
+                </span>
+                <span className="font-medium text-white/90">
+                  $ <span suppressHydrationWarning>{transferPrice}</span>
+                </span>
+              </div>
+              {(!currentStock || currentStock <= 0) && (
+                <span className="text-[10px] md:text-xs font-black text-red-500 uppercase tracking-[0.2em]">
+                  SIN STOCK
+                </span>
+              )}
             </div>
 
           </div>
@@ -348,10 +359,10 @@ function ProductCard({ producto }: ProductCardProps) {
               <button
                 type="button"
                 onClick={handleAddToCart}
-                disabled={currentStock <= 0}
+                disabled={!currentStock || currentStock <= 0}
                 className="flex-1 bg-accent text-ink py-2 md:py-3 rounded-lg font-black text-sm md:text-base flex items-center justify-center gap-2 hover:brightness-95 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/40"
               >
-                {currentStock <= 0 ? 'Sin Stock' : (
+                {!currentStock || currentStock <= 0 ? 'SIN STOCK' : (
                   <>
                     <ShoppingCart className="w-4 h-4" />
                     COMPRAR
