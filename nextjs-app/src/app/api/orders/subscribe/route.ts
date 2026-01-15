@@ -1,8 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
-import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+type ResendClient = {
+  emails: {
+    send: (args: { from: string; to: string | string[]; subject: string; html: string }) => Promise<unknown>
+  }
+}
+
+let resend: ResendClient | null = null
+
+const getResend = async (): Promise<ResendClient | null> => {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    console.warn('[orders/subscribe] RESEND_API_KEY no configurada. Email no enviado.')
+    return null
+  }
+  if (!resend) {
+    const { Resend } = await import('resend')
+    resend = new Resend(apiKey)
+  }
+  return resend
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,9 +54,10 @@ export async function POST(request: NextRequest) {
     })
 
     // Send confirmation email directly
-    if (process.env.RESEND_API_KEY) {
+    const client = await getResend()
+    if (client) {
       try {
-        const { data, error } = await resend.emails.send({
+        const result = await client.emails.send({
           from: 'Urban CDG <onboarding@resend.dev>', // Should be updated to verified domain in prod
           to: [trimmedEmail],
           subject: `Suscripción a actualizaciones del pedido ${trimmedOrder}`,
@@ -53,16 +72,10 @@ export async function POST(request: NextRequest) {
           `,
         })
 
-        if (error) {
-          console.error('Error enviando email con Resend:', error)
-        } else {
-          console.log('Email de suscripción enviado:', data)
-        }
+        console.log('Email de suscripción enviado:', result)
       } catch (emailErr) {
         console.error('Excepción al enviar email:', emailErr)
       }
-    } else {
-      console.warn('RESEND_API_KEY no configurada, email no enviado.')
     }
     
     return NextResponse.json({ success: true })
@@ -71,4 +84,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Error al registrar suscripción' }, { status: 500 })
   }
 }
-

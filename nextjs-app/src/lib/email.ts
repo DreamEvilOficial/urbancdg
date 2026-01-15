@@ -1,33 +1,52 @@
-import { Resend } from 'resend';
 import { formatPrice } from '@/lib/formatters';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM_EMAIL = 'Urban CDG <onboarding@resend.dev>'; // Usar dominio verificado en producción
+type ResendClient = {
+  emails: {
+    send: (args: { from: string; to: string | string[]; subject: string; html: string }) => Promise<unknown>
+  }
+};
+
+let resend: ResendClient | null = null;
+const FROM_EMAIL = 'Urban CDG <onboarding@resend.dev>';
+
+const getResend = async (): Promise<ResendClient | null> => {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn('[EMAIL] RESEND_API_KEY no configurada. Email no enviado.');
+    return null;
+  }
+  if (!resend) {
+    const { Resend } = await import('resend');
+    resend = new Resend(apiKey);
+  }
+  return resend;
+};
 
 export const sendEmail = async (to: string, subject: string, html: string) => {
-    try {
-        if (!process.env.RESEND_API_KEY) {
-            console.warn('[EMAIL] RESEND_API_KEY no configurada. Email no enviado.');
-            return false;
-        }
+  try {
+    const client = await getResend();
+    if (!client) return false;
 
-        await resend.emails.send({
-            from: FROM_EMAIL,
-            to,
-            subject,
-            html
-        });
-        return true;
-    } catch (error) {
-        console.error('[EMAIL] Error enviando email:', error);
-        return false;
-    }
+    await client.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject,
+      html
+    });
+    return true;
+  } catch (error) {
+    console.error('[EMAIL] Error enviando email:', error);
+    return false;
+  }
 };
 
 export async function sendOrderConfirmation(order: any, items: any[]) {
   if (!order.cliente_email) return;
 
   try {
+    const client = await getResend();
+    if (!client) return;
+
     const itemsHtml = items.map(item => `
       <tr>
         <td style="padding: 10px; border-bottom: 1px solid #eee;">
@@ -38,7 +57,7 @@ export async function sendOrderConfirmation(order: any, items: any[]) {
       </tr>
     `).join('');
 
-    await resend.emails.send({
+    await client.emails.send({
       from: FROM_EMAIL,
       to: order.cliente_email,
       subject: `Confirmación de Orden #${order.numero_orden}`,
@@ -83,7 +102,10 @@ export async function sendShippingUpdate(order: any, trackingCode: string) {
   if (!order.cliente_email) return;
 
   try {
-    await resend.emails.send({
+    const client = await getResend();
+    if (!client) return;
+
+    await client.emails.send({
       from: FROM_EMAIL,
       to: order.cliente_email,
       subject: `Tu pedido #${order.numero_orden} ha sido enviado`,
