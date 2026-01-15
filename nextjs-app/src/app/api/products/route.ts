@@ -3,6 +3,7 @@ import db from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
 import { sanitizeInput, sanitizeRichText } from '@/lib/security';
 import { cookies } from 'next/headers';
+import { toNumber } from '@/lib/formatters';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -143,8 +144,8 @@ export async function POST(request: Request) {
             nombre: nombreSafe,
             slug: slugSafe,
             descripcion: descripcionSafe,
-            precio: body.precio || 0,
-            precio_original: body.precio_original,
+            precio: toNumber(body.precio),
+            precio_original: body.precio_original ? toNumber(body.precio_original) : null,
             descuento_porcentaje: body.descuento_porcentaje || 0,
             categoria_id: body.categoria_id,
             subcategoria_id: body.subcategoria_id,
@@ -163,7 +164,7 @@ export async function POST(request: Request) {
             sku: skuSafe,
             proveedor_nombre: proveedorNombreSafe,
             proveedor_contacto: proveedorContactoSafe,
-            precio_costo: body.precio_costo,
+            precio_costo: body.precio_costo ? toNumber(body.precio_costo) : undefined,
             metadata: JSON.stringify(body.metadata || {})
         };
 
