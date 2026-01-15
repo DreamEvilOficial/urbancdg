@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import db from '@/lib/db'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,21 +35,32 @@ export async function POST(request: NextRequest) {
       const paymentData = await res.json()
       const { status, external_reference, status_detail } = paymentData
       const orderId = external_reference
+      const paymentIdNum = Number(id);
 
       console.log(`Payment ${id} status: ${status}, detail: ${status_detail}, order: ${orderId}`)
 
       if (orderId && status === 'approved') {
-        // Update order in database using db utility
-        await db.run(
-          `UPDATE ordenes SET 
-            estado = $1, 
-            mercadopago_payment_id = $2, 
-            updated_at = CURRENT_TIMESTAMP 
-           WHERE id = $3 OR numero_orden = $3`,
-          ['completado', id, orderId]
-        )
+        // Usar supabaseAdmin directamente para asegurar el update
+        // db.run puede fallar si no hay conexión directa a PG
+        if (!supabaseAdmin) {
+           throw new Error('Supabase Admin client not enabled');
+        }
+
+        const { error } = await supabaseAdmin
+            .from('ordenes')
+            .update({
+                estado: 'completado',
+                mercadopago_payment_id: isNaN(paymentIdNum) ? id : paymentIdNum,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', orderId) // orderId es UUID desde Checkout
+
+        if (error) {
+             console.error('Error updating order in Supabase:', error);
+             throw error;
+        }
         
-        console.log(`Order ${orderId} updated to completed`)
+        console.log(`Order ${orderId} updated to completed successfully via Supabase Admin`)
       }
     }
 

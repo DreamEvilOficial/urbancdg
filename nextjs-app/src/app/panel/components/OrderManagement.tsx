@@ -9,6 +9,7 @@ import {
   Info, ChevronRight, Check
 } from 'lucide-react'
 import { formatPrice, toNumber } from '@/lib/formatters'
+import ShippingLabelGenerator from './ShippingLabelGenerator'
 
 interface Orden {
   id: string
@@ -477,7 +478,7 @@ export default function OrderManagement() {
                    {/* Generador de Etiquetas Andreani */}
                    <ShippingLabelGenerator 
                       order={selectedOrder} 
-                      onLabelGenerated={(code) => setTrackingData(prev => ({ ...prev, code }))}
+                      onLabelGenerated={(code: string) => setTrackingData(prev => ({ ...prev, code }))}
                    />
 
                    {/* Seguimiento */}
