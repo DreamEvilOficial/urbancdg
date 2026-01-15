@@ -223,7 +223,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
             // Sync variants table if variants are provided
             if (updates.variantes) {
-                await syncVariants(db, id, updates.variantes, tx);
+                try {
+                    await syncVariants(db, id, updates.variantes, tx);
+                } catch (variantErr: any) {
+                    console.warn('Warning: Could not sync variants table (using JSON column instead):', variantErr.message);
+                    // No re-lanzamos el error para permitir que la actualización del producto (JSON) proceda
+                }
             }
 
             // Log operation (Intentamos insertar log, pero no fallamos si falla el log)
