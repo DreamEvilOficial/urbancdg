@@ -88,6 +88,7 @@ export interface Orden {
   cliente_nombre: string
   cliente_email: string
   cliente_telefono?: string
+  cliente_dni?: string
   direccion_envio?: string
   envio?: number
   subtotal?: number

@@ -58,6 +58,7 @@ export default function PaymentPage() {
         cliente_nombre: `${deliveryData.formData.nombre} ${deliveryData.formData.apellido}`,
         cliente_email: dummyEmail,
         cliente_telefono: deliveryData.formData.telefono,
+        cliente_dni: deliveryData.formData.dniCuit,
         direccion_envio: direccionCompleta,
         envio: deliveryData.shippingCost,
         subtotal: total(),
@@ -65,7 +66,7 @@ export default function PaymentPage() {
         total: payableTotal,
         estado: 'pendiente',
         metodo_pago: paymentMethod,
-        notas: `DNI: ${deliveryData.formData.dniCuit}\nNota: ${orderNote}`,
+        notas: `Nota: ${orderNote}`,
         items: items // Fix: Send items to API
       })
       

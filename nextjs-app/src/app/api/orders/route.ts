@@ -100,7 +100,7 @@ export async function POST(req: Request) {
         const body = await req.json();
         console.log('[orders:POST] Received body:', JSON.stringify(body, null, 2));
 
-        const { items, total, subtotal, envio, descuento, notas, metodo_pago, cliente_nombre, cliente_email, cliente_telefono, direccion_envio } = body;
+        const { items, total, subtotal, envio, descuento, notas, metodo_pago, cliente_nombre, cliente_email, cliente_telefono, cliente_dni, direccion_envio } = body;
 
         // 1. Validaciones básicas
         if (!items || !Array.isArray(items) || items.length === 0) {
@@ -111,6 +111,7 @@ export async function POST(req: Request) {
         const nombre = sanitizeInput(cliente_nombre || '');
         const email = sanitizeInput(cliente_email || '');
         const telefono = sanitizeInput(cliente_telefono || '');
+        const dni = sanitizeInput(cliente_dni || '');
         const direccion = sanitizeInput(direccion_envio || '');
         const notasSeguras = sanitizeInput(notas || '');
         const metodoPagoSeguro = sanitizeInput(metodo_pago || 'transferencia');
@@ -128,9 +129,9 @@ export async function POST(req: Request) {
             // A. Crear la orden principal
             const insertOrderQuery = `
                 INSERT INTO ordenes (
-                    id, numero_orden, cliente_nombre, cliente_email, cliente_telefono, direccion_envio,
+                    id, numero_orden, cliente_nombre, cliente_email, cliente_telefono, cliente_dni, direccion_envio,
                     subtotal, total, envio, descuento, estado, metodo_pago, notas
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             `;
             
             await client.query(insertOrderQuery, [
@@ -139,6 +140,7 @@ export async function POST(req: Request) {
                 nombre, 
                 email || null, 
                 telefono || null,
+                dni || null,
                 direccion || null,
                 subtotal || total || 0, 
                 total || 0, 

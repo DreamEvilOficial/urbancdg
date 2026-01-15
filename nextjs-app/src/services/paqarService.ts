@@ -5,6 +5,7 @@
 export interface PaqarLabelData {
   sender: {
     nombre: string
+    dni: string
     calle: string
     numero: string
     localidad: string
@@ -14,6 +15,7 @@ export interface PaqarLabelData {
   receiver: {
     nombre: string
     email: string
+    dni: string
     telefono?: string
     calle: string
     numero: string
@@ -94,6 +96,7 @@ export const paqarService = {
         order: {
           senderData: order.senderOverride ? {
             businessName: order.senderOverride.nombre,
+            documentNumber: order.senderOverride.dni,
             email: "ventas@urbancdg.com",
             address: {
               streetName: order.senderOverride.calle,
@@ -108,6 +111,7 @@ export const paqarService = {
           shippingData: {
             name: order.cliente_nombre || 'Cliente',
             email: order.cliente_email,
+            documentNumber: order.cliente_dni || '',
             address: {
               streetName: street,
               streetNumber: number,
@@ -156,6 +160,7 @@ export const paqarService = {
       return {
         sender: order.senderOverride || {
             nombre: 'Urban CDG Official',
+            dni: '',
             calle: 'Av. Corrientes',
             numero: '1234',
             localidad: 'CABA',
@@ -165,6 +170,7 @@ export const paqarService = {
         receiver: {
             nombre: order.cliente_nombre || 'Cliente',
             email: order.cliente_email,
+            dni: order.cliente_dni || '',
             telefono: order.cliente_telefono,
             calle: street,
             numero: number,
@@ -199,6 +205,7 @@ export const paqarService = {
     return {
       sender: order.senderOverride || {
         nombre: 'Urban CDG Official',
+        dni: '',
         calle: 'Av. Corrientes',
         numero: '1234',
         localidad: 'CABA',
@@ -208,6 +215,7 @@ export const paqarService = {
       receiver: {
         nombre: order.cliente_nombre || 'Cliente',
         email: order.cliente_email,
+        dni: order.cliente_dni || '',
         telefono: order.cliente_telefono,
         calle: street,
         numero: number,

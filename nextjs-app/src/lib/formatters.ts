@@ -23,6 +23,16 @@ export const toNumber = (value: number | string | null | undefined): number => {
   // Eliminar símbolos de moneda y espacios
   str = str.replace(/[$\s]/g, '')
 
+  // Heurística para corregir error común: usuario usa punto para decimales (.00 o .5)
+  // Si encontramos un punto seguido de 1 o 2 dígitos al final (y fin de cadena),
+  // asumimos que es un intento de decimal y lo cambiamos por coma.
+  // Ej: "60.000.00" -> "60.000,00"
+  // Ej: "100.50" -> "100,50"
+  // Pero "1.000" (3 dígitos) se mantiene como mil.
+  if (/\.\d{1,2}$/.test(str)) {
+    str = str.replace(/\.(\d{1,2})$/, ',$1')
+  }
+
   // Lógica estricta para formato Argentina (1.234,56)
   // 1. Si hay coma, es el separador decimal.
   // 2. Si hay puntos, son separadores de miles.

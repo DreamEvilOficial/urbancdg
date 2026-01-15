@@ -53,29 +53,62 @@ export async function POST(request: NextRequest) {
       email: trimmedEmail
     })
 
-    // Send confirmation email directly
-    const client = await getResend()
-    if (client) {
+    // Invoke Supabase Edge Function to send email
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (supabaseUrl && anonKey) {
       try {
-        const result = await client.emails.send({
-          from: 'Urban CDG <onboarding@resend.dev>', // Should be updated to verified domain in prod
-          to: [trimmedEmail],
-          subject: `Suscripción a actualizaciones del pedido ${trimmedOrder}`,
-          html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-              <h1>¡Gracias por suscribirte!</h1>
-              <p>Te avisaremos cuando haya novedades sobre tu pedido <strong>${trimmedOrder}</strong>.</p>
-              <p>Puedes ver el estado en cualquier momento <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://urbancdg.com'}/seguimiento?id=${trimmedOrder}">aquí</a>.</p>
-              <hr />
-              <p style="font-size: 12px; color: #666;">Urban CDG - Indumentaria</p>
-            </div>
-          `,
+        // Construct functions URL (remove /v1 or similar if present in base, usually base is https://ref.supabase.co)
+        // Standard format: https://<project_ref>.supabase.co/functions/v1/<function_name>
+        const functionUrl = `${supabaseUrl}/functions/v1/send-order-email`
+        
+        console.log('Invoking Supabase Function:', functionUrl)
+        
+        const res = await fetch(functionUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${anonKey}`
+          },
+          body: JSON.stringify({
+            order_id: trimmedOrder,
+            email: trimmedEmail,
+            type: 'subscribe'
+          })
         })
 
-        console.log('Email de suscripción enviado:', result)
-      } catch (emailErr) {
-        console.error('Excepción al enviar email:', emailErr)
+        if (!res.ok) {
+           const errText = await res.text()
+           console.error('Error invoking Supabase Function:', errText)
+           // Fallback to direct send if function fails? Or just log.
+        } else {
+           const data = await res.json()
+           console.log('Supabase Function response:', data)
+        }
+      } catch (fnError) {
+        console.error('Exception invoking Supabase Function:', fnError)
       }
+    } else {
+       // Fallback to local Resend if Supabase not configured (or dev mode)
+       const client = await getResend()
+       if (client) {
+         // ... existing logic ...
+          await client.emails.send({
+            from: 'Urban CDG <onboarding@resend.dev>',
+            to: [trimmedEmail],
+            subject: `Suscripción a actualizaciones del pedido ${trimmedOrder}`,
+            html: `
+              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                <h1>¡Gracias por suscribirte!</h1>
+                <p>Te avisaremos cuando haya novedades sobre tu pedido <strong>${trimmedOrder}</strong>.</p>
+                <p>Puedes ver el estado en cualquier momento <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://urbancdg.com'}/seguimiento?id=${trimmedOrder}">aquí</a>.</p>
+                <hr />
+                <p style="font-size: 12px; color: #666;">Urban CDG - Indumentaria</p>
+              </div>
+            `,
+          })
+       }
     }
     
     return NextResponse.json({ success: true })

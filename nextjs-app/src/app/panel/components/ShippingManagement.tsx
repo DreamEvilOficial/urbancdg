@@ -8,6 +8,7 @@ import ShippingLabelGenerator from './ShippingLabelGenerator'
 
 interface SenderData {
   nombre: string
+  dni: string
   calle: string
   numero: string
   localidad: string
@@ -18,6 +19,7 @@ interface SenderData {
 export default function ShippingManagement() {
   const [senderData, setSenderData] = useState<SenderData>({
     nombre: 'Urban CDG Official',
+    dni: '',
     calle: 'Av. Corrientes',
     numero: '1234',
     localidad: 'CABA',
@@ -182,8 +184,19 @@ export default function ShippingManagement() {
                 className="w-full bg-black/20 border border-white/10 p-3 rounded-xl text-xs font-bold text-white outline-none focus:border-blue-500/50 transition-colors"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-white/40 uppercase">DNI / CUIT</label>
+              <input
+                type="text"
+                value={senderData.dni}
+                onChange={e => setSenderData({ ...senderData, dni: e.target.value })}
+                className="w-full bg-black/20 border border-white/10 p-3 rounded-xl text-xs font-bold text-white outline-none focus:border-blue-500/50 transition-colors"
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="col-span-2 space-y-1">
                 <label className="text-[10px] font-bold text-white/40 uppercase">Calle</label>
                 <input
                   type="text"
