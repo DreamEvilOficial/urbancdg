@@ -450,6 +450,38 @@ export default function Header({ theme, toggleTheme }: HeaderProps) {
                       {cat.nombre}
                     </Link>
                   ))}
+
+                  {/* Filtros Especiales */}
+                  {filtrosEspeciales.map((filtro) => {
+                    let iconElement = null
+                    if (filtro.imagen_url) {
+                      iconElement = (
+                        <div className="relative w-5 h-5 flex-shrink-0">
+                          <img 
+                            src={filtro.imagen_url} 
+                            alt={filtro.nombre} 
+                            className="w-full h-full object-contain" 
+                          />
+                        </div>
+                      )
+                    } else if (filtro.icono) {
+                      iconElement = <span className="text-sm">{filtro.icono}</span>
+                    } else if (['descuentos', 'nuevos', 'proximamente'].includes(filtro.clave)) {
+                       iconElement = <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                    }
+
+                    return (
+                      <Link
+                        key={filtro.id}
+                        href={`/productos?filter=${filtro.clave}`}
+                        onClick={() => setShowMobileMenu(false)}
+                        className="flex items-center gap-3 text-sm font-bold uppercase tracking-wider text-white/70 hover:text-accent transition-colors"
+                      >
+                        {iconElement}
+                        {filtro.nombre}
+                      </Link>
+                    )
+                  })}
                 </div>
 
                 <div className="h-px bg-white/5" />
