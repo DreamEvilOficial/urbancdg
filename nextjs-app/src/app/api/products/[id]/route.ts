@@ -333,16 +333,16 @@ async function syncVariants(db: any, productId: string, variantsInput: any, tx: 
             const sku = v.sku || `${productId.substring(0,8)}-${v.talle}-${cleanHex}`.toUpperCase();
             const imagenUrl = v.imagen_url || null;
 
-            // Upsert
+            // Upsert using ? placeholders for compatibility
             const sql = `
                 INSERT INTO variantes (producto_id, talle, color, color_hex, stock, sku, imagen_url, activo, updated_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, true, NOW())
+                VALUES (?, ?, ?, ?, ?, ?, ?, true, CURRENT_TIMESTAMP)
                 ON CONFLICT (producto_id, talle, color_hex) DO UPDATE SET
                     stock = EXCLUDED.stock,
                     color = EXCLUDED.color,
                     imagen_url = EXCLUDED.imagen_url,
                     activo = true,
-                    updated_at = NOW()
+                    updated_at = CURRENT_TIMESTAMP
             `;
             const params = [productId, v.talle, colorName, colorHex, stock, sku, imagenUrl];
 
@@ -356,9 +356,10 @@ async function syncVariants(db: any, productId: string, variantsInput: any, tx: 
         }
 
         if (validKeys.length > 0) {
-            const conditions = validKeys.map((_, i) => `NOT (talle = $${i*2 + 2} AND color_hex = $${i*2 + 3})`).join(' AND ');
+            // Use ? placeholders for DELETE condition too
+            const conditions = validKeys.map(() => `NOT (talle = ? AND color_hex = ?)`).join(' AND ');
             const params = [productId, ...validKeys.flatMap(k => [k.talle, k.hex])];
-            const sql = `DELETE FROM variantes WHERE producto_id = $1 AND (${conditions})`;
+            const sql = `DELETE FROM variantes WHERE producto_id = ? AND (${conditions})`;
             
             if (tx) {
                 await db.run(sql, params, tx);

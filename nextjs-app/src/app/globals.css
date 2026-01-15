@@ -46,21 +46,32 @@
 
 html {
   scroll-behavior: smooth;
-  font-size: 110%;
-  min-height: 100%;
-  background: #000000;
+  font-size: 100%; /* Reset to standard base */
+  height: 100%;
+  width: 100%;
+  background: #06070c; /* Match bg-primary to avoid white flashes/bars */
+  overscroll-behavior-y: none; /* Prevents pull-to-refresh reload */
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
   font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  background-color: #000000;
-  background-image: 
-    radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.02) 0%, transparent 30%);
-  background-attachment: fixed;
+  background-color: #06070c;
   color: var(--text-primary);
   overflow-x: hidden;
   position: relative;
+  width: 100%;
+  min-height: 100%;
+  overscroll-behavior-y: none;
+}
+
+/* Fix mobile constraints */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
 }
 
 /* Dynamic Particles Effect */
@@ -70,17 +81,52 @@ body::before {
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
-  background-image: 
-    radial-gradient(1px 1px at 10% 10%, rgba(255,255,255,0.05) 1px, transparent 0),
-    radial-gradient(1px 1px at 20% 20%, rgba(255,255,255,0.05) 1px, transparent 0),
-    radial-gradient(1px 1px at 30% 30%, rgba(255,255,255,0.05) 1px, transparent 0),
-    radial-gradient(1px 1px at 40% 40%, rgba(255,255,255,0.05) 1px, transparent 0),
-    radial-gradient(1px 1px at 50% 50%, rgba(255,255,255,0.05) 1px, transparent 0),
-    radial-gradient(1px 1px at 60% 60%, rgba(255,255,255,0.05) 1px, transparent 0),
-    radial-gradient(1px 1px at 70% 70%, rgba(255,255,255,0.05) 1px, transparent 0),
-    radial-gradient(1px 1px at 80% 80%, rgba(255,255,255,0.05) 1px, transparent 0),
-    radial-gradient(1px 1px at 90% 90%, rgba(255,255,255,0.05) 1px, transparent 0);
+  height: 100vh; /* Use 100vh for background fixed coverage */
+  background-image: radial-gradient(
+      1px 1px at 10% 10%,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 0
+    ),
+    radial-gradient(
+      1px 1px at 20% 20%,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 0
+    ),
+    radial-gradient(
+      1px 1px at 30% 30%,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 0
+    ),
+    radial-gradient(
+      1px 1px at 40% 40%,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 0
+    ),
+    radial-gradient(
+      1px 1px at 50% 50%,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 0
+    ),
+    radial-gradient(
+      1px 1px at 60% 60%,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 0
+    ),
+    radial-gradient(
+      1px 1px at 70% 70%,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 0
+    ),
+    radial-gradient(
+      1px 1px at 80% 80%,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 0
+    ),
+    radial-gradient(
+      1px 1px at 90% 90%,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 0
+    );
   background-size: 200px 200px;
   animation: none;
   pointer-events: none;
@@ -89,15 +135,12 @@ body::before {
 }
 
 @keyframes particleFloat {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-200px); }
-}
-
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-  width: 100%;
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-200px);
+  }
 }
 
 * {
@@ -111,6 +154,7 @@ div {
 }
 
 .min-h-screen {
+  min-height: 100vh; /* Restore standard tailwind behavior */
   width: 100%;
   overflow-x: hidden;
   position: relative;
@@ -123,27 +167,21 @@ div {
 
 .flex {
   max-width: 100%;
-  flex-wrap: wrap;
 }
 
-img {
+img,
+video,
+canvas {
   max-width: 100%;
   height: auto;
+  display: block; /* Removes bottom margin issues */
 }
 
 @media (max-width: 640px) {
-  body {
-    width: 100vw;
-    overflow-x: hidden;
-    position: relative;
-  }
-
-  .min-h-screen,
-  main,
-  section {
-    width: 100vw;
-    max-width: 100vw;
-    overflow-x: hidden;
+  /* On mobile, force visible to prevent loading issues if JS lags */
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
   }
 }
 
