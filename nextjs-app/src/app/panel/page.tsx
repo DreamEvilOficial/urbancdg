@@ -78,16 +78,32 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!user) return
-    const orderedTabs = [
-      permissions.catalog && 'productos',
-      permissions.sales && 'ventas',
-      permissions.adminSales && 'deudas',
-      permissions.config && 'configuracion',
-      'perfil',
-    ].filter(Boolean) as string[]
+    const allowedTabs: string[] = []
 
-    if (!orderedTabs.includes(activeTab)) {
-      setActiveTab(orderedTabs[0] || 'perfil')
+    if (permissions.catalog) {
+      allowedTabs.push('home', 'productos', 'categorias', 'destacados', 'filtros')
+    }
+
+    if (permissions.sales) {
+      allowedTabs.push('ventas', 'inventario', 'resenas')
+    }
+
+    if (permissions.adminSales) {
+      allowedTabs.push('deudas')
+    }
+
+    if (permissions.adminSales || permissions.config) {
+      allowedTabs.push('operadores')
+    }
+
+    if (permissions.config) {
+      allowedTabs.push('configuracion')
+    }
+
+    allowedTabs.push('perfil')
+
+    if (!allowedTabs.includes(activeTab)) {
+      setActiveTab(allowedTabs[0] || 'perfil')
     }
   }, [user, permissions.catalog, permissions.sales, permissions.adminSales, permissions.config, activeTab])
 
@@ -474,7 +490,7 @@ export default function AdminPage() {
             <UserProfile user={user} />
           )}
 
-          {activeTab === 'operadores' && (
+          {activeTab === 'operadores' && (permissions.adminSales || permissions.config) && (
             <OperatorManagement />
           )}
 
@@ -482,7 +498,7 @@ export default function AdminPage() {
             <DebtManagement />
           )}
 
-          {activeTab === 'resenas' && (
+          {activeTab === 'resenas' && permissions.sales && (
             <ReviewsManagement />
           )}
 
