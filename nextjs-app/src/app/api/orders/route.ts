@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
 import { sanitizeInput } from '@/lib/security';
+import { sendOrderConfirmation, sendShippingUpdate } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -256,6 +257,19 @@ export async function POST(req: Request) {
 
         console.log('[orders:POST] Order created successfully:', result);
 
+        // Enviar email de confirmación
+        try {
+            await sendOrderConfirmation({
+                numero_orden: result.numeroOrden,
+                cliente_nombre: nombre,
+                cliente_email: email,
+                total: total || 0,
+                direccion_envio: direccion
+            }, items);
+        } catch (emailErr) {
+            console.error('[orders:POST] Error sending email:', emailErr);
+        }
+
         return NextResponse.json({ 
             success: true, 
             id: result.orderId, 
@@ -291,6 +305,18 @@ export async function PUT(req: Request) {
                 'UPDATE ordenes SET tracking_code = ?, tracking_url = ? WHERE id = ?',
                 [tracking_code || null, tracking_url || null, id]
             );
+
+            // Enviar email si hay código de seguimiento nuevo
+            if (tracking_code) {
+                try {
+                    const order = await db.get('SELECT * FROM ordenes WHERE id = ?', [id]);
+                    if (order) {
+                        await sendShippingUpdate(order, tracking_code);
+                    }
+                } catch (emailErr) {
+                    console.error('[orders:PUT] Error sending tracking email:', emailErr);
+                }
+            }
         }
 
         return NextResponse.json({ success: true });
