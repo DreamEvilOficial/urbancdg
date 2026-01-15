@@ -79,7 +79,7 @@ export default function CheckoutPage() {
         <div className="absolute top-[10%] left-[5%] w-[30%] h-[30%] bg-pink-500/5 rounded-full blur-[100px]" />
       </div>
 
-      <div className="max-w-4xl w-full px-4 md:px-0 relative z-10 flex-1 pb-10 scale-[1.25] origin-top transition-transform">
+      <div className="max-w-4xl w-full px-4 md:px-0 relative z-10 flex-1 pb-10 scale-[1.21] origin-top transition-transform">
         <div className="pt-8 pb-4 flex items-end justify-between">
           <div>
             <button onClick={() => router.back()} className="group flex items-center gap-2 text-gray-600 hover:text-white transition-colors text-[9px] font-black uppercase tracking-[0.2em] mb-2">

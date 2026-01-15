@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { sanitizeInput, sanitizeRichText } from '@/lib/security';
 import { cookies } from 'next/headers';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   const id = params.id;
@@ -109,25 +110,36 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
             }
         });
     } catch (err: any) {
-        // Si el error es que las transacciones no están disponibles (modo fallback), usamos db.run directamente
-        if (err.message?.includes('transacciones requieren una conexión directa') || !process.env.DATABASE_URL) {
-            console.log('Using non-transactional update (fallback mode)');
-            
+        const message = err.message || '';
+
+        if (message.includes('transacciones requieren una conexión directa') || !process.env.DATABASE_URL) {
             const result = await db.run(`UPDATE productos SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, values);
             
             if (result.changes === 0) {
                  return NextResponse.json({ error: 'Product not found' }, { status: 404 });
             }
 
-            // Log operation sin transacción
             try {
                 await db.run(`INSERT INTO admin_logs (action, details, target_id) VALUES (?, ?, ?)`, 
                     ['PRODUCT_UPDATE', logDetails, id]);
             } catch (logErr) {
                 console.warn('Could not write admin log (fallback):', logErr);
             }
+        } else if (message.toLowerCase().includes('maxclientsinsessionmode') || message.toLowerCase().includes('max clients')) {
+            const client = supabaseAdmin || supabase;
+            if (!client) {
+                throw err;
+            }
+
+            const { error } = await client
+                .from('productos')
+                .update(updates)
+                .eq('id', id);
+
+            if (error) {
+                throw error;
+            }
         } else {
-            // Si es otro error, lo relanzamos
             throw err;
         }
     }
