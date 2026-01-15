@@ -22,6 +22,9 @@
     "type-check": "tsc --noEmit",
     "clean": "rm -rf .next node_modules",
     "reinstall": "npm run clean && npm install",
+    "generate-secrets": "node scripts/generate-secrets.js",
+    "build:production": "NODE_ENV=production next build",
+    "analyze": "ANALYZE=true npm run build",
     "setup:supabase": "node scripts/setup-supabase.js"
   },
   "dependencies": {
@@ -47,6 +50,7 @@
     "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.1.2",
     "@types/node": "20.10.6",
     "@types/react": "18.2.46",
     "@types/react-dom": "18.2.18",
@@ -55,9 +59,13 @@
     "autoprefixer": "10.4.16",
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.0.4",
+    "javascript-obfuscator": "^5.1.0",
     "postcss": "8.4.32",
     "tailwindcss": "3.4.0",
-    "typescript": "5.3.3"
+    "terser-webpack-plugin": "^5.3.16",
+    "typescript": "5.3.3",
+    "webpack-bundle-analyzer": "^5.1.1",
+    "webpack-obfuscator": "^3.6.0"
   },
   "engines": {
     "node": ">=18.0.0",

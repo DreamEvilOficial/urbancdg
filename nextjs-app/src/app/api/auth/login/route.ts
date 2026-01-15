@@ -2,7 +2,6 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import db from '@/lib/db'
 import bcrypt from 'bcryptjs'
-import { createClient } from '@supabase/supabase-js'
 import { sanitizeInput } from '@/lib/security'
 
 export const dynamic = 'force-dynamic'
@@ -38,7 +37,7 @@ export async function POST(request: Request) {
     const cleanUsername = sanitizeInput(username);
     console.log('Intento de login para:', cleanUsername)
 
-    // Autenticación usando lib/db (con pool de PostgreSQL)
+    // Autenticación usando lib/db (con pool de PostgreSQL o fallback)
     const user = await db.get('SELECT * FROM usuarios WHERE (email = ? OR usuario = ?) AND activo = TRUE', [cleanUsername, cleanUsername]) as any
 
     if (!user) {

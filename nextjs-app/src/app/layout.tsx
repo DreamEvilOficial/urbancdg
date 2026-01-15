@@ -3,6 +3,7 @@ import { Urbanist, Bebas_Neue } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import ClientLayout from '@/components/ClientLayout'
+import DevToolsProtection from '@/components/DevToolsProtection'
 
 import { supabase } from '@/lib/supabase'
 
@@ -100,6 +101,8 @@ export default function RootLayout({
             },
           }}
         />
+        {/* Protección de seguridad - Solo en producción */}
+        {process.env.NODE_ENV === 'production' && <DevToolsProtection />}
       </body>
     </html>
   )
