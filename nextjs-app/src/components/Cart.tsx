@@ -5,6 +5,7 @@ import { X, Plus, Trash2, ArrowRight, ChevronDown } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { productosAPI } from '@/lib/supabase'
+import toast from 'react-hot-toast'
 
 interface CartProps {
   onClose: () => void
@@ -15,6 +16,13 @@ export default function Cart({ onClose }: CartProps) {
   const router = useRouter()
   const [suggestedProducts, setSuggestedProducts] = useState<any[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
+
+  const hasInvalidStock = items.some((item) => {
+    if (typeof item.stock !== 'number') return false
+    if (item.stock <= 0) return true
+    if (item.cantidad > item.stock) return true
+    return false
+  })
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -39,6 +47,10 @@ export default function Cart({ onClose }: CartProps) {
   }, [items])
 
   const handleCheckout = () => {
+    if (hasInvalidStock) {
+      toast.error('Hay productos sin stock en tu carrito')
+      return
+    }
     router.push('/checkout')
     onClose()
   }
@@ -167,7 +179,15 @@ export default function Cart({ onClose }: CartProps) {
                           </div>
                         )}
                         <div className="flex items-center justify-between mt-auto">
-                          <p className="text-white font-black text-sm md:text-base">${item.precio.toLocaleString()}</p>
+                          <div className="flex flex-col">
+                            <p className="text-white font-black text-sm md:text-base">${item.precio.toLocaleString()}</p>
+                            {typeof item.stock === 'number' && item.stock <= 0 && (
+                              <span className="text-[10px] font-bold text-red-500">Sin stock</span>
+                            )}
+                            {typeof item.stock === 'number' && item.stock > 0 && item.cantidad > item.stock && (
+                              <span className="text-[10px] font-bold text-amber-400">Stock insuficiente</span>
+                            )}
+                          </div>
                           <span className="font-bold text-sm text-white/50">x{item.cantidad}</span>
                         </div>
                       </div>
@@ -182,6 +202,11 @@ export default function Cart({ onClose }: CartProps) {
                 </div>
                 <div className="md:col-span-5 space-y-4 h-fit">
                   <div className="p-6 border border-white/10 bg-[#07080d]/40 rounded-2xl">
+                    {hasInvalidStock && (
+                      <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.2em] text-red-400">
+                        Ajustá tu carrito: hay productos sin stock
+                      </p>
+                    )}
                     <div className="mb-6">
                       <span className="block text-white/55 text-sm font-medium">Subtotal</span>
                       <span className="block text-3xl font-black text-white tracking-tighter">$<span suppressHydrationWarning>{total().toLocaleString()}</span></span>
@@ -189,7 +214,8 @@ export default function Cart({ onClose }: CartProps) {
                     <div className="space-y-3">
                       <button
                         onClick={handleCheckout}
-                        className="w-full h-14 flex items-center justify-center gap-3 bg-accent text-ink rounded-2xl font-black text-lg hover:brightness-95 transition-all shadow-xl active:scale-[0.98]"
+                        disabled={items.length === 0 || hasInvalidStock}
+                        className="w-full h-14 flex items-center justify-center gap-3 bg-accent text-ink rounded-2xl font-black text-lg hover:brightness-95 transition-all shadow-xl active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/40"
                       >
                         <span>Ir al Checkout</span>
                         <ArrowRight className="w-6 h-6" />

@@ -221,14 +221,18 @@ function ProductCard({ producto }: ProductCardProps) {
       nombre: productName,
       precio: productPrice,
       cantidad: 1,
-      imagen_url: productImage
+      imagen_url: productImage,
+      stock: currentStock
     })
     toast.success(`✅ ${productName} agregado al carrito`)
     window.dispatchEvent(new Event('cartUpdated'))
-  }, [hasVariants, addItem, productId, productName, productPrice, productImage])
+  }, [hasVariants, addItem, productId, productName, productPrice, productImage, currentStock])
 
   const handleVariantConfirm = useCallback(
     (talle: string, color: string) => {
+      const variant = variantes.find(v => v.talle === talle && v.color === color)
+      const variantStock = variant ? variant.stock : producto.stock_actual
+
       addItem({
         id: productId,
         nombre: productName,
@@ -237,12 +241,12 @@ function ProductCard({ producto }: ProductCardProps) {
         imagen_url: productImage,
         talle,
         color,
-        stock: producto.stock_actual
+        stock: variantStock
       })
       toast.success(`✅ ${productName} (${talle}, ${color}) agregado al carrito`)
       window.dispatchEvent(new Event('cartUpdated'))
     },
-    [addItem, productId, productName, productPrice, productImage]
+    [addItem, productId, productName, productPrice, productImage, variantes, producto.stock_actual]
   )
 
   // Verificar etiquetas

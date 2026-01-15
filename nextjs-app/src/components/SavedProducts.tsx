@@ -94,12 +94,25 @@ export default function SavedProducts({ onClose }: SavedProductsProps) {
 
   const handleAddToCart = (product: any, e: React.MouseEvent) => {
     e.stopPropagation()
+
+    if (typeof product.stock_actual === 'number' && product.stock_actual <= 0) {
+      toast.error('Sin stock')
+      return
+    }
+
+    const imageUrl =
+      product.imagen_url ||
+      (Array.isArray(product.imagenes) && product.imagenes.length > 0
+        ? product.imagenes[0]
+        : '/proximamente.png')
+
     addItem({
       id: String(product.id),
       nombre: product.nombre,
       precio: product.precio,
       cantidad: 1,
-      imagen_url: product.imagen_url
+      imagen_url: imageUrl,
+      stock: product.stock_actual
     })
     toast.success('Agregado al carrito')
     window.dispatchEvent(new Event('cartUpdated'))

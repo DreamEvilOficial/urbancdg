@@ -228,7 +228,15 @@ export default function ProductDetailPage() {
                   onClick={() => {
                     if (hasVariants && (!selectedTalle || !selectedColor)) return toast.error('Elige opciones')
                     if (cantidad > stockDisponible) return toast.error('Sin stock')
-                    addItem({ id: String(producto.id), nombre: producto.nombre, precio: producto.precio, cantidad, imagen_url: producto.imagen_url, ...(hasVariants && { talle: selectedTalle, color: selectedColor }) })
+                    addItem({
+                      id: String(producto.id),
+                      nombre: producto.nombre,
+                      precio: producto.precio,
+                      cantidad,
+                      imagen_url: imagenes[selectedImage],
+                      stock: stockDisponible,
+                      ...(hasVariants && { talle: selectedTalle, color: selectedColor })
+                    })
                     toast.success('Agregado')
                   }}
                   disabled={stockDisponible <= 0}
