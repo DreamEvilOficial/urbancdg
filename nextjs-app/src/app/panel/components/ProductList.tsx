@@ -237,7 +237,7 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
       </div>
 
       {/* Tabla Desktop */}
-      <div className="hidden md:block bg-[#06070c]/70 backdrop-blur-2xl rounded-[34px] border border-white/10 shadow-[0_30px_120px_-80px_rgba(0,0,0,0.9)] overflow-hidden">
+      <div className="hidden md:block bg-[#06070c]/70 backdrop-blur-2xl rounded-[34px] border border-white/10 shadow-[0_30px_120px_-80px_rgba(0,0,0,0.9)] overflow-hidden scale-[0.8] origin-top-left w-[125%]">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-white/[0.03]">
