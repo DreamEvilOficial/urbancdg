@@ -207,6 +207,12 @@ function ProductCard({ producto }: ProductCardProps) {
     [transferPriceValue]
   )
 
+  // Determinar stock actual
+  const currentStock = useMemo(() => {
+    if (!hasVariants) return producto.stock_actual
+    return variantes.reduce((acc, v) => acc + v.stock, 0)
+  }, [producto.stock_actual, hasVariants, variantes])
+
   const handleAddToCart = useCallback((e?: React.MouseEvent) => {
     e?.preventDefault()
     e?.stopPropagation()
@@ -252,12 +258,6 @@ function ProductCard({ producto }: ProductCardProps) {
   // Verificar etiquetas
   const hasHotSale = producto.etiquetas?.some(e => e.tipo === 'hot_sale')
   const has2x1 = producto.etiquetas?.some(e => e.tipo === '2x1')
-
-  // Determinar stock actual
-  const currentStock = useMemo(() => {
-    if (!hasVariants) return producto.stock_actual
-    return variantes.reduce((acc, v) => acc + v.stock, 0)
-  }, [producto.stock_actual, hasVariants, variantes])
 
   const upcomingContent = (
     <div className="flex flex-col flex-grow items-center justify-center p-4">
