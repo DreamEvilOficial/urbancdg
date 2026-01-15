@@ -13,49 +13,22 @@ export default function DevToolsProtection() {
       return;
     }
 
-    // ===== 1. DESHABILITAR CLICK DERECHO =====
-    const handleContextMenu = (e: MouseEvent) => {
-      e.preventDefault();
-      return false;
-    };
+    // ===== 1. DESHABILITAR CLICK DERECHO (DESHABILITADO) =====
+    // const handleContextMenu = (e: MouseEvent) => {
+    //   e.preventDefault();
+    //   return false;
+    // };
 
     // ===== 2. DESHABILITAR TECLAS DE ACCESO RÁPIDO =====
     const handleKeyDown = (e: KeyboardEvent) => {
       // F12
       if (e.key === 'F12') {
-        e.preventDefault();
-        return false;
+        // e.preventDefault();
+        // return false;
       }
-
-      // Ctrl+Shift+I (Abrir DevTools)
-      if (e.ctrlKey && e.shiftKey && e.key === 'I') {
-        e.preventDefault();
-        return false;
-      }
-
-      // Ctrl+Shift+J (Consola)
-      if (e.ctrlKey && e.shiftKey && e.key === 'J') {
-        e.preventDefault();
-        return false;
-      }
-
-      // Ctrl+U (Ver código fuente)
-      if (e.ctrlKey && e.key === 'u') {
-        e.preventDefault();
-        return false;
-      }
-
-      // Ctrl+Shift+C (Inspeccionar elemento)
-      if (e.ctrlKey && e.shiftKey && e.key === 'C') {
-        e.preventDefault();
-        return false;
-      }
-
-      // Ctrl+S (Guardar página)
-      if (e.ctrlKey && e.key === 's') {
-        e.preventDefault();
-        return false;
-      }
+      
+      // Permitir herramientas de desarrollo para facilitar la inspección
+      return true;
     };
 
     // ===== 3. DETECTAR SI DEVTOOLS ESTÁ ABIERTO =====
@@ -226,10 +199,10 @@ export default function DevToolsProtection() {
 
     // Cleanup
     return () => {
-      document.removeEventListener('contextmenu', handleContextMenu);
+      // document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('selectstart', preventSelection);
-      document.removeEventListener('copy', preventSelection);
+      // document.removeEventListener('selectstart', preventSelection);
+      // document.removeEventListener('copy', preventSelection);
       clearInterval(detectInterval);
       clearInterval(debugInterval);
       observer.disconnect();
