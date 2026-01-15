@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Search, Star, TrendingUp, Sparkles, Clock, Tag, X, Save, DollarSign, Percent } from 'lucide-react'
+import { formatPrice, toNumber } from '@/lib/formatters'
 import { Producto } from '@/lib/supabase'
 import toast from 'react-hot-toast'
 
@@ -22,9 +23,9 @@ export default function FeaturedProductsManagement() {
   // Oferta State
   const [tempOfertaActive, setTempOfertaActive] = useState(false)
   const [tempPrices, setTempPrices] = useState({
-    original: 0,
-    current: 0,
-    discount: 0
+    original: '',
+    current: '',
+    discount: ''
   })
 
   useEffect(() => {
@@ -88,9 +89,9 @@ export default function FeaturedProductsManagement() {
     setSelectedProduct(product)
     setTempOfertaActive(!!product.descuento_activo)
     setTempPrices({
-        original: product.precio_original || product.precio || 0,
-        current: product.precio || 0,
-        discount: product.descuento_porcentaje || 0
+        original: formatPrice(product.precio_original || product.precio),
+        current: formatPrice(product.precio),
+        discount: product.descuento_porcentaje?.toString() || '0'
     })
     setOfertaModalOpen(true)
   }
@@ -160,18 +161,28 @@ export default function FeaturedProductsManagement() {
     }
   }
 
-  function updatePriceFromDiscount(discount: number) {
-     const original = tempPrices.original
-     if (original <= 0) return
-     const current = Math.round(original - (original * discount / 100))
-     setTempPrices(prev => ({ ...prev, discount, current }))
+  function updatePriceFromDiscount(discountInput: string) {
+     const discount = Number(discountInput)
+     const original = toNumber(tempPrices.original)
+     
+     let current = tempPrices.current
+     if (original > 0) {
+         const calculatedCurrent = Math.round(original - (original * discount / 100))
+         current = formatPrice(calculatedCurrent)
+     }
+     setTempPrices(prev => ({ ...prev, discount: discountInput, current }))
   }
 
-  function updateDiscountFromPrice(current: number) {
-      const original = tempPrices.original
-      if (original <= 0) return
-      const discount = Math.round(((original - current) / original) * 100)
-      setTempPrices(prev => ({ ...prev, current, discount: Math.max(0, discount) }))
+  function updateDiscountFromPrice(currentInput: string) {
+      const current = toNumber(currentInput)
+      const original = toNumber(tempPrices.original)
+      
+      let discount = '0'
+      if (original > 0) {
+          const calculatedDiscount = Math.round(((original - current) / original) * 100)
+          discount = Math.max(0, calculatedDiscount).toString()
+      }
+      setTempPrices(prev => ({ ...prev, current: currentInput, discount }))
   }
 
   const filteredProducts = products.filter(p => 
@@ -435,15 +446,22 @@ export default function FeaturedProductsManagement() {
                                 <div className="relative">
                                     <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                                     <input 
-                                        type="number"
+                                        type="text"
                                         value={tempPrices.original}
                                         onChange={e => {
-                                            const val = Number(e.target.value)
-                                            setTempPrices(p => ({ ...p, original: val }))
-                                            if (val > 0 && tempPrices.current > 0) {
-                                                 const discount = Math.round(((val - tempPrices.current) / val) * 100)
-                                                 setTempPrices(p => ({ ...p, original: val, discount: Math.max(0, discount) }))
+                                            const val = e.target.value
+                                            const numVal = toNumber(val)
+                                            const currentVal = toNumber(tempPrices.current)
+                                            
+                                            // Update state first
+                                            let newPrices = { ...tempPrices, original: val }
+                                            
+                                            // Recalculate discount if possible
+                                            if (numVal > 0 && currentVal > 0) {
+                                                 const discount = Math.round(((numVal - currentVal) / numVal) * 100)
+                                                 newPrices.discount = Math.max(0, discount).toString()
                                             }
+                                            setTempPrices(newPrices)
                                         }}
                                         className="w-full bg-black border border-white/10 pl-10 pr-4 py-4 rounded-2xl text-sm font-bold text-white focus:border-pink-500 transition-all outline-none"
                                         placeholder="0"
@@ -457,9 +475,9 @@ export default function FeaturedProductsManagement() {
                                     <div className="relative">
                                         <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                                         <input 
-                                            type="number"
+                                            type="text"
                                             value={tempPrices.current}
-                                            onChange={e => updateDiscountFromPrice(Number(e.target.value))}
+                                            onChange={e => updateDiscountFromPrice(e.target.value)}
                                             className="w-full bg-black border border-white/10 pl-10 pr-4 py-4 rounded-2xl text-sm font-bold text-white focus:border-pink-500 transition-all outline-none"
                                             placeholder="0"
                                         />
@@ -472,7 +490,7 @@ export default function FeaturedProductsManagement() {
                                         <input 
                                             type="number"
                                             value={tempPrices.discount}
-                                            onChange={e => updatePriceFromDiscount(Number(e.target.value))}
+                                            onChange={e => updatePriceFromDiscount(e.target.value)}
                                             className="w-full bg-black border border-white/10 pl-10 pr-4 py-4 rounded-2xl text-sm font-bold text-white focus:border-pink-500 transition-all outline-none"
                                             placeholder="0"
                                         />

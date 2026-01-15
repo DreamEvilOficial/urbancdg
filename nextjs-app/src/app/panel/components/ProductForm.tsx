@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Upload, Plus, Trash2 } from 'lucide-react'
 import { Producto, supabase } from '@/lib/supabase'
+import { formatPrice, toNumber } from '@/lib/formatters'
 import toast from 'react-hot-toast'
 import NextImage from 'next/image'
 
@@ -45,8 +46,8 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
       setFormData({
         nombre: producto.nombre || '',
         descripcion: producto.descripcion || '',
-        precio: producto.precio?.toString() || '',
-        precio_original: producto.precio_original?.toString() || '',
+        precio: formatPrice(producto.precio),
+        precio_original: formatPrice(producto.precio_original),
         descuento_porcentaje: producto.descuento_porcentaje?.toString() || '',
         categoria_id: producto.categoria_id || '',
         subcategoria_id: producto.subcategoria_id || '',
@@ -66,7 +67,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
         stock_minimo: producto.stock_minimo?.toString() || '5',
         proveedor_nombre: producto.proveedor_nombre || '',
         proveedor_contacto: producto.proveedor_contacto || '',
-        precio_costo: producto.precio_costo?.toString() || '',
+        precio_costo: formatPrice(producto.precio_costo),
         fecha_lanzamiento: producto.fecha_lanzamiento ? new Date(producto.fecha_lanzamiento).toISOString().slice(0, 16) : ''
       })
     }
@@ -74,8 +75,8 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
 
   // Cálculo automático de descuento
   useEffect(() => {
-    const precio = parseFloat(formData.precio)
-    const precioOriginal = parseFloat(formData.precio_original)
+    const precio = toNumber(formData.precio)
+    const precioOriginal = toNumber(formData.precio_original)
 
     if (!isNaN(precio) && !isNaN(precioOriginal) && precioOriginal > 0) {
       if (precio < precioOriginal) {
@@ -128,8 +129,8 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
 
     // Validaciones de descuento
     if (formData.descuento_activo) {
-      const precio = Number(formData.precio)
-      const precioOriginal = Number(formData.precio_original)
+      const precio = toNumber(formData.precio)
+      const precioOriginal = toNumber(formData.precio_original)
       
       if (!precioOriginal || precioOriginal <= precio) {
         toast.error('El precio original debe ser mayor al precio final cuando hay un descuento activo')
@@ -139,7 +140,14 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
     }
 
     try {
-      await onSave(formData)
+      // Convertir precios a formato numérico limpio antes de guardar
+      const dataToSave = {
+        ...formData,
+        precio: toNumber(formData.precio),
+        precio_original: toNumber(formData.precio_original),
+        precio_costo: toNumber(formData.precio_costo)
+      }
+      await onSave(dataToSave)
     } catch (error: any) {
       console.error(error)
       toast.error(error.message || 'Error al guardar producto')
@@ -263,12 +271,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 font-bold">$</span>
                       <input 
-                        type="number"
-                        step="1"
-                        min="0"
-                        onKeyDown={(e) => {
-                          if (e.key === '.' || e.key === ',') e.preventDefault()
-                        }}
+                        type="text"
                         value={formData.precio}
                         onChange={e => setFormData({...formData, precio: e.target.value})}
                         className="w-full bg-[#111] border border-white/5 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold placeholder:text-white/20 focus:bg-black focus:border-white text-white transition-all outline-none"
@@ -311,12 +314,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 font-bold">$</span>
                     <input 
-                      type="number"
-                      step="1"
-                      min="0"
-                      onKeyDown={(e) => {
-                        if (e.key === '.' || e.key === ',') e.preventDefault()
-                      }}
+                      type="text"
                       value={formData.precio_costo}
                       onChange={e => setFormData({...formData, precio_costo: e.target.value})}
                       className="w-full bg-[#111] border border-white/5 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold placeholder:text-white/20 focus:bg-black focus:border-white text-white transition-all outline-none"
@@ -420,12 +418,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                           <div className="relative">
                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 font-bold">$</span>
                             <input 
-                              type="number"
-                              step="1"
-                              min="0"
-                              onKeyDown={(e) => {
-                                if (e.key === '.' || e.key === ',') e.preventDefault()
-                              }}
+                              type="text"
                               value={formData.precio_original}
                               onChange={e => setFormData({...formData, precio_original: e.target.value})}
                               className="w-full bg-black border border-white/10 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold text-white/70 focus:border-white transition-all outline-none"
