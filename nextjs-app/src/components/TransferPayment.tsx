@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Copy, Check, Instagram } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useCartStore } from '@/store/cartStore'
+import { formatPrice } from '@/lib/formatters'
 
 interface TransferPaymentProps {
   orderTotal: number
@@ -145,7 +146,7 @@ export default function TransferPayment({ orderTotal, orderItems, orderId, order
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Monto a transferir</p>
                 <p className="text-3xl font-black tracking-tighter">
-                  ${ orderTotal.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                  ${ formatPrice(orderTotal) }
                 </p>
               </div>
               <div className="text-right">

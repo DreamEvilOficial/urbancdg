@@ -47,6 +47,42 @@ export async function POST(request: NextRequest) {
     let updated = 0
     for (const it of items) {
       if (!it?.id || !it?.cantidad) continue
+
+      // 1. Descontar de variante si existe
+      let variantUpdated = false
+      const vInfo = typeof it.variante_info === 'string' ? JSON.parse(it.variante_info) : (it.variante_info || it.variante || (it.talle && it.color ? { talle: it.talle, color: it.color } : null))
+
+      if (vInfo?.talle && vInfo?.color) {
+         // Buscar variante por talle y color (hex o nombre)
+         // Como color puede ser nombre o hex, intentamos ambos o buscamos coincidencia
+         // La consulta más segura es buscar por talle y coincidencia flexible en color
+         const { data: variants, error: vErr } = await db
+           .from('variantes')
+           .select('id, stock, color, color_hex')
+           .eq('producto_id', it.id)
+           .eq('talle', vInfo.talle)
+         
+         if (!vErr && variants && variants.length > 0) {
+             // Encontrar la variante correcta
+             const targetVariant = variants.find(v => 
+                 v.color === vInfo.color || 
+                 v.color_hex === vInfo.color || 
+                 v.color === vInfo.color_hex || 
+                 v.color_hex === vInfo.color_hex
+             )
+
+             if (targetVariant) {
+                 const nuevoStockV = Math.max(0, (targetVariant.stock || 0) - Number(it.cantidad))
+                 await db
+                   .from('variantes')
+                   .update({ stock: nuevoStockV })
+                   .eq('id', targetVariant.id)
+                 variantUpdated = true
+             }
+         }
+      }
+
+      // 2. Descontar de producto global (Siempre, para mantener consistencia total)
       // Leer stock actual
       const { data: prod, error: pErr } = await db
         .from('productos')

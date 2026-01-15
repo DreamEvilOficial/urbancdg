@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { productosAPI } from '@/lib/supabase'
 import { useCartStore } from '@/store/cartStore'
+import { formatPrice } from '@/lib/formatters'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -95,6 +96,11 @@ export default function SavedProducts({ onClose }: SavedProductsProps) {
   const handleAddToCart = (product: any, e: React.MouseEvent) => {
     e.stopPropagation()
 
+    if ((product as any).proximo_lanzamiento) {
+      toast.error('Producto próximamente disponible')
+      return
+    }
+
     if (typeof product.stock_actual === 'number' && product.stock_actual <= 0) {
       toast.error('Sin stock')
       return
@@ -176,12 +182,24 @@ export default function SavedProducts({ onClose }: SavedProductsProps) {
             </div>
           ) : (
             <div className="p-4 space-y-4">
-              {items.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => { router.push(`/productos/${item.slug || item.id}`); onClose(); }}
-                  className="flex gap-4 p-2 rounded-2xl items-center group hover:bg-white/[0.03] transition-colors cursor-pointer border border-transparent hover:border-white/5"
-                >
+              {items.map((item) => {
+                const isProximoLanzamiento = (item as any).proximo_lanzamiento
+
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => {
+                      if (isProximoLanzamiento) {
+                        toast.error('Producto próximamente disponible')
+                        return
+                      }
+                      router.push(`/productos/${item.slug || item.id}`)
+                      onClose()
+                    }}
+                    className={`flex gap-4 p-2 rounded-2xl items-center group hover:bg-white/[0.03] transition-colors border border-transparent hover:border-white/5 ${
+                      isProximoLanzamiento ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
+                    }`}
+                  >
                   {/* Foto */}
                   <div className="relative w-20 h-24 bg-white/5 rounded-xl overflow-hidden shrink-0 group">
                     <Image 
@@ -201,13 +219,14 @@ export default function SavedProducts({ onClose }: SavedProductsProps) {
                     <div className="flex items-center justify-between mt-2">
                       <p className="text-white font-black text-sm">
                         $<span suppressHydrationWarning>
-                          { item.precio.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                          { formatPrice(item.precio) }
                         </span>
                       </p>
                       <button
                         onClick={(e) => handleAddToCart(item, e)}
-                        className="p-2 bg-white/10 hover:bg-accent hover:text-ink text-white rounded-xl transition-all"
-                        title="Agregar al carrito"
+                        disabled={isProximoLanzamiento}
+                        className="p-2 bg-white/10 hover:bg-accent hover:text-ink text-white rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        title={isProximoLanzamiento ? 'Próximamente disponible' : 'Agregar al carrito'}
                       >
                         <ShoppingCart className="w-4 h-4" />
                       </button>
@@ -222,7 +241,8 @@ export default function SavedProducts({ onClose }: SavedProductsProps) {
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

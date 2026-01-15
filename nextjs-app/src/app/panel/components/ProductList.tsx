@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { formatPrice } from '@/lib/formatters'
 import { Plus, Edit, Trash2, Search, Filter } from 'lucide-react'
 import { Producto } from '@/lib/supabase'
 import NextImage from 'next/image'
@@ -203,11 +204,11 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
                           <p className="text-[9px] font-black text-white/35 uppercase tracking-wider mb-0.5">Precio</p>
                           <div className="flex items-baseline gap-2">
                             <span className="text-lg font-black text-white">
-                              ${ producto.precio.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                              ${ formatPrice(producto.precio) }
                             </span>
                             {producto.precio_original && (
                               <span className="text-xs text-white/35 line-through font-bold">
-                                ${ producto.precio_original.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                                ${ formatPrice(producto.precio_original) }
                               </span>
                             )}
                           </div>
@@ -242,12 +243,12 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
           <table className="w-full">
             <thead className="bg-white/[0.03]">
               <tr>
-                <th className="px-4 py-3 md:px-8 md:py-4 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em]">Producto</th>
-                <th className="px-4 py-3 md:px-6 md:py-4 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em]">Tipo</th>
-                <th className="px-4 py-3 md:px-6 md:py-4 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em] whitespace-nowrap">Precio Venta</th>
-                <th className="px-4 py-3 md:px-6 md:py-4 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em] whitespace-nowrap">Disponibilidad</th>
-                <th className="px-4 py-3 md:px-6 md:py-4 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em]">Estado</th>
-                <th className="px-4 py-3 md:px-8 md:py-4 text-right text-[10px] font-black text-white/45 uppercase tracking-[0.35em] whitespace-nowrap w-[160px]">Acciones</th>
+                <th className="px-4 py-3 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em]">Producto</th>
+                <th className="px-4 py-3 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em]">Tipo</th>
+                <th className="px-4 py-3 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em] whitespace-nowrap">Precio Venta</th>
+                <th className="px-4 py-3 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em] whitespace-nowrap">Disponibilidad</th>
+                <th className="px-4 py-3 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em]">Estado</th>
+                <th className="px-4 py-3 text-right text-[10px] font-black text-white/45 uppercase tracking-[0.35em] whitespace-nowrap w-[140px]">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/10">
@@ -263,16 +264,16 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
                   
                   return (
                   <tr key={producto.id} className="group hover:bg-white/[0.03] transition-colors">
-                    <td className="px-4 py-3 md:px-8 md:py-4 whitespace-nowrap">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-4">
-                        <div className="h-14 w-14 rounded-2xl overflow-hidden shadow-sm border border-white/10 flex-shrink-0 bg-white/[0.02] relative">
+                        <div className="h-12 w-12 rounded-xl overflow-hidden shadow-sm border border-white/10 flex-shrink-0 bg-white/[0.02] relative">
                           {img.startsWith('/') || img.includes('supabase.co') ? (
                             <NextImage 
                               className="h-full w-full object-cover transition group-hover:scale-110" 
                               src={img} 
                               alt={producto.nombre} 
                               fill
-                              sizes="56px"
+                              sizes="48px"
                             />
                           ) : (
                             <img 
@@ -283,88 +284,88 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
                           )}
                         </div>
                         <div>
-                          <div className="text-sm font-bold text-white transition">{producto.nombre}</div>
-                          <div className="text-[10px] font-black text-white/45 uppercase tracking-[0.35em]">{producto.sku || 'SIN-REF'}</div>
+                          <div className="text-xs font-bold text-white transition">{producto.nombre}</div>
+                          <div className="text-[9px] font-black text-white/45 uppercase tracking-[0.35em]">{producto.sku || 'SIN-REF'}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 md:px-6 md:py-4 whitespace-nowrap">
-                      <span className="px-3 py-1 text-[9px] font-black uppercase tracking-[0.32em] rounded-full bg-white/[0.03] text-white/60 border border-white/10">
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className="px-2 py-1 text-[8px] font-black uppercase tracking-[0.32em] rounded-full bg-white/[0.03] text-white/60 border border-white/10">
                         {categorias.find(c => c.id === producto.categoria_id)?.nombre || 'General'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 md:px-6 md:py-4 whitespace-nowrap">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex flex-col">
-                        <span className="text-sm font-black text-white">
-                          ${ producto.precio.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                        <span className="text-xs font-black text-white">
+                          ${formatPrice(producto.precio)}
                         </span>
                         {producto.precio_original && (
-                          <span className="text-[10px] text-white/35 line-through font-bold">
-                            ${ producto.precio_original.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                          <span className="text-[9px] text-white/35 line-through font-bold">
+                            ${formatPrice(producto.precio_original)}
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 md:px-6 md:py-4 whitespace-nowrap">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       {producto.stock_actual <= 0 ? (
                         <div className="flex flex-col gap-1">
-                          <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">Agotado</span>
-                          <div className="w-20 h-1 bg-white/10 rounded-full overflow-hidden">
+                          <span className="text-[9px] font-black text-red-500 uppercase tracking-widest">Agotado</span>
+                          <div className="w-16 h-1 bg-white/10 rounded-full overflow-hidden">
                             <div className="w-0 h-full bg-red-500" />
                           </div>
                         </div>
                       ) : producto.stock_actual < 10 ? (
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-2">
-                             <span className="text-sm font-black text-orange-500">{producto.stock_actual}</span>
-                             <span className="text-[8px] font-black text-orange-400 uppercase">Bajo Stock</span>
+                             <span className="text-xs font-black text-orange-500">{producto.stock_actual}</span>
+                             <span className="text-[8px] font-black text-orange-400 uppercase">Bajo</span>
                           </div>
-                          <div className="w-20 h-1 bg-orange-500/15 rounded-full overflow-hidden">
+                          <div className="w-16 h-1 bg-orange-500/15 rounded-full overflow-hidden">
                             <div className="h-full bg-orange-500" style={{ width: `${(producto.stock_actual / 10) * 100}%` }} />
                           </div>
                         </div>
                       ) : (
                         <div className="flex flex-col gap-1">
-                          <span className="text-sm font-black text-emerald-400">{producto.stock_actual} unid.</span>
-                          <div className="w-20 h-1 bg-emerald-500/15 rounded-full overflow-hidden">
+                          <span className="text-xs font-black text-emerald-400">{producto.stock_actual} un.</span>
+                          <div className="w-16 h-1 bg-emerald-500/15 rounded-full overflow-hidden">
                             <div className="w-full h-full bg-emerald-500" />
                           </div>
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-4 md:px-8 md:py-5 whitespace-nowrap">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex flex-col gap-2">
                         {producto.activo ? (
                           <div className="flex items-center gap-1.5">
                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                            <span className="text-[9px] font-black uppercase text-emerald-400 tracking-widest">En Venta</span>
+                            <span className="text-[8px] font-black uppercase text-emerald-400 tracking-widest">En Venta</span>
                           </div>
                         ) : (
                           <div className="flex items-center gap-1.5">
                             <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                            <span className="text-[9px] font-black uppercase text-white/45 tracking-widest">Pausado</span>
+                            <span className="text-[8px] font-black uppercase text-white/45 tracking-widest">Pausado</span>
                           </div>
                         )}
                         {producto.destacado && (
-                          <span className="w-fit px-2 py-0.5 text-[8px] font-black bg-accent text-ink rounded-full uppercase tracking-[0.3em]">Destacado</span>
+                          <span className="w-fit px-1.5 py-0.5 text-[7px] font-black bg-accent text-ink rounded-full uppercase tracking-[0.3em]">Destacado</span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 md:px-8 md:py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
                         <button 
                           onClick={() => onEdit(producto)}
-                          className="w-10 h-10 flex items-center justify-center bg-white/[0.02] border border-white/10 rounded-xl text-white/55 hover:text-white hover:border-white/20 transition-all"
+                          className="w-8 h-8 flex items-center justify-center bg-white/[0.02] border border-white/10 rounded-lg text-white/55 hover:text-white hover:border-white/20 transition-all"
                           title="Editar"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit className="w-3.5 h-3.5" />
                         </button>
                         <button 
                           onClick={() => onDelete(producto.id)}
-                          className="w-10 h-10 flex items-center justify-center bg-white/[0.02] border border-white/10 rounded-xl text-white/55 hover:text-red-400 hover:border-red-500/30 transition-all"
+                          className="w-8 h-8 flex items-center justify-center bg-white/[0.02] border border-white/10 rounded-lg text-white/55 hover:text-red-400 hover:border-red-500/30 transition-all"
                           title="Eliminar"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </td>

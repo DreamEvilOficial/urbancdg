@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { type Producto } from '@/lib/supabase'
 import { useCartStore } from '@/store/cartStore'
+import { formatPrice } from '@/lib/formatters'
 import { ShoppingBag, ShoppingCart, Bookmark, Clock } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -193,33 +194,16 @@ function ProductCard({ producto }: ProductCardProps) {
 
   const hasDiscount = productDiscount > 0
 
-  const formattedPrice = useMemo(
-    () =>
-      productPrice.toLocaleString('es-AR', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-      }),
-    [productPrice]
-  )
+  const formattedPrice = useMemo(() => formatPrice(productPrice), [productPrice])
+  
   const formattedOriginalPrice = useMemo(
-    () =>
-      productOriginalPrice
-        ? productOriginalPrice.toLocaleString('es-AR', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-          })
-        : null,
+    () => productOriginalPrice ? formatPrice(productOriginalPrice) : null,
     [productOriginalPrice]
   )
+  
   const transferPriceValue = useMemo(() => productPrice * 0.9, [productPrice])
-  const transferPrice = useMemo(
-    () =>
-      transferPriceValue.toLocaleString('es-AR', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-      }),
-    [transferPriceValue]
-  )
+  const transferPrice = useMemo(() => formatPrice(transferPriceValue), [transferPriceValue])
+
 
   // Determinar stock actual
   const currentStock = useMemo(() => {
@@ -362,10 +346,7 @@ function ProductCard({ producto }: ProductCardProps) {
             <div className="flex items-center gap-1 text-gray-400 text-[10px] md:text-xs whitespace-nowrap">
               <span className="opacity-80">6 cuotas sin interés de</span>
               <span className="font-bold text-white/90 underline decoration-gray-700 underline-offset-2">
-                $<span suppressHydrationWarning>{(productPrice / 6).toLocaleString('es-AR', { 
-                  minimumFractionDigits: 0, 
-                  maximumFractionDigits: 0 
-                })}</span>
+                $<span suppressHydrationWarning>{formatPrice(productPrice / 6)}</span>
               </span>
             </div>
             
@@ -407,6 +388,13 @@ function ProductCard({ producto }: ProductCardProps) {
 
   return (
     <div className={`bg-black border rounded-xl md:rounded-2xl overflow-hidden group transition w-full relative flex flex-col h-full hover:z-30 border-white/10 hover:border-white/20 shadow-lg shadow-black/50`}>
+      {/* Badge PROXIMAMENTE */}
+      {isProximoLanzamiento && (
+        <div className="absolute top-3 left-3 z-30 bg-zinc-900 text-white text-[10px] md:text-xs font-black px-2.5 py-1 rounded-sm shadow-lg border border-white/20 tracking-widest backdrop-blur-md">
+          PROXIMAMENTE
+        </div>
+      )}
+
       {/* Badge NUEVO */}
       {(producto as any).nuevo_lanzamiento && !isProximoLanzamiento && (
         <div className={`absolute ${hasDiscount ? 'top-10' : 'top-3'} left-3 z-30 bg-green-500 text-black text-[10px] md:text-xs font-black px-2.5 py-1 rounded-sm shadow-lg border border-white/20`}>
@@ -461,35 +449,67 @@ function ProductCard({ producto }: ProductCardProps) {
       {hasHotSale && <div className="fire-effect"></div>}
 
       {/* Imagen */}
-      <Link href={productHref} className="relative block w-full aspect-[4/5] bg-black overflow-hidden">
-        <Image
-          src={imgSrc}
-          alt={productName}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className={`object-cover transition-all duration-700 ${
-            isProximoLanzamiento 
-              ? 'group-hover:scale-105' 
-              : 'group-hover:scale-110 group-hover:brightness-110'
-          }`}
-          onError={() => {
-            console.warn(`Error loading image for ${productName}: ${imgSrc}`)
-            setImgSrc('/logo.svg')
-          }}
-        />
-      </Link>
+      {isProximoLanzamiento ? (
+        <div className="relative block w-full aspect-[4/5] bg-black overflow-hidden cursor-not-allowed">
+          <Image
+            src={imgSrc}
+            alt={productName}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className={`object-cover transition-all duration-700 ${
+              isProximoLanzamiento 
+                ? 'group-hover:scale-105 grayscale opacity-70' 
+                : 'group-hover:scale-110 group-hover:brightness-110'
+            }`}
+            onError={() => {
+              console.warn(`Error loading image for ${productName}: ${imgSrc}`)
+              setImgSrc('/logo.svg')
+            }}
+          />
+        </div>
+      ) : (
+        <Link href={productHref} className="relative block w-full aspect-[4/5] bg-black overflow-hidden">
+          <Image
+            src={imgSrc}
+            alt={productName}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className={`object-cover transition-all duration-700 ${
+              isProximoLanzamiento 
+                ? 'group-hover:scale-105' 
+                : 'group-hover:scale-110 group-hover:brightness-110'
+            }`}
+            onError={() => {
+              console.warn(`Error loading image for ${productName}: ${imgSrc}`)
+              setImgSrc('/logo.svg')
+            }}
+          />
+        </Link>
+      )}
       
       {/* Product Info */}
       <div className="p-3 md:p-6 bg-black flex flex-col flex-grow">
-        <Link href={productHref} className="block mb-2 group/title">
-          <h3 className={`font-bold text-white transition-colors group-hover/title:text-accent leading-tight break-words line-clamp-2 min-h-[2.5rem] md:min-h-[3.5rem] ${
-            producto.nombre.length > 25 
-              ? 'text-[13px] md:text-base' 
-              : 'text-[14px] md:text-lg'
-          }`}>
-            {producto.nombre}
-          </h3>
-        </Link>
+        {isProximoLanzamiento ? (
+          <div className="block mb-2 group/title cursor-not-allowed">
+            <h3 className={`font-bold text-white/50 transition-colors leading-tight break-words line-clamp-2 min-h-[2.5rem] md:min-h-[3.5rem] ${
+              producto.nombre.length > 25 
+                ? 'text-[13px] md:text-base' 
+                : 'text-[14px] md:text-lg'
+            }`}>
+              {producto.nombre}
+            </h3>
+          </div>
+        ) : (
+          <Link href={productHref} className="block mb-2 group/title">
+            <h3 className={`font-bold text-white transition-colors group-hover/title:text-accent leading-tight break-words line-clamp-2 min-h-[2.5rem] md:min-h-[3.5rem] ${
+              producto.nombre.length > 25 
+                ? 'text-[13px] md:text-base' 
+                : 'text-[14px] md:text-lg'
+            }`}>
+              {producto.nombre}
+            </h3>
+          </Link>
+        )}
         
         <div className="mt-auto">
           {isProximoLanzamiento ? upcomingContent : regularContent}

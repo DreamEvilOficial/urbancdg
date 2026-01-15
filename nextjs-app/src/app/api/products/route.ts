@@ -26,6 +26,7 @@ export async function GET(request: Request) {
                 nuevo_lanzamiento: p.nuevo_lanzamiento === true || p.nuevo_lanzamiento === 1 || p.nuevo_lanzamiento === 'true',
                 descuento_activo: p.descuento_activo === true || p.descuento_activo === 1 || p.descuento_activo === 'true',
                 imagenes: typeof p.imagenes === 'string' ? JSON.parse(p.imagenes) : (p.imagenes || []),
+                // variantes: handled separately for single product fetch, fallback to JSON for list
                 variantes: typeof p.variantes === 'string' ? JSON.parse(p.variantes) : (p.variantes || []),
                 metadata: typeof p.metadata === 'string' ? JSON.parse(p.metadata) : (p.metadata || {}),
                 dimensiones: typeof p.dimensiones === 'string' ? JSON.parse(p.dimensiones) : (p.dimensiones || null),
@@ -34,13 +35,43 @@ export async function GET(request: Request) {
 
         if (id) {
             const product = await db.get('SELECT * FROM productos WHERE id = ?', [id]);
-            return NextResponse.json(normalizeProduct(product));
+            if (!product) return NextResponse.json(null);
+
+            // Fetch real-time variants from dedicated table
+            const variants = await db.all('SELECT * FROM variantes WHERE producto_id = ? AND activo = true', [id]);
+            const normalized = normalizeProduct(product);
+            if (variants && variants.length > 0) {
+                normalized.variantes = variants.map((v: any) => ({
+                    ...v,
+                    // Ensure compatibility with frontend expected shape
+                    color_nombre: v.color, // DB has color as name, color_hex as hex
+                    color: v.color_hex // Frontend expects 'color' to be hex usually, or we adjust frontend.
+                    // Wait, let's check frontend usage.
+                }));
+                // Frontend ProductDetailPage.tsx: 
+                // v.color is used for HEX (lines 106, 117)
+                // v.color_nombre is used for name (line 108)
+                // DB: color (text), color_hex (text)
+                // So we map: color -> color_nombre, color_hex -> color
+            }
+            return NextResponse.json(normalized);
         }
 
         if (slug) {
             const product = await db.get('SELECT * FROM productos WHERE slug = ?', [slug]);
-            // El cliente espera un array para el endpoint de búsqueda
-            return NextResponse.json(product ? [normalizeProduct(product)] : []);
+            if (!product) return NextResponse.json([]);
+            
+            // Fetch real-time variants from dedicated table
+            const variants = await db.all('SELECT * FROM variantes WHERE producto_id = ? AND activo = true', [product.id]);
+            const normalized = normalizeProduct(product);
+            if (variants && variants.length > 0) {
+                 normalized.variantes = variants.map((v: any) => ({
+                    ...v,
+                    color_nombre: v.color, 
+                    color: v.color_hex
+                }));
+            }
+            return NextResponse.json([normalized]);
         }
 
         let sql = 'SELECT * FROM productos WHERE activo = TRUE';
@@ -187,7 +218,50 @@ export async function POST(request: Request) {
             productData.precio_costo, productData.metadata
         ];
 
-        await db.run(sql, params);
+        await db.transaction(async (tx) => {
+            await db.run(sql, params, tx);
+
+            // Sincronizar variantes en tabla dedicada
+            if (body.variantes && Array.isArray(body.variantes)) {
+                // 1. Prepare list of valid variants to keep (based on talle + color_hex)
+                const validKeys = [];
+
+                for (const v of body.variantes) {
+                    if (!v.talle || !v.color) continue;
+                    
+                    const colorHex = v.color; 
+                    const colorName = v.color_nombre || v.color;
+                    const stock = parseInt(v.stock || '0');
+                    
+                    const cleanHex = colorHex.replace('#', '').substring(0, 6);
+                    const sku = v.sku || `${id.substring(0,8)}-${v.talle}-${cleanHex}`.toUpperCase();
+                    const imagenUrl = v.imagen_url || null;
+
+                    await db.run(`
+                        INSERT INTO variantes (producto_id, talle, color, color_hex, stock, sku, imagen_url, activo, updated_at)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, true, NOW())
+                        ON CONFLICT (producto_id, talle, color_hex) DO UPDATE SET
+                            stock = EXCLUDED.stock,
+                            color = EXCLUDED.color,
+                            imagen_url = EXCLUDED.imagen_url,
+                            activo = true,
+                            updated_at = NOW()
+                    `, [id, v.talle, colorName, colorHex, stock, sku, imagenUrl], tx);
+
+                    validKeys.push({ talle: v.talle, hex: colorHex });
+                }
+
+                // 2. Deactivate/Delete variants not in the list
+                if (validKeys.length > 0) {
+                    const conditions = validKeys.map((_, i) => `NOT (talle = $${i*2 + 2} AND color_hex = $${i*2 + 3})`).join(' AND ');
+                    const params = [id, ...validKeys.flatMap(k => [k.talle, k.hex])];
+                    await db.run(`DELETE FROM variantes WHERE producto_id = $1 AND (${conditions})`, params, tx);
+                } else {
+                    // If empty list provided (but array exists), delete all
+                    await db.run('DELETE FROM variantes WHERE producto_id = ?', [id], tx);
+                }
+            }
+        });
 
         return NextResponse.json({ success: true, id });
     } catch (error: any) {

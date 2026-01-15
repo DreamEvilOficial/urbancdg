@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Search, Package, Truck, CheckCircle, Clock, XCircle, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
+import { formatPrice } from '@/lib/formatters'
 
 export default function OrderTrackingPage() {
   const [orderId, setOrderId] = useState('')
@@ -132,7 +133,7 @@ export default function OrderTrackingPage() {
                 <div className="flex justify-between text-sm">
                   <span className="text-white/50">Total</span>
                   <span className="font-mono font-bold text-lg text-accent">
-                    ${ order.total?.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                    ${ formatPrice(order.total) }
                   </span>
                 </div>
                 

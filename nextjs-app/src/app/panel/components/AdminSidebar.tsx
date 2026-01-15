@@ -176,6 +176,13 @@ export default function AdminSidebar({
               setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
             />
             <SidebarItem
+              id="inventario"
+              icon={Layers}
+              label="Inventario"
+              activeTab={activeTab}
+              setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
+            />
+            <SidebarItem
               id="resenas"
               icon={MessageSquare}
               label="Reseñas"

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import NextImage from 'next/image'
 import { useCartStore } from '@/store/cartStore'
+import { formatPrice } from '@/lib/formatters'
 import { Truck, Store, MapPin, ArrowRight, ArrowLeft, ShieldCheck, ChevronRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -161,9 +162,16 @@ export default function CheckoutPage() {
                             sizes="32px"
                           />
                         </div>
-                        <div className="flex-1 truncate"><p className="text-[9px] font-black uppercase truncate">{item.nombre}</p></div>
+                        <div className="flex-1 truncate">
+                          <p className="text-[9px] font-black uppercase truncate">{item.nombre}</p>
+                          {(item.talle || item.color) && (
+                            <p className="text-[7px] font-bold text-gray-500 uppercase tracking-widest">
+                              {[item.talle, item.color].filter(Boolean).join(' / ')}
+                            </p>
+                          )}
+                        </div>
                         <p className="text-[10px] font-black tracking-tight">
-                          ${ (item.precio * item.cantidad).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                          ${ formatPrice(item.precio * item.cantidad) }
                         </p>
                      </div>
                    ))}
@@ -172,7 +180,7 @@ export default function CheckoutPage() {
                   <div className="flex justify-between text-[9px] font-bold uppercase opacity-40">
                     <span>Subtotal</span>
                     <span>
-                      ${ total().toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                      ${ formatPrice(total()) }
                     </span>
                   </div>
                   <div className="flex justify-between text-[9px] font-bold uppercase opacity-40">
@@ -184,7 +192,7 @@ export default function CheckoutPage() {
                           ? 'GRATIS'
                           : (
                             <>$<span suppressHydrationWarning>
-                              { shippingCost.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                              { formatPrice(shippingCost) }
                             </span></>
                           )}
                     </span>
@@ -193,7 +201,7 @@ export default function CheckoutPage() {
                     <span className="font-black uppercase tracking-tighter text-[10px]">Total</span>
                     <span className="text-3xl font-black tracking-tighter leading-none">
                       $<span suppressHydrationWarning>
-                        { (total() + shippingCost).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                        { formatPrice(total() + shippingCost) }
                       </span>
                     </span>
                   </div>

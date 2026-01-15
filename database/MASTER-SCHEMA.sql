@@ -92,6 +92,22 @@ CREATE TABLE IF NOT EXISTS productos (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 4.1 VARIANTES DE PRODUCTOS
+DROP TABLE IF EXISTS variantes CASCADE;
+CREATE TABLE IF NOT EXISTS variantes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    producto_id UUID REFERENCES productos(id) ON DELETE CASCADE,
+    talle VARCHAR(50) NOT NULL,
+    color VARCHAR(100) NOT NULL,
+    color_hex VARCHAR(50),
+    stock INTEGER DEFAULT 0,
+    sku VARCHAR(100),
+    imagen_url TEXT,
+    activo BOOLEAN DEFAULT TRUE,
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(producto_id, talle, color_hex)
+);
+
 -- 5. VENTAS / ÓRDENES
 DROP TABLE IF EXISTS orden_items CASCADE;
 DROP TABLE IF EXISTS ordenes CASCADE;
@@ -201,10 +217,24 @@ CREATE TABLE IF NOT EXISTS homepage_sections (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 8.3 NOTIFICACIONES PROXIMAMENTE
+DROP TABLE IF EXISTS proximamente_notificaciones CASCADE;
+CREATE TABLE IF NOT EXISTS proximamente_notificaciones (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email TEXT NOT NULL,
+    producto_id TEXT NOT NULL,
+    notificado BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(email, producto_id)
+);
+
 -- 9. ÍNDICES DE RENDIMIENTO
 CREATE INDEX IF NOT EXISTS idx_productos_slug ON productos(slug);
 CREATE INDEX IF NOT EXISTS idx_productos_categoria ON productos(categoria_id);
 CREATE INDEX IF NOT EXISTS idx_productos_activo ON productos(activo);
+CREATE INDEX IF NOT EXISTS idx_variantes_producto ON variantes(producto_id);
+CREATE INDEX IF NOT EXISTS idx_proximamente_email ON proximamente_notificaciones(email);
+CREATE INDEX IF NOT EXISTS idx_proximamente_producto ON proximamente_notificaciones(producto_id);
 CREATE INDEX IF NOT EXISTS idx_ordenes_numero ON ordenes(numero_orden);
 CREATE INDEX IF NOT EXISTS idx_usuarios_usuario ON usuarios(usuario);
 CREATE INDEX IF NOT EXISTS idx_deudas_cliente ON deudas(cliente_nombre);
@@ -219,6 +249,8 @@ ALTER TABLE deudas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE resenas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE banners ENABLE ROW LEVEL SECURITY;
 ALTER TABLE configuracion ENABLE ROW LEVEL SECURITY;
+ALTER TABLE variantes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE proximamente_notificaciones ENABLE ROW LEVEL SECURITY;
 
 -- Políticas de acceso público (Lectura)
 DROP POLICY IF EXISTS "Acceso público lectura productos" ON productos;
@@ -253,3 +285,5 @@ CREATE POLICY "Acceso total admin deudas" ON deudas FOR ALL USING (true);
 CREATE POLICY "Acceso total admin resenas" ON resenas FOR ALL USING (true);
 CREATE POLICY "Acceso total admin banners" ON banners FOR ALL USING (true);
 CREATE POLICY "Acceso total admin configuracion" ON configuracion FOR ALL USING (true);
+CREATE POLICY "Acceso total admin variantes" ON variantes FOR ALL USING (true);
+CREATE POLICY "Acceso total admin proximamente" ON proximamente_notificaciones FOR ALL USING (true);

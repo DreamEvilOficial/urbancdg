@@ -31,7 +31,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
     descuento_activo: false,
     imagen_url: '',
     imagenes: [] as string[],
-    variantes: [] as Array<{talle: string, color: string, color_nombre: string, stock: number}>,
+    variantes: [] as Array<{talle: string, color: string, color_nombre: string, stock: number, imagen_url?: string}>,
     sku: '',
     stock_minimo: '5',
     proveedor_nombre: '',
@@ -149,7 +149,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
   }
 
   // Variante form state
-  const [newVariant, setNewVariant] = useState({ talle: '', color: '#000000', color_nombre: '', stock: '' })
+  const [newVariant, setNewVariant] = useState({ talle: '', color: '#000000', color_nombre: '', stock: '', imagen_url: '' })
   const [showVariantForm, setShowVariantForm] = useState(false)
 
   const commonColors = [
@@ -183,10 +183,11 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
         talle: newVariant.talle, 
         color: newVariant.color, 
         color_nombre: newVariant.color_nombre || newVariant.color,
-        stock: parseInt(newVariant.stock) 
+        stock: parseInt(newVariant.stock),
+        imagen_url: newVariant.imagen_url
       }]
     })
-    setNewVariant({ talle: '', color: '#000000', color_nombre: '', stock: '' })
+    setNewVariant({ talle: '', color: '#000000', color_nombre: '', stock: '', imagen_url: '' })
   }
 
   return (
@@ -263,6 +264,11 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 font-bold">$</span>
                       <input 
                         type="number"
+                        step="1"
+                        min="0"
+                        onKeyDown={(e) => {
+                          if (e.key === '.' || e.key === ',') e.preventDefault()
+                        }}
                         value={formData.precio}
                         onChange={e => setFormData({...formData, precio: e.target.value})}
                         className="w-full bg-[#111] border border-white/5 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold placeholder:text-white/20 focus:bg-black focus:border-white text-white transition-all outline-none"
@@ -299,6 +305,24 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                       <option key={sub.id} value={sub.id}>{sub.nombre}</option>
                     ))}
                   </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Costo</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 font-bold">$</span>
+                    <input 
+                      type="number"
+                      step="1"
+                      min="0"
+                      onKeyDown={(e) => {
+                        if (e.key === '.' || e.key === ',') e.preventDefault()
+                      }}
+                      value={formData.precio_costo}
+                      onChange={e => setFormData({...formData, precio_costo: e.target.value})}
+                      className="w-full bg-[#111] border border-white/5 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold placeholder:text-white/20 focus:bg-black focus:border-white text-white transition-all outline-none"
+                      placeholder="0"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -397,6 +421,11 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 font-bold">$</span>
                             <input 
                               type="number"
+                              step="1"
+                              min="0"
+                              onKeyDown={(e) => {
+                                if (e.key === '.' || e.key === ',') e.preventDefault()
+                              }}
                               value={formData.precio_original}
                               onChange={e => setFormData({...formData, precio_original: e.target.value})}
                               className="w-full bg-black border border-white/10 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold text-white/70 focus:border-white transition-all outline-none"
@@ -411,6 +440,11 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-500 font-bold">$</span>
                             <input 
                               type="number"
+                              step="1"
+                              min="0"
+                              onKeyDown={(e) => {
+                                if (e.key === '.' || e.key === ',') e.preventDefault()
+                              }}
                               value={formData.precio}
                               onChange={e => setFormData({...formData, precio: e.target.value})}
                               className="w-full bg-pink-500/10 border border-pink-500/50 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold text-white focus:bg-pink-500/20 transition-all outline-none"
@@ -517,6 +551,11 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                       <label className="block text-[9px] font-black uppercase text-gray-400 tracking-[0.2em] mb-2 px-1">Unidades</label>
                       <input 
                         type="number"
+                        step="1"
+                        min="0"
+                        onKeyDown={(e) => {
+                          if (e.key === '.' || e.key === ',') e.preventDefault()
+                        }}
                         value={newVariant.stock}
                         onChange={e => setNewVariant({...newVariant, stock: e.target.value})}
                         className="w-full h-10 bg-[#06070c] border border-white/10 px-4 rounded-xl text-sm font-black text-white outline-none focus:border-white transition-all"
@@ -533,6 +572,18 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                       >
                         <Plus className="w-5 h-5" />
                       </button>
+                    </div>
+
+                    {/* Imagen URL (Opcional) */}
+                    <div className="lg:col-span-12">
+                      <label className="block text-[9px] font-black uppercase text-gray-400 tracking-[0.2em] mb-2 px-1">Imagen URL de la Variante (Opcional)</label>
+                      <input 
+                        type="text"
+                        value={newVariant.imagen_url}
+                        onChange={e => setNewVariant({...newVariant, imagen_url: e.target.value})}
+                        className="w-full h-10 bg-[#06070c] border border-white/10 px-4 rounded-xl text-[11px] font-bold placeholder:text-white/20 text-white outline-none focus:border-white transition-all"
+                        placeholder="https://... (Deja vacío para usar imagen principal)"
+                      />
                     </div>
                   </div>
 
@@ -584,10 +635,19 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {formData.variantes.map((v, idx) => (
                     <div key={idx} className="bg-[#06070c] border border-white/10 p-5 rounded-[24px] flex items-center gap-4 hover:border-white transition-all group">
-                      <div className="w-12 h-12 rounded-2xl bg-[#111] flex flex-col items-center justify-center border border-white/5 group-hover:bg-white group-hover:text-black transition-colors">
-                        <span className="text-[7px] font-black uppercase opacity-40">Talle</span>
-                        <span className="text-xs font-black">{v.talle}</span>
-                      </div>
+                      {v.imagen_url ? (
+                        <div className="w-12 h-12 rounded-2xl overflow-hidden border border-white/5 relative group-hover:border-white transition-colors">
+                          <img src={v.imagen_url} alt={v.talle} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[1px]">
+                             <span className="text-[9px] font-black text-white shadow-sm">{v.talle}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 rounded-2xl bg-[#111] flex flex-col items-center justify-center border border-white/5 group-hover:bg-white group-hover:text-black transition-colors">
+                          <span className="text-[7px] font-black uppercase opacity-40">Talle</span>
+                          <span className="text-xs font-black">{v.talle}</span>
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
                           <div className="w-3 h-3 rounded-full border border-white/10" style={{ backgroundColor: v.color }} />
@@ -599,6 +659,11 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                         <label className="block text-[7px] font-black text-gray-500 uppercase tracking-widest mb-1 text-center">Unid.</label>
                         <input 
                           type="number"
+                          step="1"
+                          min="0"
+                          onKeyDown={(e) => {
+                            if (e.key === '.' || e.key === ',') e.preventDefault()
+                          }}
                           value={v.stock}
                           onChange={(e) => {
                             const val = e.target.value === '' ? 0 : parseInt(e.target.value)

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCartStore } from '@/store/cartStore'
-import { ordenesAPI } from '@/lib/supabase'
+import { formatPrice } from '@/lib/formatters'
 import TransferPayment from '@/components/TransferPayment'
 import { ArrowLeft, CreditCard, Building2, ShieldCheck, ChevronRight } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -81,7 +81,9 @@ export default function PaymentPage() {
               id: i.id, // Incluir ID para validación en el servidor
               title: i.nombre, 
               unit_price: i.precio, 
-              quantity: i.cantidad 
+              quantity: i.cantidad,
+              talle: i.talle,
+              color: i.color
             })),
             shippingCost: deliveryData.shippingCost || 0,
             ordenId: orden.id,
@@ -165,27 +167,27 @@ export default function PaymentPage() {
                   <div className="flex justify-between text-[9px] font-bold opacity-40 uppercase">
                     <span>Subtotal</span>
                     <span>
-                      ${ total().toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                      ${ formatPrice(total()) }
                     </span>
                   </div>
                   <div className="flex justify-between text-[9px] font-bold opacity-40 uppercase">
                     <span>Envío</span>
                     <span>
-                      ${ deliveryData.shippingCost.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                      ${ formatPrice(deliveryData.shippingCost) }
                     </span>
                   </div>
                   {isBank && (
                     <div className="flex justify-between text-[9px] font-black text-green-600 uppercase">
                       <span>10% OFF</span>
                       <span>
-                        - ${ discountAmount.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                        - ${ formatPrice(discountAmount) }
                       </span>
                     </div>
                   )}
                   <div className="flex justify-between items-end pt-2 border-t border-black/5 mt-2">
                     <span className="font-black text-sm uppercase">Total</span>
                     <span className="text-4xl font-black tracking-tighter leading-none">
-                      ${ payableTotal.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                      ${ formatPrice(payableTotal) }
                     </span>
                   </div>
                </div>

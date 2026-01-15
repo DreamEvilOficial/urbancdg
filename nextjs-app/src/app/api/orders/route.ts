@@ -114,15 +114,64 @@ export async function POST(req: Request) {
 
                 // Validar stock
                 const cantidad = Number(item.cantidad) || 1;
-                if (product.stock_actual < cantidad) {
-                    throw new Error(`Stock insuficiente para "${product.nombre}". Solicitado: ${cantidad}, Disponible: ${product.stock_actual}`);
-                }
-
+                
                 // Construir información de variante
                 const varianteInfo = item.variante || item.variante_info || { 
                     talle: item.talle, 
                     color: item.color 
                 };
+
+                // Si hay información de variante, validar y descontar de la tabla de variantes
+                if (varianteInfo.talle && varianteInfo.color) {
+                    // Normalizar color (si viene hex o nombre, tratar de buscar coincidencia)
+                    // Asumimos que el frontend envía el color tal cual está en la BD (hex o nombre)
+                    // Pero idealmente deberíamos buscar por talle y color_hex o color
+                    
+                    // Buscar variante específica
+                    const variantQuery = `
+                        SELECT id, stock, talle, color, color_hex 
+                        FROM variantes 
+                        WHERE producto_id = $1 
+                        AND talle = $2 
+                        AND (color = $3 OR color_hex = $3)
+                        FOR UPDATE
+                    `;
+                    
+                    const variantResult = await client.query(variantQuery, [
+                        productId, 
+                        varianteInfo.talle, 
+                        varianteInfo.color
+                    ]);
+
+                    const variante = variantResult.rows[0];
+
+                    if (!variante) {
+                        // Fallback: Si no existe en tabla variantes, quizás es un producto antiguo o error de sincro.
+                        // Permitimos continuar si hay stock global, pero logueamos advertencia.
+                        console.warn(`[Order] Variante no encontrada en tabla: ${productId} ${varianteInfo.talle} ${varianteInfo.color}`);
+                        
+                        // Validar contra stock global si no hay variante (comportamiento legacy)
+                        if (product.stock_actual < cantidad) {
+                            throw new Error(`Stock insuficiente para "${product.nombre}". Solicitado: ${cantidad}, Disponible: ${product.stock_actual}`);
+                        }
+                    } else {
+                        // Validar stock de variante
+                        if (variante.stock < cantidad) {
+                            throw new Error(`Stock insuficiente para "${product.nombre} (${varianteInfo.talle} ${varianteInfo.color})". Solicitado: ${cantidad}, Disponible: ${variante.stock}`);
+                        }
+
+                        // Descontar stock de variante
+                        await client.query(
+                            'UPDATE variantes SET stock = stock - $1, updated_at = NOW() WHERE id = $2',
+                            [cantidad, variante.id]
+                        );
+                    }
+                } else {
+                    // Validar stock global si no es variante
+                    if (product.stock_actual < cantidad) {
+                        throw new Error(`Stock insuficiente para "${product.nombre}". Solicitado: ${cantidad}, Disponible: ${product.stock_actual}`);
+                    }
+                }
 
                 // Insertar item de orden
                 await client.query(`
@@ -137,7 +186,7 @@ export async function POST(req: Request) {
                     JSON.stringify(varianteInfo)
                 ]);
 
-                // Actualizar stock
+                // Actualizar stock global del producto (siempre se descuenta del total)
                 await client.query(`
                     UPDATE productos 
                     SET stock_actual = stock_actual - $1 

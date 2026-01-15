@@ -43,6 +43,31 @@ export async function POST(request: NextRequest) {
         throw new Error(`Producto no disponible: ${item.title}`)
       }
 
+      // Validar Stock
+      const quantity = Number(item.quantity)
+      if (item.talle && item.color) {
+         // Validar stock de variante
+         const variant = await db.get(
+           'SELECT stock FROM variantes WHERE producto_id = ? AND talle = ? AND (color = ? OR color_hex = ?)',
+           [product.id, item.talle, item.color, item.color]
+         )
+         
+         if (!variant) {
+            // Si no existe la variante, fallback a stock global (legacy) o error
+            // Asumimos error para ser estrictos
+            throw new Error(`Variante no encontrada: ${product.nombre} ${item.talle} ${item.color}`)
+         }
+         
+         if (variant.stock < quantity) {
+            throw new Error(`Stock insuficiente para ${product.nombre} (${item.talle} ${item.color}). Disponible: ${variant.stock}`)
+         }
+      } else {
+         // Validar stock global
+         if ((product.stock_actual || 0) < quantity) {
+            throw new Error(`Stock insuficiente para ${product.nombre}. Disponible: ${product.stock_actual}`)
+         }
+      }
+
       // Calcular precio real (aplicando descuento transferencia si corresponde, 
       // aunque MP generalmente se usa para tarjetas, si el usuario eligió MP 
       // asumimos precio de lista o lo que corresponda según lógica de negocio.
@@ -56,8 +81,17 @@ export async function POST(request: NextRequest) {
         // Force server price
       }
 
+      // Construir título con variante si existe
+      let title = product.nombre
+      if (item.talle || item.color) {
+        const parts = []
+        if (item.talle) parts.push(item.talle)
+        if (item.color) parts.push(item.color)
+        title += ` (${parts.join(' - ')})`
+      }
+
       validatedItems.push({
-        title: product.nombre, // Usar nombre real de la BD
+        title: title, // Usar nombre real de la BD + Variante
         unit_price: realPrice,
         quantity: quantity,
         currency_id: 'ARS'

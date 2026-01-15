@@ -20,6 +20,7 @@ import HomepageManagement from './components/HomepageManagement'
 import DebtManagement from './components/DebtManagement'
 import ReviewsManagement from './components/ReviewsManagement'
 import FeaturedProductsManagement from './components/FeaturedProductsManagement'
+import InventoryReport from './components/InventoryReport'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -65,6 +66,7 @@ export default function AdminPage() {
   useEffect(() => {
     setMounted(true)
     checkAuthAndLoadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const permissions = {
@@ -87,7 +89,7 @@ export default function AdminPage() {
     if (!orderedTabs.includes(activeTab)) {
       setActiveTab(orderedTabs[0] || 'perfil')
     }
-  }, [user, permissions.catalog, permissions.sales, permissions.adminSales, permissions.config])
+  }, [user, permissions.catalog, permissions.sales, permissions.adminSales, permissions.config, activeTab])
 
   if (!mounted) return null
 
@@ -462,6 +464,10 @@ export default function AdminPage() {
 
           {activeTab === 'ventas' && permissions.sales && (
             <OrderManagement />
+          )}
+
+          {activeTab === 'inventario' && permissions.sales && (
+            <InventoryReport />
           )}
 
           {activeTab === 'perfil' && (

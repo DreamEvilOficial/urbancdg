@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCartStore } from '@/store/cartStore'
+import { formatPrice } from '@/lib/formatters'
 import { ArrowLeft, Plus, Minus, Trash2, ArrowRight, ShoppingBag, Info } from 'lucide-react'
 import toast from 'react-hot-toast'
 import NextImage from 'next/image'
@@ -71,8 +72,10 @@ export default function CartPage() {
               </div>
 
               <div className="space-y-6">
-                {items.map((item) => (
-                  <div key={item.id} className="group relative flex items-center gap-6 p-4 rounded-3xl hover:bg-white/[0.02] transition-colors">
+                {items.map((item) => {
+                  const itemKey = item.cartItemId || `${item.id}-${item.talle || ''}-${item.color || ''}`
+                  return (
+                  <div key={itemKey} className="group relative flex items-center gap-6 p-4 rounded-3xl hover:bg-white/[0.02] transition-colors">
                     <div className="w-24 h-24 bg-white/5 rounded-2xl overflow-hidden shrink-0 border border-white/10 relative">
                       <NextImage 
                         src={item.imagen_url || '/proximamente.png'} 
@@ -92,24 +95,24 @@ export default function CartPage() {
                             {item.color && <div className="w-3 h-3 rounded-full border border-white/10" style={{backgroundColor: item.color}} />}
                           </div>
                         </div>
-                        <button onClick={() => removeItem(item.id)} className="text-gray-600 hover:text-white p-1">
+                        <button onClick={() => removeItem(itemKey)} className="text-gray-600 hover:text-white p-1">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
 
                       <div className="flex items-center justify-between mt-4">
                         <div className="flex items-center gap-3 bg-white/5 p-1 rounded-xl border border-white/5">
-                          <button onClick={() => handleQuantityChange(item.id, item.cantidad - 1)} className="w-7 h-7 flex items-center justify-center hover:bg-white/[0.05] rounded-lg transition-colors"><Minus className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => handleQuantityChange(itemKey, item.cantidad - 1)} className="w-7 h-7 flex items-center justify-center hover:bg-white/[0.05] rounded-lg transition-colors"><Minus className="w-3.5 h-3.5" /></button>
                           <span className="text-xs font-black min-w-[1.5rem] text-center">{item.cantidad}</span>
-                          <button onClick={() => handleQuantityChange(item.id, item.cantidad + 1)} className="w-7 h-7 flex items-center justify-center hover:bg-white/[0.05] rounded-lg transition-colors"><Plus className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => handleQuantityChange(itemKey, item.cantidad + 1)} className="w-7 h-7 flex items-center justify-center hover:bg-white/[0.05] rounded-lg transition-colors"><Plus className="w-3.5 h-3.5" /></button>
                         </div>
                         <p className="text-lg font-black tracking-tighter">
-                          ${ (item.precio * item.cantidad).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                          ${ formatPrice(item.precio * item.cantidad) }
                         </p>
                       </div>
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
             </div>
           </div>
@@ -125,7 +128,7 @@ export default function CartPage() {
                     <div className="flex justify-between text-sm">
                       <span className="font-bold opacity-60 uppercase text-[10px] tracking-widest text-white/60">Subtotal</span>
                       <span className="font-black">
-                        ${ total().toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                        ${ formatPrice(total()) }
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
@@ -137,7 +140,7 @@ export default function CartPage() {
                       <span className="font-black uppercase tracking-tighter text-xl leading-none">Total</span>
                       <span className="text-5xl font-black tracking-tighter leading-none">
                         $<span suppressHydrationWarning>
-                          { total().toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                          { formatPrice(total()) }
                         </span>
                       </span>
                     </div>

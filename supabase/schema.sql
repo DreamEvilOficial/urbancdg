@@ -115,12 +115,24 @@ CREATE TABLE variantes (
     sku VARCHAR(100),
     talle VARCHAR(50),
     color VARCHAR(50),
-    color_hex VARCHAR(7),
+    color_hex VARCHAR(50),
     precio_adicional DECIMAL(10, 2) DEFAULT 0,
     stock INTEGER DEFAULT 0,
+    imagen_url TEXT,
     activo BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(producto_id, talle, color_hex)
+);
+
+-- Tabla de notificaciones de proximamente
+CREATE TABLE proximamente_notificaciones (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    email TEXT NOT NULL,
+    producto_id TEXT NOT NULL,
+    notificado BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(email, producto_id)
 );
 
 -- Tabla de talles disponibles

@@ -8,6 +8,7 @@ import {
   CreditCard, Landmark, User, Mail, Phone, MapPin,
   Info, ChevronRight, Check
 } from 'lucide-react'
+import { formatPrice, toNumber } from '@/lib/formatters'
 
 interface Orden {
   id: string
@@ -149,23 +150,6 @@ export default function OrderManagement() {
     return 'bg-white/[0.03] text-white/70 border border-white/10'
   }
 
-  const toNumber = (value: number | string | null | undefined) => {
-    if (typeof value === 'number') return value
-    if (typeof value === 'string') {
-      const n = Number(value.replace(/\./g, '').replace(/,/g, '.'))
-      return Number.isNaN(n) ? 0 : n
-    }
-    return 0
-  }
-
-  const formatARS = (value: number | string | null | undefined) => {
-    const n = toNumber(value)
-    return n.toLocaleString('es-AR', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    })
-  }
-
   const filteredOrders = ordenes.filter(orden => {
     const matchesSearch = 
       orden.numero_orden.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -224,7 +208,7 @@ export default function OrderManagement() {
            <div className="bg-emerald-500/10 border border-emerald-500/20 px-6 py-3 rounded-[24px] text-right">
               <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400 opacity-70">Total Ventas</p>
               <p className="text-2xl font-black text-white tracking-tighter">
-                $ {formatARS(ordenes.filter(o => o.estado === 'completado').reduce((acc, o) => acc + toNumber(o.total), 0))} ARS
+                $ {formatPrice(ordenes.filter(o => o.estado === 'completado').reduce((acc, o) => acc + toNumber(o.total), 0))} ARS
               </p>
            </div>
            <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-[24px] text-right">
@@ -307,7 +291,7 @@ export default function OrderManagement() {
 
                   <div className="text-right">
                     <p className="text-[9px] md:text-[10px] text-white/35 uppercase font-black tracking-[0.32em] mb-1">Total</p>
-                    <p className="text-lg md:text-xl font-black text-white">$ {formatARS(orden.total)} ARS</p>
+                    <p className="text-lg md:text-xl font-black text-white">$ {formatPrice(orden.total)} ARS</p>
                   </div>
 
                   <div className="pl-4 border-l border-white/10 hidden md:block">
@@ -456,7 +440,9 @@ export default function OrderManagement() {
                                  </div>
                                  <div className="flex justify-between items-end">
                                     <p className="text-xs text-white/45 font-black">x{item.cantidad}</p>
-                                    <p className="text-sm font-black text-white">$ {formatARS(toNumber(item.precio) * toNumber(item.cantidad))} ARS</p>
+                                    <p className="text-sm font-black text-white">
+                                      $ {formatPrice(toNumber(item.precio) * toNumber(item.cantidad))} ARS
+                                    </p>
                                  </div>
                               </div>
                            </div>
@@ -478,7 +464,7 @@ export default function OrderManagement() {
                          <div className="h-[1px] bg-white/10 my-4" />
                          <div className="flex justify-between items-end">
                             <span className="text-xs opacity-60 font-bold uppercase tracking-widest">Total Pagado</span>
-                            <span className="text-4xl font-black tracking-tighter">$ {formatARS(selectedOrder.total)} ARS</span>
+                            <span className="text-4xl font-black tracking-tighter">$ {formatPrice(selectedOrder.total)} ARS</span>
                          </div>
                       </div>
 

@@ -4,11 +4,12 @@ import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { productosAPI, type Producto } from '@/lib/supabase'
 import { useCartStore } from '@/store/cartStore'
-import { ShoppingBag, ChevronLeft, ChevronRight, Minus, Plus, ShieldCheck, CreditCard, Banknote, ArrowLeft, Ticket } from 'lucide-react'
+import { ShoppingBag, ChevronLeft, ChevronRight, Minus, Plus, ShieldCheck, CreditCard, Banknote, ArrowLeft, Ticket, Bell } from 'lucide-react'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
 import ProductCard from '@/components/ProductCard'
 import dynamic from 'next/dynamic'
+import { formatPrice } from '@/lib/formatters'
 
 const ProductReviews = dynamic(() => import('@/components/ProductReviews'), {
   ssr: false,
@@ -29,6 +30,9 @@ export default function ProductDetailPage() {
   const [selectedTalle, setSelectedTalle] = useState('')
   const [selectedColor, setSelectedColor] = useState('')
   const [cantidad, setCantidad] = useState(1)
+  const [isImageLoading, setIsImageLoading] = useState(true)
+  const [notified, setNotified] = useState(false)
+  const [email, setEmail] = useState('')
   
   const addItem = useCartStore((state) => state.addItem)
 
@@ -74,19 +78,95 @@ export default function ProductDetailPage() {
     cargarProducto() 
   }, [productSlug, cargarProducto])
 
+  const handleNotify = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email.trim()) {
+      toast.error('Ingresá un email válido')
+      return
+    }
+    if (!producto) {
+      toast.error('Producto no disponible')
+      return
+    }
+
+    try {
+      const res = await fetch('/api/proximamente', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          producto_id: producto.id, 
+          email: email.trim() 
+        })
+      })
+
+      if (!res.ok) {
+        let message = 'No se pudo registrar la alerta'
+        try {
+          const data = await res.json()
+          if (data?.error) message = data.error
+        } catch {}
+        throw new Error(message)
+      }
+
+      setNotified(true)
+      toast.success('Te avisaremos cuando esté disponible')
+    } catch (error: any) {
+      toast.error(error.message || 'Error al registrar alerta')
+    }
+  }
+
   const variantes = producto?.variantes || []
   const hasVariants = variantes.length > 0
-  const availableSizes = useMemo(() => Array.from(new Set(variantes.map(v => v.talle))).filter(Boolean), [variantes])
+  
+  // Helper para verificar stock
+  const checkStock = (talle: string, colorHex: string) => {
+    const v = variantes.find(v => v.talle === talle && v.color === colorHex)
+    return (v?.stock || 0) > 0
+  }
+
+  const availableSizes = useMemo(() => {
+    // Obtener todos los talles únicos
+    const sizes = Array.from(new Set(variantes.map(v => v.talle))).filter(Boolean)
+    // Mapear a objetos con info de stock
+    return sizes.map(t => ({
+      name: t,
+      hasStock: variantes.some(v => v.talle === t && v.stock > 0)
+    }))
+  }, [variantes])
+
   const availableColors = useMemo(() => {
-    if (selectedTalle) return Array.from(new Set(variantes.filter(v => v.talle === selectedTalle).map(v => v.color))).filter(Boolean)
-    return Array.from(new Set(variantes.map(v => v.color))).filter(Boolean)
+    let filtered = variantes
+    if (selectedTalle) {
+      filtered = variantes.filter(v => v.talle === selectedTalle)
+    }
+    
+    const uniqueColors = new Map()
+    filtered.forEach(v => {
+      if (v.color && !uniqueColors.has(v.color)) {
+        uniqueColors.set(v.color, {
+          hex: v.color,
+          name: v.color_nombre || v.color, // Fallback a hex si no hay nombre
+          stock: v.stock
+        })
+      }
+    })
+    
+    return Array.from(uniqueColors.values())
   }, [variantes, selectedTalle])
 
   const stockDisponible = useMemo(() => {
     if (!hasVariants) return producto?.stock_actual || 0
     if (selectedTalle && selectedColor) return variantes.find(v => v.talle === selectedTalle && v.color === selectedColor)?.stock || 0
-    return variantes.reduce((acc, v) => acc + v.stock, 0)
+    return 0 // Si no hay selección completa, asumimos 0 para seguridad en botón, aunque mostremos info diferente
   }, [hasVariants, producto, variantes, selectedTalle, selectedColor])
+
+  // Reset color si cambiamos talle y el color no existe en ese talle
+  useEffect(() => {
+    if (selectedTalle && selectedColor) {
+      const exists = variantes.some(v => v.talle === selectedTalle && v.color === selectedColor)
+      if (!exists) setSelectedColor('')
+    }
+  }, [selectedTalle, variantes]) // Remove selectedColor from dependency to avoid loop
 
   const imagenes = useMemo(() => {
     const imgs: string[] = []
@@ -100,10 +180,30 @@ export default function ProductDetailPage() {
     if (producto?.imagen_url && !imgs.includes(producto.imagen_url)) {
       imgs.unshift(producto.imagen_url)
     }
+
+    // Prioridad 3: Imágenes de variantes
+    if (producto?.variantes) {
+      producto.variantes.forEach((v: any) => {
+        if (v.imagen_url && !imgs.includes(v.imagen_url)) {
+          imgs.push(v.imagen_url)
+        }
+      })
+    }
     
     // Fallback: Imagen de proximamente
     return imgs.length > 0 ? imgs : ['/proximamente.png']
-  }, [producto?.imagenes, producto?.imagen_url])
+  }, [producto?.imagenes, producto?.imagen_url, producto?.variantes])
+
+  // Cambiar imagen al seleccionar variante
+  useEffect(() => {
+    if (selectedTalle && selectedColor) {
+      const variant = variantes.find(v => v.talle === selectedTalle && v.color === selectedColor) as any
+      if (variant?.imagen_url) {
+        const idx = imagenes.indexOf(variant.imagen_url)
+        if (idx !== -1) setSelectedImage(idx)
+      }
+    }
+  }, [selectedTalle, selectedColor, variantes, imagenes])
 
   const { precioTransferencia, precioCuotas } = useMemo(() => ({
     precioTransferencia: producto ? Math.round(producto.precio * 0.9) : 0,
@@ -134,16 +234,28 @@ export default function ProductDetailPage() {
           {/* Images Section - Shrunken by 10% visually via col-span and padding */}
           <div className="lg:col-span-6 space-y-4 px-4">
             <div className="relative aspect-[4/5] bg-white/[0.02] border border-white/5 rounded-[35px] overflow-hidden group">
-               <Image src={imagenes[selectedImage]} alt={producto.nombre} fill className="object-cover group-hover:scale-105 transition-transform duration-1000 ease-out" priority />
-               <div className="absolute inset-x-0 bottom-4 px-4 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                 <button onClick={(e) => { e.stopPropagation(); setSelectedImage(prev => (prev - 1 + imagenes.length) % imagenes.length) }} className="w-10 h-10 bg-white text-black rounded-xl flex items-center justify-center shadow-2xl"><ChevronLeft className="w-5 h-5" /></button>
-                 <button onClick={(e) => { e.stopPropagation(); setSelectedImage(prev => (prev + 1) % imagenes.length) }} className="w-10 h-10 bg-white text-black rounded-xl flex items-center justify-center shadow-2xl"><ChevronRight className="w-5 h-5" /></button>
+               {isImageLoading && (
+                 <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/20 backdrop-blur-sm transition-all duration-300">
+                    <div className="w-10 h-10 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                 </div>
+               )}
+               <Image 
+                 src={imagenes[selectedImage]} 
+                 alt={producto.nombre} 
+                 fill 
+                 className={`object-cover group-hover:scale-105 transition-all duration-700 ease-out ${isImageLoading ? 'scale-110 blur-lg grayscale' : 'scale-100 blur-0 grayscale-0'}`}
+                 priority 
+                 onLoad={() => setIsImageLoading(false)}
+               />
+               <div className="absolute inset-x-0 bottom-4 px-4 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                 <button onClick={(e) => { e.stopPropagation(); setIsImageLoading(true); setSelectedImage(prev => (prev - 1 + imagenes.length) % imagenes.length) }} className="w-10 h-10 bg-white text-black rounded-xl flex items-center justify-center shadow-2xl hover:scale-110 transition-transform"><ChevronLeft className="w-5 h-5" /></button>
+                 <button onClick={(e) => { e.stopPropagation(); setIsImageLoading(true); setSelectedImage(prev => (prev + 1) % imagenes.length) }} className="w-10 h-10 bg-white text-black rounded-xl flex items-center justify-center shadow-2xl hover:scale-110 transition-transform"><ChevronRight className="w-5 h-5" /></button>
                </div>
             </div>
             {imagenes.length > 1 && (
                <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
                   {imagenes.map((img, i) => (
-                    <button key={i} onClick={() => setSelectedImage(i)} className={`w-14 h-18 rounded-xl overflow-hidden border transition-all shrink-0 ${selectedImage === i ? 'border-white' : 'border-white/5 opacity-30 hover:opacity-100'}`}>
+                    <button key={i} onClick={() => { if(selectedImage !== i) { setIsImageLoading(true); setSelectedImage(i); } }} className={`w-14 h-18 rounded-xl overflow-hidden border transition-all shrink-0 ${selectedImage === i ? 'border-white' : 'border-white/5 opacity-30 hover:opacity-100'}`}>
                       <Image src={img} alt="" width={60} height={80} className="w-full h-full object-cover" />
                     </button>
                   ))}
@@ -174,13 +286,13 @@ export default function ProductDetailPage() {
                     <div className="flex items-baseline gap-3">
                       <span className="text-3xl font-black tracking-tighter leading-none text-white">
                         $<span suppressHydrationWarning>
-                          { producto.precio.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                          { formatPrice(producto.precio) }
                         </span>
                       </span>
                       {producto.precio_original && discountPercent > 0 && (
                         <span className="text-lg font-bold text-white/30 line-through decoration-white/30">
                           $<span suppressHydrationWarning>
-                            { producto.precio_original.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                            { formatPrice(producto.precio_original) }
                           </span>
                         </span>
                       )}
@@ -191,7 +303,7 @@ export default function ProductDetailPage() {
                        <p className="text-[10px] font-black uppercase text-accent tracking-tight">Efectivo / Transf.</p>
                        <span className="text-xl font-black text-accent">
                          $<span suppressHydrationWarning>
-                           { precioTransferencia.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                           {formatPrice(precioTransferencia)}
                          </span>
                        </span>
                     </div>
@@ -199,7 +311,7 @@ export default function ProductDetailPage() {
                        <p className="text-[10px] font-black uppercase text-accent2 tracking-tight">6 cuotas fijas de</p>
                        <span className="text-lg font-black text-accent2">
                          $<span suppressHydrationWarning>
-                           { precioCuotas.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                           {formatPrice(precioCuotas)}
                          </span>
                        </span>
                     </div>
@@ -208,14 +320,62 @@ export default function ProductDetailPage() {
             </section>
 
             {/* Compact Selection Area */}
-            <div className="space-y-6 bg-white/[0.03] border border-white/10 p-6 rounded-[35px] scale-[0.9] origin-top backdrop-blur-xl">
+            <div className="space-y-6 bg-white/[0.03] border border-white/10 p-6 rounded-[35px] scale-[0.9] origin-top backdrop-blur-xl relative overflow-hidden">
+              
+              {producto.proximamente ? (
+                <div className="py-8 text-center space-y-6">
+                  <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10">
+                    <Bell className="w-8 h-8 text-white/40" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-white uppercase tracking-widest mb-2">Próximamente</h3>
+                    <p className="text-white/40 text-xs font-medium max-w-[250px] mx-auto">
+                      Este producto aún no está disponible para la venta. Dejanos tu email y te avisamos cuando llegue.
+                    </p>
+                  </div>
+
+                  {!notified ? (
+                    <form onSubmit={handleNotify} className="flex gap-2 max-w-sm mx-auto">
+                      <input 
+                        type="email" 
+                        placeholder="tu@email.com" 
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder:text-white/20 outline-none focus:border-accent/50 transition-colors"
+                      />
+                      <button type="submit" className="bg-white text-black px-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-white/90 transition-colors">
+                        Avísame
+                      </button>
+                    </form>
+                  ) : (
+                    <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 inline-block">
+                      <p className="text-green-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4" />
+                        ¡Te avisaremos!
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
               {availableSizes.length > 0 && (
                 <div className="space-y-3">
                   <label className="text-[9px] font-black text-white/55 uppercase tracking-[0.2em]">Talle Disponible</label>
                   <div className="flex flex-wrap gap-1.5">
-                    {availableSizes.map(t => (
-                      <button key={t} onClick={() => { setSelectedTalle(t); setSelectedColor('') }} className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${selectedTalle === t ? 'bg-accent text-ink shadow-lg shadow-accent/10' : 'bg-white/5 text-white/55 hover:text-white border border-transparent hover:border-white/10'}`}>
-                        {t}
+                    {availableSizes.map(({ name, hasStock }) => (
+                      <button 
+                        key={name} 
+                        onClick={() => { setSelectedTalle(name); setSelectedColor('') }} 
+                        disabled={!hasStock}
+                        className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all 
+                          ${selectedTalle === name 
+                            ? 'bg-accent text-ink shadow-lg shadow-accent/10' 
+                            : hasStock 
+                              ? 'bg-white/5 text-white/55 hover:text-white border border-transparent hover:border-white/10' 
+                              : 'bg-white/5 text-white/20 cursor-not-allowed decoration-slice line-through opacity-50'
+                          }`}
+                      >
+                        {name}
                       </button>
                     ))}
                   </div>
@@ -226,9 +386,26 @@ export default function ProductDetailPage() {
                 <div className="space-y-3">
                   <label className="text-[9px] font-black text-white/55 uppercase tracking-[0.2em]">Color</label>
                   <div className="flex flex-wrap gap-2">
-                    {availableColors.map(c => (
-                      <button key={c} onClick={() => setSelectedColor(c)} className={`w-8 h-8 rounded-full border-2 transition-all p-0.5 ${selectedColor === c ? 'border-accent scale-105 shadow-lg shadow-accent/10' : 'border-white/10 opacity-50 hover:opacity-100'}`}>
-                        <div className="w-full h-full rounded-full" style={{ backgroundColor: c }} />
+                    {availableColors.map(({ hex, name, stock }) => (
+                      <button 
+                        key={hex} 
+                        onClick={() => setSelectedColor(hex)} 
+                        disabled={stock <= 0}
+                        title={`${name} ${stock <= 0 ? '(Sin Stock)' : ''}`}
+                        className={`w-8 h-8 rounded-full border-2 transition-all p-0.5 relative group
+                          ${selectedColor === hex 
+                            ? 'border-accent scale-105 shadow-lg shadow-accent/10' 
+                            : stock > 0 
+                              ? 'border-white/10 opacity-50 hover:opacity-100' 
+                              : 'border-white/5 opacity-20 cursor-not-allowed'
+                          }`}
+                      >
+                        <div className="w-full h-full rounded-full" style={{ backgroundColor: hex }} />
+                        {stock <= 0 && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-full h-0.5 bg-white/50 -rotate-45" />
+                          </div>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -257,13 +434,23 @@ export default function ProductDetailPage() {
                     })
                     toast.success('Agregado')
                   }}
-                  disabled={stockDisponible <= 0}
+                  disabled={!!(hasVariants && selectedTalle && selectedColor && stockDisponible <= 0)}
                   className="flex-1 ml-4 bg-accent text-ink py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:brightness-95 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group disabled:opacity-30"
                 >
                   <ShoppingBag className="w-4 h-4 group-hover:-rotate-12 transition-transform" />
-                  {stockDisponible <= 0 ? 'SIN STOCK' : 'Sumar a la bolsa'}
+                  {hasVariants && (!selectedTalle || !selectedColor) ? 'ELEGIR OPCIONES' : (stockDisponible <= 0 ? 'SIN STOCK' : 'Sumar a la bolsa')}
                 </button>
               </div>
+              
+              {hasVariants && selectedTalle && selectedColor && stockDisponible > 0 && (
+                <div className="flex justify-end pt-2">
+                  <span className="text-[9px] font-black text-green-400 uppercase tracking-widest animate-pulse">
+                    ¡Quedan {stockDisponible} unidades!
+                  </span>
+                </div>
+              )}
+                </>
+              )}
             </div>
           </div>
         </div>

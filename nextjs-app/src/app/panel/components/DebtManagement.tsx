@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { supabase, deudasAPI } from '@/lib/supabase'
-import { Plus, Search, DollarSign, Calendar, RefreshCcw, User, Trash2, Eye, ChevronDown, ChevronUp, MessageCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { DollarSign, Plus, Search, Calendar, ChevronUp, ChevronDown, MessageCircle, Trash2 } from 'lucide-react'
+import { formatPrice } from '@/lib/formatters'
 import { v4 as uuidv4 } from 'uuid'
 
 interface Deuda {
@@ -244,7 +245,7 @@ export default function DebtManagement() {
     }
 
     const timing = getDebtTiming(client)
-    const message = `Hola ${client.cliente_nombre}, te recordamos que tenés un saldo pendiente de $${client.total_deuda.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} en tu cuenta de Urban CDG. Próximo vencimiento: ${timing.nextDueDate.toLocaleDateString()}.`
+    const message = `Hola ${client.cliente_nombre}, te recordamos que tenés un saldo pendiente de $${formatPrice(client.total_deuda)} en tu cuenta de Urban CDG. Próximo vencimiento: ${timing.nextDueDate.toLocaleDateString()}.`
 
     const phone = client.cliente_celular.replace(/[^0-9]/g, '')
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
@@ -351,7 +352,7 @@ export default function DebtManagement() {
                              <div className="text-right">
                                 <p className="text-[10px] uppercase font-black tracking-widest text-white/30 mb-1">Saldo Actual</p>
                                 <p className={`text-2xl font-black tracking-tighter ${client.total_deuda > 0 ? 'text-red-400' : 'text-green-400'}`}>
-                                   ${client.total_deuda.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                   ${formatPrice(client.total_deuda)}
                                 </p>
                              </div>
                           {expandedId === client.id ? <ChevronUp className="w-5 h-5 text-white/30" /> : <ChevronDown className="w-5 h-5 text-white/30" />}
@@ -411,10 +412,10 @@ export default function DebtManagement() {
                                 
                                 <div className="flex gap-2">
                                   <button onClick={() => { setSelectedClient(client); setTransactionData({ ...transactionData, tipo: 'deuda' }) }} className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 py-3 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors">
-                                    + Agregar Deuda
+                                    + Agregar Compra
                                   </button>
                                   <button onClick={() => { setSelectedClient(client); setTransactionData({ ...transactionData, tipo: 'pago' }) }} className="flex-1 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 py-3 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors">
-                                    Register Pago
+                                   - Registrar Pago
                                   </button>
                                   {client.total_deuda > 0 && (() => {
                                     const timing = getDebtTiming(client)
@@ -442,7 +443,19 @@ export default function DebtManagement() {
                                         {transactionData.tipo === 'deuda' ? 'Nueva Cuenta / Fiado' : 'Registrar Pago'}
                                       </h4>
                                       <div className="space-y-3">
-                                         <input autoFocus type="number" placeholder="Monto ($)" value={transactionData.monto} onChange={e => setTransactionData({...transactionData, monto: e.target.value})} className="w-full bg-black/40 border border-white/10 p-3 rounded-lg text-white font-mono" />
+                                         <input 
+                                           autoFocus 
+                                           type="number" 
+                                           placeholder="Monto ($)" 
+                                           value={transactionData.monto} 
+                                           onChange={e => setTransactionData({...transactionData, monto: e.target.value})} 
+                                           onKeyDown={(e) => {
+                                             if (e.key === '.' || e.key === ',') e.preventDefault()
+                                           }}
+                                           step="1"
+                                           min="0"
+                                           className="w-full bg-black/40 border border-white/10 p-3 rounded-lg text-white font-mono" 
+                                         />
                                          <input type="text" placeholder="Producto (opcional)" value={transactionData.producto} onChange={e => setTransactionData({...transactionData, producto: e.target.value})} className="w-full bg-black/40 border border-white/10 p-3 rounded-lg text-white" />
                                          <div className="grid grid-cols-2 gap-2">
                                             <input type="date" placeholder="Fecha" value={transactionData.fechaDate} onChange={e => setTransactionData({...transactionData, fechaDate: e.target.value})} className="w-full bg-black/40 border border-white/10 p-3 rounded-lg text-white text-sm" />
@@ -539,7 +552,7 @@ export default function DebtManagement() {
                                       <p className="text-sm font-medium text-white truncate">{h.producto || '—'}</p>
                                       <p className="text-[10px] text-white/40">{new Date(h.fecha).toLocaleString()}</p>
                                       <span className={`font-mono font-bold ${h.tipo === 'deuda' ? 'text-red-400' : 'text-green-400'}`}>
-                                        {h.tipo === 'deuda' ? '+' : '-'}${Number(h.monto).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                        {h.tipo === 'deuda' ? '+' : '-'}${formatPrice(h.monto)}
                                       </span>
                                       <p className="text-[12px] text-white/70 truncate">{h.descripcion || 'Sin descripción'}</p>
                                     </div>

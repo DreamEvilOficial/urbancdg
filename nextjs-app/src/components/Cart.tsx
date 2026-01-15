@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { productosAPI } from '@/lib/supabase'
 import toast from 'react-hot-toast'
+import { formatPrice } from '@/lib/formatters'
 
 interface CartProps {
   onClose: () => void
@@ -70,7 +71,7 @@ export default function Cart({ onClose }: CartProps) {
   }
 
   const handleUpdateQuantity = (id: string, quantity: number) => {
-    const item = items.find(i => i.id === id);
+    const item = items.find(i => (i.cartItemId || `${i.id}-${i.talle || ''}-${i.color || ''}`) === id);
     if (item && item.stock !== undefined && quantity > item.stock) {
         // Optional: Toast warning
         return; 
@@ -154,9 +155,11 @@ export default function Cart({ onClose }: CartProps) {
                       {items.length}
                     </span>
                   </div>
-                  {items.map((item) => (
+                  {items.map((item) => {
+                    const itemKey = item.cartItemId || `${item.id}-${item.talle || ''}-${item.color || ''}`
+                    return (
                     <div
-                      key={item.id}
+                      key={itemKey}
                       className="flex gap-4 p-3 md:p-4 rounded-2xl items-center group hover:bg-white/[0.03] transition-colors"
                     >
                       <div className="relative w-24 h-28 md:w-28 md:h-32 bg-white/5 rounded-xl overflow-hidden shrink-0 group">
@@ -197,7 +200,7 @@ export default function Cart({ onClose }: CartProps) {
                         <div className="flex items-center justify-between mt-auto">
                           <div className="flex flex-col">
                             <p className="text-white font-black text-sm md:text-base">
-                              ${ item.precio.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                              ${ formatPrice(item.precio) }
                             </p>
                             {typeof item.stock === 'number' && item.stock <= 0 && (
                               <span className="text-[10px] font-bold text-red-500">Sin stock</span>
@@ -210,13 +213,13 @@ export default function Cart({ onClose }: CartProps) {
                         </div>
                       </div>
                       <button
-                        onClick={() => handleRemoveItem(item.id)}
+                        onClick={() => handleRemoveItem(itemKey)}
                         className="p-2.5 text-white/35 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-all"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                  ))}
+                  )})}
                 </div>
                 <div className="md:col-span-5 space-y-4 h-fit">
                   <div className="p-6 border border-white/10 bg-[#07080d]/40 rounded-2xl">
@@ -229,7 +232,7 @@ export default function Cart({ onClose }: CartProps) {
                       <span className="block text-white/55 text-sm font-medium">Subtotal</span>
                       <span className="block text-3xl font-black text-white tracking-tighter">
                         $<span suppressHydrationWarning>
-                          { total().toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                          { formatPrice(total()) }
                         </span>
                       </span>
                     </div>
@@ -289,7 +292,7 @@ export default function Cart({ onClose }: CartProps) {
                               </div>
                               <p className="text-[11px] font-bold text-white truncate">{prod.nombre}</p>
                               <p className="text-[10px] text-accent font-black">
-                                ${ prod.precio.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                                ${ formatPrice(prod.precio) }
                               </p>
                             </div>
                           ))}

@@ -113,6 +113,16 @@ export async function GET() {
             ALTER TABLE productos ADD COLUMN imagen_url TEXT;
         END IF;
 
+        -- 4. Tabla de Notificaciones Proximamente
+        CREATE TABLE IF NOT EXISTS proximamente_notificaciones (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            producto_id UUID REFERENCES productos(id) ON DELETE CASCADE,
+            email TEXT NOT NULL,
+            notificado BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            UNIQUE(producto_id, email)
+        );
+
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'sku') THEN
             ALTER TABLE productos ADD COLUMN sku TEXT;
         END IF;

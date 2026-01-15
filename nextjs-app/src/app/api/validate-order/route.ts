@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import db from '@/lib/db' // Changed from supabase to db for consistency with variants table
 import { sanitizePrice } from '@/lib/security'
 
 /**
@@ -27,13 +27,12 @@ export async function POST(request: NextRequest) {
 
     for (const item of items) {
       // Obtener precio REAL desde la base de datos
-      const { data: producto, error } = await supabase
-        .from('productos')
-        .select('id, nombre, precio, activo, stock_actual, variantes')
-        .eq('id', item.id)
-        .single()
+      const producto = await db.get(
+        'SELECT id, nombre, precio, activo, stock_actual FROM productos WHERE id = ?',
+        [item.id]
+      )
       
-      if (error || !producto) {
+      if (!producto) {
         return NextResponse.json(
           { error: `Producto ${item.id} no encontrado` },
           { status: 404 }
@@ -51,21 +50,36 @@ export async function POST(request: NextRequest) {
       // Calcular stock disponible
       let stockDisponible = producto.stock_actual || 0
       
-      // Si tiene variantes, verificar stock de la variante específica
+      // Si tiene variantes, verificar stock de la variante específica en tabla variantes
       if (item.talle && item.color) {
-        const variantes = producto.variantes || []
-        const variante = variantes.find(
-          (v: any) => v.talle === item.talle && v.color === item.color
-        )
+        // Buscar en tabla variantes
+        const variante = await db.get(
+            `SELECT stock FROM variantes 
+             WHERE producto_id = ? AND talle = ? AND (color = ? OR color_hex = ?)`,
+            [item.id, item.talle, item.color, item.color]
+        );
         
-        if (!variante) {
-          return NextResponse.json(
-            { error: `Variante no encontrada: ${item.talle} - ${item.color}` },
-            { status: 400 }
-          )
+        if (variante) {
+            stockDisponible = variante.stock;
+        } else {
+            // Fallback legacy check if not in variants table
+             // This might happen if migration didn't cover this product yet or it's a legacy structure
+             // We'll stick to global stock if variant not found, or strict check?
+             // Let's be strict but safe: if we implemented variants, we expect them. 
+             // But for now, let's assume if not found, it might be an error or just global stock applies.
+             // Actually, returning error is safer to prevent overselling.
+             // But to be safe with partial migrations, let's check if the product *should* have variants.
+             // For now, let's fallback to global stock but warn.
+             console.warn(`Variant not found in table for validation: ${item.id} ${item.talle} ${item.color}`);
+             // Try checking JSON column as last resort? No, let's just use global stock for now to avoid blocking, 
+             // OR return error if we are sure everything is migrated.
+             // Given the user wants "Corrección", let's be stricter.
+             // If the user selected a variant, it MUST exist.
+             return NextResponse.json(
+                { error: `Variante no disponible: ${item.talle} - ${item.color}` },
+                { status: 400 }
+             )
         }
-        
-        stockDisponible = variante.stock || 0
       }
 
       // Verificar stock disponible
