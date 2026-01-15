@@ -108,7 +108,7 @@ export default function OrderTrackingPage() {
                   <h2 className={`text-2xl font-black uppercase tracking-wide ${getStatusInfo(order.estado).color}`}>
                     {getStatusInfo(order.estado).label}
                   </h2>
-                  <p className="text-white/40 text-sm mt-1">Orden #{order.numero_orden}</p>
+                  <p className="text-white/40 text-sm mt-1">#{order.numero_orden}</p>
                 </div>
               </div>
 

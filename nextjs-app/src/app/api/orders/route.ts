@@ -15,7 +15,64 @@ export async function GET(req: Request) {
             const order = await db.get('SELECT * FROM ordenes WHERE id = ?', [id]);
             if (order) {
                 const items = await db.all('SELECT * FROM orden_items WHERE orden_id = ?', [id]);
-                order.items = items;
+
+                const enrichedItems = [];
+
+                for (const rawItem of items as any[]) {
+                    const productoId = (rawItem as any).producto_id;
+                    let nombre = '';
+                    let imagenUrl: string | null = null;
+
+                    if (productoId) {
+                        const productRow: any = await db.get(
+                            'SELECT nombre, imagen_url, imagenes FROM productos WHERE id = ?',
+                            [productoId]
+                        );
+
+                        if (productRow) {
+                            nombre = productRow.nombre || '';
+                            if (productRow.imagen_url) {
+                                imagenUrl = productRow.imagen_url;
+                            } else if (productRow.imagenes) {
+                                try {
+                                    const arr = typeof productRow.imagenes === 'string'
+                                        ? JSON.parse(productRow.imagenes)
+                                        : productRow.imagenes;
+                                    if (Array.isArray(arr) && arr.length > 0) {
+                                        imagenUrl = arr[0];
+                                    }
+                                } catch {
+                                    imagenUrl = null;
+                                }
+                            }
+                        }
+                    }
+
+                    let varianteInfo: any = {};
+                    if (rawItem.variante_info) {
+                        try {
+                            varianteInfo = typeof rawItem.variante_info === 'string'
+                                ? JSON.parse(rawItem.variante_info)
+                                : rawItem.variante_info;
+                        } catch {
+                            varianteInfo = {};
+                        }
+                    }
+
+                    const enriched = {
+                        ...rawItem,
+                        nombre: nombre || varianteInfo.nombre || '',
+                        imagen_url: imagenUrl,
+                        talle: varianteInfo.talle || rawItem.talle || null,
+                        color: varianteInfo.color || varianteInfo.color_hex || rawItem.color || null,
+                        precio: rawItem.precio_unitario,
+                        cantidad: rawItem.cantidad
+                    };
+
+                    enrichedItems.push(enriched);
+                }
+
+                (order as any).items = enrichedItems;
             }
             return NextResponse.json(order || null);
         }

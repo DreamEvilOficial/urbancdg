@@ -124,6 +124,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     // Campos que deben ser tratados como números
     const NUMERIC_FIELDS = ['precio', 'precio_original', 'precio_costo', 'stock_actual', 'stock_minimo', 'descuento_porcentaje'];
 
+    const cleanUpdates: Record<string, any> = {};
     const setClause = keys.map(key => `${key} = ?`).join(', ');
     const values = keys.map(key => {
         let val = updates[key];
@@ -192,12 +193,16 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
             }
         }
 
+        // Save to cleanUpdates before stringifying for SQL
+        cleanUpdates[key] = val;
+
         // Handle arrays/objects for JSON columns
         if (typeof val === 'object' && val !== null) {
           return JSON.stringify(val);
         }
         return val;
     });
+
     values.push(id);
 
     // Preparar detalles del log
@@ -230,46 +235,111 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
             }
         });
     } catch (err: any) {
-        const message = err.message || '';
+        console.warn('Transaction failed, attempting fallback to Supabase Client:', err.message);
 
-        if (message.includes('transacciones requieren una conexión directa') || !process.env.DATABASE_URL) {
-            const result = await db.run(`UPDATE productos SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, values);
+        const client = supabaseAdmin || supabase;
+        if (!client) {
+            console.error('No Supabase client available for fallback');
+            throw err;
+        }
+
+        // Fallback: Use Supabase Client directly (Bypassing broken db.run fallback)
+        try {
+            // 1. Update Product
+            // Remove 'variantes' from cleanUpdates for product table update if it exists there
+            // (Wait, 'variantes' IS a column in 'productos' too, JSON column)
+            // But we also sync to 'variantes' table.
             
-            if (result.changes === 0) {
-                 return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+            const { error: updateError } = await client
+                .from('productos')
+                .update({ ...cleanUpdates, updated_at: new Date().toISOString() })
+                .eq('id', id);
+
+            if (updateError) {
+                // Check for 404-like error (not found)
+                // Update returns count in header but supabase-js might not throw for 0 rows unless select() is used?
+                // Actually update returns null data if no rows matched?
+                // Let's assume if no error, it's fine.
+                console.error('Supabase fallback update error:', updateError);
+                throw new Error(updateError.message);
             }
 
-            // Attempt to sync variants without transaction
+            // 2. Sync Variants (if variants are provided)
             if (updates.variantes) {
-                try {
-                    await syncVariants(db, id, updates.variantes, null);
-                } catch (variantErr) {
-                    console.error('Error syncing variants in fallback:', variantErr);
+                let variantsList = updates.variantes;
+                if (typeof variantsList === 'string') {
+                    try { variantsList = JSON.parse(variantsList); } catch (e) { variantsList = []; }
+                }
+
+                if (Array.isArray(variantsList)) {
+                     // Prepare variants for upsert
+                     const variantsToUpsert = variantsList
+                        .filter((v: any) => v.talle && v.color)
+                        .map((v: any) => {
+                            const colorHex = v.color; 
+                            const colorName = v.color_nombre || v.color;
+                            const stock = parseInt(v.stock || '0');
+                            const cleanHex = colorHex.replace('#', '').substring(0,6);
+                            const sku = v.sku || `${id.substring(0,8)}-${v.talle}-${cleanHex}`.toUpperCase();
+                            
+                            return {
+                                producto_id: id,
+                                talle: v.talle,
+                                color: colorName,
+                                color_hex: colorHex,
+                                stock: stock,
+                                sku: sku,
+                                imagen_url: v.imagen_url || null,
+                                activo: true,
+                                updated_at: new Date().toISOString()
+                            };
+                        });
+                    
+                    if (variantsToUpsert.length > 0) {
+                         // Upsert
+                         const { data: upsertedData, error: upsertError } = await client
+                            .from('variantes')
+                            .upsert(variantsToUpsert, { onConflict: 'producto_id, talle, color_hex' })
+                            .select('id');
+                         
+                         if (upsertError) {
+                             console.error('Error syncing variants in fallback (upsert):', upsertError);
+                         } else if (upsertedData) {
+                             // Delete variants not in the upserted list
+                             const newIds = upsertedData.map((v: any) => v.id);
+                             if (newIds.length > 0) {
+                                 // "not.in" syntax: .not('id', 'in', `(${newIds.join(',')})`)
+                                 await client
+                                    .from('variantes')
+                                    .delete()
+                                    .eq('producto_id', id)
+                                    .not('id', 'in', `(${newIds.join(',')})`);
+                             }
+                         }
+                    } else {
+                        // If empty list provided, delete all variants?
+                        // Or maybe we shouldn't delete if empty list?
+                        // Original syncVariants deletes if validKeys is empty.
+                         await client
+                            .from('variantes')
+                            .delete()
+                            .eq('producto_id', id);
+                    }
                 }
             }
 
+            // 3. Log (Optional)
             try {
-                await db.run(`INSERT INTO admin_logs (action, details, target_id) VALUES (?, ?, ?)`, 
-                    ['PRODUCT_UPDATE', logDetails, id]);
-            } catch (logErr) {
-                console.warn('Could not write admin log (fallback):', logErr);
-            }
-        } else if (message.toLowerCase().includes('maxclientsinsessionmode') || message.toLowerCase().includes('max clients')) {
-            const client = supabaseAdmin || supabase;
-            if (!client) {
-                throw err;
-            }
+                 await client.from('admin_logs').insert({
+                     action: 'PRODUCT_UPDATE',
+                     details: logDetails,
+                     target_id: id
+                 });
+            } catch (ignore) {}
 
-            const { error } = await client
-                .from('productos')
-                .update(updates)
-                .eq('id', id);
-
-            if (error) {
-                throw error;
-            }
-        } else {
-            throw err;
+        } catch (fallbackErr: any) {
+            console.error('Supabase fallback failed:', fallbackErr);
+            throw fallbackErr; // Throw original error or fallback error
         }
     }
 

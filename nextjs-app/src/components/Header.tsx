@@ -381,8 +381,8 @@ export default function Header({ theme, toggleTheme }: HeaderProps) {
               >
                 <ShoppingCart className="w-4 h-4" />
                 {totalItems > 0 && (
-                  <span className="absolute top-2 right-2 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-accent ring-2 ring-black">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-accent text-ink text-[10px] font-black border border-black shadow-md">
+                    {totalItems}
                   </span>
                 )}
               </button>
