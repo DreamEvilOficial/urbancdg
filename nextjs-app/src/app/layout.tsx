@@ -77,6 +77,7 @@ export default function RootLayout({
         <ClientLayout>
           {children}
         </ClientLayout>
+        <DevToolsProtection />
         <Toaster 
           position="top-right"
           containerStyle={{
@@ -101,7 +102,7 @@ export default function RootLayout({
             },
           }}
         />
-        {/* Protección de seguridad - Solo en producción */}
+        {/* Protección de DevTools (sin bloquear selección de texto) */}
         {process.env.NODE_ENV === 'production' && <DevToolsProtection />}
       </body>
     </html>

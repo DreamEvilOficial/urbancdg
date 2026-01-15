@@ -333,115 +333,97 @@ export default function OrderManagement() {
                </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar space-y-8">
               {selectedOrderLoading && (
-                <div className="mb-6 flex items-center justify-center">
+                <div className="flex items-center justify-center py-4">
                   <div className="w-8 h-8 border-2 border-white/20 border-t-accent rounded-full animate-spin" />
                 </div>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-                
-                {/* Columna Izquierda: Cliente y Envío */}
-                <div className="space-y-8 md:space-y-10">
-                   <section>
-                      <h3 className="text-xs font-black text-white/40 uppercase tracking-[0.32em] mb-4 md:mb-6 flex items-center gap-2">
-                        <User className="w-4 h-4" /> Comprador
-                      </h3>
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-4 bg-white/[0.03] border border-white/10 p-4 rounded-2xl">
-                           <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center text-ink shadow-[0_18px_50px_-30px_rgba(183,255,42,0.5)] font-black text-sm">CN</div>
-                           <div className="overflow-hidden">
-                              <p className="text-sm font-black text-white uppercase truncate">{selectedOrder.cliente_nombre}</p>
-                              <p className="text-xs text-white/45 flex items-center gap-1 font-bold truncate"><Mail className="w-3 h-3 flex-shrink-0" /> {selectedOrder.cliente_email}</p>
-                           </div>
-                        </div>
-                        {selectedOrder.cliente_telefono && (
-                          <div className="flex items-center gap-4 bg-white/[0.03] border border-white/10 p-4 rounded-2xl">
-                             <div className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-center text-white/70 shadow-sm"><Phone className="w-4 h-4" /></div>
-                             <p className="text-sm font-black text-white">{selectedOrder.cliente_telefono}</p>
-                          </div>
-                        )}
-                      </div>
-                   </section>
 
-                   <section>
-                      <h3 className="text-xs font-black text-white/40 uppercase tracking-[0.32em] mb-6 flex items-center gap-2">
-                        <MapPin className="w-4 h-4" /> Envío
-                      </h3>
-                      <div className="bg-white/[0.03] border border-white/10 p-6 rounded-3xl space-y-4">
-                        <p className="text-white/80 font-bold leading-relaxed italic border-l-2 border-accent/60 pl-4">
-                          {selectedOrder.direccion_envio || 'Sin dirección de envío especificada'}
+              {/* Sección Superior: Comprador y Envío */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Datos Comprador */}
+                <div className="bg-white/[0.03] border border-white/10 p-6 rounded-[24px]">
+                  <h3 className="text-xs font-black text-white/40 uppercase tracking-[0.32em] mb-4 flex items-center gap-2">
+                    <User className="w-4 h-4" /> Comprador
+                  </h3>
+                  <div className="flex items-start gap-4">
+                     <div className="w-12 h-12 rounded-2xl bg-accent flex items-center justify-center text-ink shadow-[0_18px_50px_-30px_rgba(183,255,42,0.5)] font-black text-base flex-shrink-0">
+                       {selectedOrder.cliente_nombre.substring(0, 2).toUpperCase()}
+                     </div>
+                     <div className="space-y-1 min-w-0">
+                        <p className="text-lg font-black text-white uppercase truncate">{selectedOrder.cliente_nombre}</p>
+                        <p className="text-xs text-white/60 flex items-center gap-1.5 font-bold truncate">
+                          <Mail className="w-3.5 h-3.5" /> {selectedOrder.cliente_email}
                         </p>
-                        <div className="grid grid-cols-2 gap-4 pt-2">
-                           <div className="bg-white/[0.03] border border-white/10 p-3 rounded-2xl text-center">
-                              <p className="text-[10px] text-white/35 font-black uppercase tracking-[0.26em]">Ciudad</p>
-                              <p className="text-xs font-black text-white">{selectedOrder.ciudad || '-'}</p>
-                           </div>
-                           <div className="bg-white/[0.03] border border-white/10 p-3 rounded-2xl text-center">
-                              <p className="text-[10px] text-white/35 font-black uppercase tracking-[0.26em]">Provincia</p>
-                              <p className="text-xs font-black text-white">{selectedOrder.provincia || '-'}</p>
-                           </div>
-                        </div>
-                      </div>
-                   </section>
-
-                   <section>
-                      <h3 className="text-xs font-black text-white/40 uppercase tracking-[0.32em] mb-6 flex items-center gap-2">
-                        <Truck className="w-4 h-4" /> Seguimiento
-                      </h3>
-                      <div className="bg-white/[0.03] border border-white/10 p-6 rounded-3xl space-y-4">
-                        <div>
-                          <p className="text-[10px] text-white/35 font-black uppercase tracking-widest mb-2">Código de Seguimiento</p>
-                          <input 
-                            type="text" 
-                            value={trackingData.code}
-                            onChange={(e) => setTrackingData({...trackingData, code: e.target.value})}
-                            placeholder="Ej: AR123456789"
-                            className="w-full bg-black/40 border border-white/10 p-3 rounded-xl text-sm font-bold text-white outline-none focus:border-accent/50"
-                          />
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-white/35 font-black uppercase tracking-widest mb-2">URL de Seguimiento</p>
-                          <input 
-                            type="text" 
-                            value={trackingData.url}
-                            onChange={(e) => setTrackingData({...trackingData, url: e.target.value})}
-                            placeholder="https://correo.com/track/..."
-                            className="w-full bg-black/40 border border-white/10 p-3 rounded-xl text-sm font-bold text-white outline-none focus:border-accent/50"
-                          />
-                        </div>
-                        <button 
-                          onClick={actualizarSeguimiento}
-                          className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
-                        >
-                          Actualizar Seguimiento
-                        </button>
-                      </div>
-                   </section>
+                        {selectedOrder.cliente_telefono && (
+                          <p className="text-xs text-white/60 flex items-center gap-1.5 font-bold truncate">
+                            <Phone className="w-3.5 h-3.5" /> {selectedOrder.cliente_telefono}
+                          </p>
+                        )}
+                     </div>
+                  </div>
                 </div>
 
-                {/* Columna Derecha: Productos y Pago */}
-                <div className="space-y-10">
+                {/* Datos Envío */}
+                <div className="bg-white/[0.03] border border-white/10 p-6 rounded-[24px]">
+                  <h3 className="text-xs font-black text-white/40 uppercase tracking-[0.32em] mb-4 flex items-center gap-2">
+                    <MapPin className="w-4 h-4" /> Envío
+                  </h3>
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-white/50 flex-shrink-0">
+                      <Truck className="w-5 h-5" />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-white/90 font-bold leading-relaxed">
+                        {selectedOrder.direccion_envio || 'Sin dirección de envío especificada'}
+                      </p>
+                      {(selectedOrder.ciudad || selectedOrder.provincia) && (
+                        <div className="flex gap-2 text-[10px] font-black uppercase text-white/50">
+                          {selectedOrder.ciudad && <span className="bg-white/5 px-2 py-1 rounded-md border border-white/5">{selectedOrder.ciudad}</span>}
+                          {selectedOrder.provincia && <span className="bg-white/5 px-2 py-1 rounded-md border border-white/5">{selectedOrder.provincia}</span>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+                
+                {/* Columna Ancha: Productos */}
+                <div className="lg:col-span-2 space-y-6">
                    <section>
-                      <h3 className="text-xs font-black text-white/40 uppercase tracking-[0.32em] mb-6 flex items-center gap-2">
-                        <Package className="w-4 h-4" /> Compra
+                      <h3 className="text-xs font-black text-white/40 uppercase tracking-[0.32em] mb-4 flex items-center gap-2">
+                        <Package className="w-4 h-4" /> Productos ({parseItems(selectedOrder.items).length})
                       </h3>
                       <div className="space-y-3">
                         {parseItems(selectedOrder.items).map((item, i) => (
-                           <div key={i} className="flex gap-4 p-4 border border-white/10 rounded-3xl group hover:border-accent/30 transition-all bg-white/[0.02]">
-                              <div className="w-16 h-20 rounded-xl overflow-hidden bg-white/[0.03] border border-white/10 flex-shrink-0">
-                                 {item.imagen_url ? <img src={item.imagen_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center">📦</div>}
+                           <div key={i} className="flex gap-5 p-5 border border-white/10 rounded-[24px] group hover:border-accent/30 transition-all bg-[#08090E]">
+                              <div className="w-20 h-24 rounded-xl overflow-hidden bg-white/[0.03] border border-white/10 flex-shrink-0 relative">
+                                 {item.imagen_url ? (
+                                   <img src={item.imagen_url} className="w-full h-full object-cover" alt={item.nombre} />
+                                 ) : (
+                                   <div className="w-full h-full flex items-center justify-center text-2xl">🧥</div>
+                                 )}
                               </div>
-                              <div className="flex-1">
-                                 <p className="text-sm font-black text-white mb-1 line-clamp-1">{item.nombre}</p>
-                                 <div className="flex flex-wrap gap-2 mb-2">
-                                    {item.talle && <span className="text-[10px] font-black px-2 py-1 bg-white/[0.03] border border-white/10 rounded-md text-white/70">Talle {item.talle}</span>}
-                                    {item.color && <div className="w-4 h-4 rounded-full border border-white/10" style={{backgroundColor: item.color}} />}
+                              <div className="flex-1 flex flex-col justify-between py-1">
+                                 <div>
+                                  <p className="text-base font-black text-white mb-2 line-clamp-2">{item.nombre}</p>
+                                  <div className="flex flex-wrap gap-2">
+                                      {item.talle && <span className="text-[10px] font-black px-2.5 py-1 bg-white/[0.04] border border-white/5 rounded-lg text-white/70">Talle {item.talle}</span>}
+                                      {item.color && (
+                                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.04] border border-white/5 rounded-lg">
+                                          <div className="w-2 h-2 rounded-full" style={{backgroundColor: item.color}} />
+                                          <span className="text-[10px] font-black text-white/70 uppercase">{item.color}</span>
+                                        </div>
+                                      )}
+                                  </div>
                                  </div>
-                                 <div className="flex justify-between items-end">
-                                    <p className="text-xs text-white/45 font-black">x{item.cantidad}</p>
-                                    <p className="text-sm font-black text-white">
-                                      $ {formatPrice(toNumber(item.precio) * toNumber(item.cantidad))} ARS
+                                 <div className="flex justify-between items-end mt-2">
+                                    <p className="text-xs text-white/40 font-black uppercase tracking-wider">Cant: {item.cantidad}</p>
+                                    <p className="text-lg font-black text-white">
+                                      $ {formatPrice(toNumber(item.precio) * toNumber(item.cantidad))}
                                     </p>
                                  </div>
                               </div>
@@ -449,28 +431,87 @@ export default function OrderManagement() {
                         ))}
                       </div>
                    </section>
+                </div>
 
-                   <section className="bg-ink text-white p-8 rounded-[35px] shadow-2xl relative overflow-hidden border border-white/10">
-                      {/* Adorno visual pago */}
-                      <div className="absolute top-0 right-0 p-4 opacity-20"><CreditCard className="w-12 h-12" /></div>
+                {/* Columna Lateral: Pago y Seguimiento */}
+                <div className="space-y-6">
+                   {/* Tarjeta de Pago */}
+                   <section className="bg-ink text-white p-6 rounded-[28px] shadow-2xl relative overflow-hidden border border-white/10 group">
+                      <div className="absolute -right-6 -top-6 w-24 h-24 bg-accent/20 rounded-full blur-2xl group-hover:bg-accent/30 transition-all"></div>
                       
-                      <h3 className="text-[10px] font-black text-white/45 uppercase tracking-[0.45em] mb-6">Detalles del Pago</h3>
+                      <h3 className="text-[10px] font-black text-white/45 uppercase tracking-[0.45em] mb-6 relative z-10">Pago</h3>
                       
-                      <div className="space-y-4 mb-8">
-                         <div className="flex justify-between text-sm opacity-60"><span>Método</span><span className="font-bold">{resolveMethod(selectedOrder)}</span></div>
+                      <div className="space-y-4 mb-8 relative z-10">
+                         <div className="flex justify-between items-center text-sm">
+                            <span className="text-white/60 font-bold">Método</span>
+                            <div className="flex items-center gap-2 font-black bg-white/10 px-3 py-1 rounded-lg">
+                               {resolveMethod(selectedOrder) === 'Mercado Pago' ? <CreditCard className="w-3 h-3 text-sky-400" /> : <Landmark className="w-3 h-3 text-emerald-400" />}
+                               {resolveMethod(selectedOrder)}
+                            </div>
+                         </div>
                          {selectedOrder.mercadopago_payment_id && (
-                           <div className="flex justify-between text-sm opacity-60"><span>ID MP</span><span className="font-bold font-mono">#{selectedOrder.mercadopago_payment_id}</span></div>
+                           <div className="flex justify-between items-center text-sm">
+                              <span className="text-white/60 font-bold">ID Transacción</span>
+                              <span className="font-mono text-xs opacity-80">#{selectedOrder.mercadopago_payment_id}</span>
+                           </div>
                          )}
                          <div className="h-[1px] bg-white/10 my-4" />
-                         <div className="flex justify-between items-end">
-                            <span className="text-xs opacity-60 font-bold uppercase tracking-widest">Total Pagado</span>
-                            <span className="text-4xl font-black tracking-tighter">$ {formatPrice(selectedOrder.total)} ARS</span>
+                         <div>
+                            <span className="text-[10px] text-white/60 font-black uppercase tracking-widest block mb-1">Total Abonado</span>
+                            <span className="text-3xl font-black tracking-tighter text-accent">$ {formatPrice(selectedOrder.total)}</span>
                          </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2">
-                         <button onClick={() => actualizarEstado(selectedOrder.id, 'enviado')} className="flex items-center justify-center gap-2 py-4 bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 rounded-2xl text-[10px] font-black transition-all uppercase tracking-[0.28em]"><Truck className="w-4 h-4" /> Marcar Envío</button>
-                         <button onClick={() => actualizarEstado(selectedOrder.id, 'completado')} className="flex items-center justify-center gap-2 py-4 bg-accent text-ink hover:brightness-95 rounded-2xl text-[10px] font-black transition-all uppercase tracking-[0.28em] shadow-[0_18px_50px_-30px_rgba(183,255,42,0.6)]"><Check className="w-4 h-4" /> Completar</button>
+                      <div className="grid grid-cols-2 gap-2 relative z-10">
+                         <button onClick={() => actualizarEstado(selectedOrder.id, 'enviado')} className="flex flex-col items-center justify-center gap-1 py-3 bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 rounded-xl transition-all group/btn">
+                            <Truck className="w-4 h-4 text-white/70 group-hover/btn:scale-110 transition-transform" />
+                            <span className="text-[8px] font-black uppercase tracking-widest">Enviado</span>
+                         </button>
+                         <button onClick={() => actualizarEstado(selectedOrder.id, 'completado')} className="flex flex-col items-center justify-center gap-1 py-3 bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 rounded-xl transition-all group/btn">
+                            <Check className="w-4 h-4 text-emerald-400 group-hover/btn:scale-110 transition-transform" />
+                            <span className="text-[8px] font-black uppercase tracking-widest text-emerald-400">Completar</span>
+                         </button>
+                      </div>
+                   </section>
+
+                   {/* Seguimiento */}
+                   <section className="bg-white/[0.03] border border-white/10 p-6 rounded-[24px]">
+                      <h3 className="text-xs font-black text-white/40 uppercase tracking-[0.32em] mb-4 flex items-center gap-2">
+                        <Truck className="w-4 h-4" /> Tracking
+                      </h3>
+                      <div className="space-y-4">
+                        <div className="space-y-1">
+                          <label className="text-[9px] text-white/40 font-black uppercase tracking-widest">Código</label>
+                          <div className="relative">
+                            <input 
+                              type="text" 
+                              value={trackingData.code}
+                              onChange={(e) => setTrackingData({...trackingData, code: e.target.value})}
+                              placeholder="Sin código"
+                              className="w-full bg-black/40 border border-white/10 p-3 pl-9 rounded-xl text-xs font-bold text-white outline-none focus:border-white/30 transition-colors"
+                            />
+                            <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] text-white/40 font-black uppercase tracking-widest">Link</label>
+                          <div className="relative">
+                            <input 
+                              type="text" 
+                              value={trackingData.url}
+                              onChange={(e) => setTrackingData({...trackingData, url: e.target.value})}
+                              placeholder="https://..."
+                              className="w-full bg-black/40 border border-white/10 p-3 pl-9 rounded-xl text-xs font-bold text-white outline-none focus:border-white/30 transition-colors"
+                            />
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30 font-serif italic">w</div>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={actualizarSeguimiento}
+                          className="w-full py-3 bg-white text-black hover:bg-gray-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-white/5"
+                        >
+                          Guardar
+                        </button>
                       </div>
                    </section>
                 </div>
