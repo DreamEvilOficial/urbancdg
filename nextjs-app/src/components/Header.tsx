@@ -231,12 +231,12 @@ export default function Header({ theme, toggleTheme }: HeaderProps) {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
-                        className="absolute top-full left-0 mt-4 w-64 bg-[#0a0a0a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-2 z-50 backdrop-blur-3xl"
+                        className="absolute top-full left-0 mt-4 min-w-[360px] md:min-w-[480px] bg-[#0a0a0a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-4 z-50 backdrop-blur-3xl"
                       >
                         <Link 
                           href="/productos"
                           onClick={() => setShowProductsMenu(false)}
-                          className="block px-4 py-3 text-[10px] font-bold text-white uppercase tracking-widest hover:bg-white/5 rounded-xl transition-colors"
+                          className="block px-5 py-3 text-[12px] font-black text-white uppercase tracking-[0.2em] hover:bg-white/5 rounded-xl transition-colors"
                         >
                           Ver Todo
                         </Link>
@@ -246,14 +246,14 @@ export default function Header({ theme, toggleTheme }: HeaderProps) {
                         <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
                           {categorias.map((cat) => (
                             <div key={cat.id}>
-                              <div className="flex items-center justify-between px-4 py-2 hover:bg-white/5 rounded-xl cursor-pointer group transition-colors">
+                              <div className="flex items-center justify-between px-5 py-3 hover:bg-white/5 rounded-xl cursor-pointer group transition-colors">
                                 <Link 
                                   href={`/productos?categoria=${cat.slug}`}
                                   onClick={() => setShowProductsMenu(false)}
                                   className="flex items-center gap-3 flex-1"
                                 >
-                                  {cat.icono && <CategoryIcon iconName={cat.icono} className="w-3 h-3 text-white/50 group-hover:text-white transition-colors" />}
-                                  <span className="text-[10px] font-bold text-white/70 group-hover:text-white uppercase tracking-wider transition-colors">{cat.nombre}</span>
+                                  {cat.icono && <CategoryIcon iconName={cat.icono} className="w-4 h-4 text-white/50 group-hover:text-white transition-colors" />}
+                                  <span className="text-[12px] font-bold text-white/80 group-hover:text-white uppercase tracking-wider transition-colors">{cat.nombre}</span>
                                 </Link>
                                 {cat.subcategorias && cat.subcategorias.length > 0 && (
                                   <button
@@ -261,9 +261,9 @@ export default function Header({ theme, toggleTheme }: HeaderProps) {
                                       e.preventDefault()
                                       setExpandedCategory(expandedCategory === cat.id ? null : cat.id)
                                     }}
-                                    className="p-1 hover:bg-white/10 rounded-lg"
+                                    className="p-1.5 hover:bg-white/10 rounded-lg"
                                   >
-                                    <ChevronDown className={`w-3 h-3 text-white/50 transition-transform ${expandedCategory === cat.id ? 'rotate-180' : ''}`} />
+                                    <ChevronDown className={`w-4 h-4 text-white/50 transition-transform ${expandedCategory === cat.id ? 'rotate-180' : ''}`} />
                                   </button>
                                 )}
                               </div>
@@ -281,7 +281,7 @@ export default function Header({ theme, toggleTheme }: HeaderProps) {
                                         key={sub.id}
                                         href={`/productos?categoria=${cat.slug}&subcategoria=${sub.slug}`}
                                         onClick={() => setShowProductsMenu(false)}
-                                        className="block px-10 py-2 text-[9px] font-medium text-white/50 hover:text-white hover:bg-white/5 transition-colors uppercase tracking-widest"
+                                        className="block px-12 py-2.5 text-[11px] font-medium text-white/60 hover:text-white hover:bg-white/5 transition-colors uppercase tracking-widest"
                                       >
                                         {sub.nombre}
                                       </Link>

@@ -285,7 +285,7 @@ export const deudasAPI = {
     });
   },
   
-  async agregarMovimiento(data: { id: string, monto: number, descripcion: string, tipo: 'deuda' | 'pago' }) {
+  async agregarMovimiento(data: { id: string, monto: number, descripcion: string, tipo: 'deuda' | 'pago', producto?: string, fecha?: string }) {
     return apiFetch('/debts', {
       method: 'PUT',
       body: JSON.stringify(data)
@@ -298,4 +298,3 @@ export const deudasAPI = {
     });
   }
 }
-

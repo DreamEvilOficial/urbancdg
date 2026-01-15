@@ -57,7 +57,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
     try {
         const body = await request.json();
-        const { id, total_deuda, historial, estado, monto, descripcion, tipo } = body;
+        const { id, total_deuda, historial, estado, monto, descripcion, tipo, producto, fecha } = body;
 
         if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
@@ -69,10 +69,11 @@ export async function PUT(request: Request) {
             const currentHistory = typeof debt.historial === 'string' ? JSON.parse(debt.historial) : (debt.historial || []);
             const newMovement = {
                 id: uuidv4(),
-                fecha: new Date().toISOString(),
+                fecha: fecha || new Date().toISOString(),
                 monto,
                 descripcion: descripcion || (tipo === 'pago' ? 'Pago recibido' : 'Aumento de deuda'),
-                tipo
+                tipo,
+                producto: producto || ''
             };
 
             const updatedHistory = [...currentHistory, newMovement];

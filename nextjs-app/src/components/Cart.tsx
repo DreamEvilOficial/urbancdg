@@ -1,7 +1,7 @@
 'use client'
 
 import { useCartStore } from '@/store/cartStore'
-import { X, Plus, Minus, Trash2, ArrowRight } from 'lucide-react'
+import { X, Plus, Minus, Trash2, ArrowRight, ChevronDown } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { productosAPI } from '@/lib/supabase'
@@ -14,6 +14,7 @@ export default function Cart({ onClose }: CartProps) {
   const { items, removeItem, updateQuantity, total, clearCart, addItem } = useCartStore()
   const router = useRouter()
   const [suggestedProducts, setSuggestedProducts] = useState<any[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(true)
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -228,39 +229,48 @@ export default function Cart({ onClose }: CartProps) {
 
             {/* Suggested Products Section - MOVED TO BOTTOM */}
             {suggestedProducts.length > 0 && (
-                <div className="py-6 bg-white/[0.02] border-t border-white/10">
-                <div className="px-6 flex items-center justify-between mb-4">
+                <div className="py-4 bg-white/[0.02] border-t border-white/10">
+                  <div className="px-6 flex items-center justify-between">
                     <h3 className="text-xs font-black text-white/45 uppercase tracking-[0.35em] flex items-center gap-2">
-                    <span className="text-accent">+</span> Completa el fit
+                      <span className="text-accent">+</span> Completa el fit
                     </h3>
-                </div>
-                
-                <div className="flex gap-4 overflow-x-auto px-6 pb-2 custom-scrollbar no-scrollbar scroll-smooth">
-                    {suggestedProducts.map((prod) => (
-                    <div 
-                        key={prod.id} 
-                        className="flex-shrink-0 w-32 group cursor-pointer"
-                        onClick={() => handleAddSuggested(prod)}
+                    <button 
+                      onClick={() => setShowSuggestions(!showSuggestions)} 
+                      className="p-2 rounded-lg hover:bg-white/5 text-white/60"
+                      aria-label="Alternar sugerencias"
                     >
-                        <div className="relative aspect-[3/4] rounded-2xl overflow-hidden mb-2 border border-white/10 group-hover:border-accent/30 transition-colors">
-                        <img 
-                            src={prod.imagen_url || prod.imagenes?.[0] || '/proximamente.png'} 
-                            alt={prod.nombre} 
-                            className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" 
-                            onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = '/proximamente.png';
-                            }}
-                        />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <Plus className="w-6 h-6 text-white" />
+                      <ChevronDown className={`w-4 h-4 transition-transform ${showSuggestions ? 'rotate-180' : ''}`} />
+                    </button>
+                  </div>
+                  
+                  {showSuggestions && (
+                    <div className="mt-4 flex gap-4 overflow-x-auto px-6 pb-2 custom-scrollbar no-scrollbar scroll-smooth max-h-[240px]">
+                      {suggestedProducts.map((prod) => (
+                        <div 
+                          key={prod.id} 
+                          className="flex-shrink-0 w-32 group cursor-pointer"
+                          onClick={() => handleAddSuggested(prod)}
+                        >
+                          <div className="relative aspect-[3/4] rounded-2xl overflow-hidden mb-2 border border-white/10 group-hover:border-accent/30 transition-colors">
+                            <img 
+                              src={prod.imagen_url || prod.imagenes?.[0] || '/proximamente.png'} 
+                              alt={prod.nombre} 
+                              className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" 
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = '/proximamente.png';
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Plus className="w-6 h-6 text-white" />
+                            </div>
+                          </div>
+                          <p className="text-[11px] font-bold text-white truncate px-1">{prod.nombre}</p>
+                          <p className="text-[10px] text-accent font-black px-1">${prod.precio.toLocaleString()}</p>
                         </div>
-                        </div>
-                        <p className="text-[11px] font-bold text-white truncate px-1">{prod.nombre}</p>
-                        <p className="text-[10px] text-accent font-black px-1">${prod.precio.toLocaleString()}</p>
+                      ))}
                     </div>
-                    ))}
-                </div>
+                  )}
                 </div>
             )}
             </>

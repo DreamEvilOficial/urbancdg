@@ -38,6 +38,9 @@ export default function DebtManagement() {
   const [transactionData, setTransactionData] = useState({
     monto: '',
     descripcion: '',
+    producto: '',
+    fechaDate: '',
+    fechaTime: '',
     tipo: 'deuda' // 'deuda' | 'pago'
   })
   const [selectedClient, setSelectedClient] = useState<Deuda | null>(null)
@@ -80,18 +83,33 @@ export default function DebtManagement() {
     const amount = Number(transactionData.monto)
     if (isNaN(amount) || amount <= 0) return toast.error('Monto inválido')
 
+    // Construir fecha/hora
+    let fechaISO = new Date().toISOString()
+    if (transactionData.fechaDate) {
+      const datePart = transactionData.fechaDate
+      const timePart = transactionData.fechaTime || '00:00'
+      try {
+        const composed = new Date(`${datePart}T${timePart}:00`)
+        if (!isNaN(composed.getTime())) {
+          fechaISO = composed.toISOString()
+        }
+      } catch {}
+    }
+
     try {
       const updatedDebt = await deudasAPI.agregarMovimiento({
          id: selectedClient.id,
          monto: amount,
          descripcion: transactionData.descripcion,
-         tipo: transactionData.tipo as 'deuda' | 'pago'
+         tipo: transactionData.tipo as 'deuda' | 'pago',
+         producto: transactionData.producto || '',
+         fecha: fechaISO
       })
 
       setDeudas(deudas.map(d => d.id === selectedClient.id ? updatedDebt : d))
 
       setSelectedClient(null)
-      setTransactionData({ monto: '', descripcion: '', tipo: 'deuda' })
+      setTransactionData({ monto: '', descripcion: '', producto: '', fechaDate: '', fechaTime: '', tipo: 'deuda' })
       toast.success('Movimiento registrado')
     } catch (error) {
       toast.error('Error al actualizar saldo')
@@ -215,7 +233,12 @@ export default function DebtManagement() {
                                       </h4>
                                       <div className="space-y-3">
                                          <input autoFocus type="number" placeholder="Monto ($)" value={transactionData.monto} onChange={e => setTransactionData({...transactionData, monto: e.target.value})} className="w-full bg-black/40 border border-white/10 p-3 rounded-lg text-white font-mono" />
-                                         <input type="text" placeholder="Descripción (Producto, fecha, nota...)" value={transactionData.descripcion} onChange={e => setTransactionData({...transactionData, descripcion: e.target.value})} className="w-full bg-black/40 border border-white/10 p-3 rounded-lg text-white" />
+                                         <input type="text" placeholder="Producto (opcional)" value={transactionData.producto} onChange={e => setTransactionData({...transactionData, producto: e.target.value})} className="w-full bg-black/40 border border-white/10 p-3 rounded-lg text-white" />
+                                         <div className="grid grid-cols-2 gap-2">
+                                            <input type="date" placeholder="Fecha" value={transactionData.fechaDate} onChange={e => setTransactionData({...transactionData, fechaDate: e.target.value})} className="w-full bg-black/40 border border-white/10 p-3 rounded-lg text-white text-sm" />
+                                            <input type="time" placeholder="Hora" value={transactionData.fechaTime} onChange={e => setTransactionData({...transactionData, fechaTime: e.target.value})} className="w-full bg-black/40 border border-white/10 p-3 rounded-lg text-white text-sm" />
+                                         </div>
+                                         <input type="text" placeholder="Descripción (nota...)" value={transactionData.descripcion} onChange={e => setTransactionData({...transactionData, descripcion: e.target.value})} className="w-full bg-black/40 border border-white/10 p-3 rounded-lg text-white" />
                                          <div className="flex gap-2 justify-end">
                                             <button onClick={() => setSelectedClient(null)} className="text-xs text-white/50 hover:text-white px-3 py-2 font-bold uppercase">Cancelar</button>
                                             <button onClick={handleTransaction} className="bg-accent text-ink px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest hover:brightness-110">Confirmar</button>
@@ -229,14 +252,13 @@ export default function DebtManagement() {
                              <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                                 <h4 className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-2 sticky top-0 bg-[#05060a] py-2 z-10">Historial de Movimientos</h4>
                                 {client.historial && client.historial.map((h: any, idx: number) => (
-                                   <div key={h.id || idx} className="flex items-center justify-between p-3 rounded-lg border border-white/5 bg-white/[0.02]">
-                                      <div>
-                                         <p className="text-sm font-medium text-white">{h.descripcion || 'Sin descripción'}</p>
-                                         <p className="text-[10px] text-white/40">{new Date(h.fecha).toLocaleString()}</p>
-                                      </div>
+                                   <div key={h.id || idx} className="grid grid-cols-4 gap-3 items-center p-3 rounded-lg border border-white/5 bg-white/[0.02]">
+                                      <p className="text-sm font-medium text-white truncate">{h.producto || '—'}</p>
+                                      <p className="text-[10px] text-white/40">{new Date(h.fecha).toLocaleString()}</p>
                                       <span className={`font-mono font-bold ${h.tipo === 'deuda' ? 'text-red-400' : 'text-green-400'}`}>
                                          {h.tipo === 'deuda' ? '+' : '-'}${Number(h.monto).toLocaleString()}
                                       </span>
+                                      <p className="text-[12px] text-white/70 truncate">{h.descripcion || 'Sin descripción'}</p>
                                    </div>
                                 ))}
                                 {(!client.historial || client.historial.length === 0) && (
