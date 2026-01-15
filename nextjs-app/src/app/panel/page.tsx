@@ -200,6 +200,11 @@ export default function AdminPage() {
         console.warn('No se pudo resolver categoría/subcategoría:', e)
       }
 
+      const normalizadoCategoriaId =
+        !categoria_id || categoria_id === 'Seleccionar...' ? null : categoria_id
+      const normalizadoSubcategoriaId =
+        !subcategoria_id || subcategoria_id === 'Ninguna' ? null : subcategoria_id
+
       const productoData = {
         id: editingProduct ? editingProduct.id : undefined,
         nombre: data.nombre,
@@ -207,8 +212,8 @@ export default function AdminPage() {
         precio: Number(data.precio),
         precio_original: data.precio_original ? Number(data.precio_original) : null,
         descuento_porcentaje: data.descuento_porcentaje ? Number(data.descuento_porcentaje) : 0,
-        categoria_id: data.categoria_id,
-        subcategoria_id: data.subcategoria_id || undefined,
+        categoria_id: normalizadoCategoriaId,
+        subcategoria_id: normalizadoSubcategoriaId || undefined,
         imagen_url: data.imagen_url,
         imagenes: data.imagenes,
         variantes: data.variantes,

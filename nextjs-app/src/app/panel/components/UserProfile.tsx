@@ -43,7 +43,7 @@ export default function UserProfile({ user }: UserProfileProps) {
         nombre: u?.nombre || '',
         apellido: '',
         email: u?.email || '',
-        usuario: u?.username || (u?.email ? u.email.split('@')[0] : '')
+        usuario: u?.usuario || u?.username || (u?.email ? u.email.split('@')[0] : '')
       })
     } catch (error) {
       console.error('Error loading profile:', error)

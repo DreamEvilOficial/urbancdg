@@ -237,17 +237,17 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
       </div>
 
       {/* Tabla Desktop */}
-      <div className="hidden md:block bg-[#06070c]/70 backdrop-blur-2xl rounded-[34px] border border-white/10 shadow-[0_30px_120px_-80px_rgba(0,0,0,0.9)] overflow-hidden scale-[0.8] origin-top-left w-[125%]">
+      <div className="hidden md:block bg-[#06070c]/70 backdrop-blur-2xl rounded-[34px] border border-white/10 shadow-[0_30px_120px_-80px_rgba(0,0,0,0.9)] overflow-hidden scale-[0.8] origin-top-left w-[135%]">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-white/[0.03]">
               <tr>
-                <th className="px-4 py-4 md:px-8 md:py-5 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em]">Producto</th>
-                <th className="px-4 py-4 md:px-8 md:py-5 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em]">Tipo</th>
-                <th className="px-4 py-4 md:px-8 md:py-5 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em]">Precio Venta</th>
-                <th className="px-4 py-4 md:px-8 md:py-5 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em]">Disponibilidad</th>
-                <th className="px-4 py-4 md:px-8 md:py-5 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em]">Estado</th>
-                <th className="px-4 py-4 md:px-8 md:py-5 text-right text-[10px] font-black text-white/45 uppercase tracking-[0.35em]">Acciones</th>
+                <th className="px-4 py-3 md:px-8 md:py-4 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em]">Producto</th>
+                <th className="px-4 py-3 md:px-6 md:py-4 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em]">Tipo</th>
+                <th className="px-4 py-3 md:px-6 md:py-4 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em] whitespace-nowrap">Precio Venta</th>
+                <th className="px-4 py-3 md:px-6 md:py-4 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em] whitespace-nowrap">Disponibilidad</th>
+                <th className="px-4 py-3 md:px-6 md:py-4 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em]">Estado</th>
+                <th className="px-4 py-3 md:px-8 md:py-4 text-right text-[10px] font-black text-white/45 uppercase tracking-[0.35em] whitespace-nowrap w-[160px]">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/10">
@@ -263,7 +263,7 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
                   
                   return (
                   <tr key={producto.id} className="group hover:bg-white/[0.03] transition-colors">
-                    <td className="px-4 py-4 md:px-8 md:py-5 whitespace-nowrap">
+                    <td className="px-4 py-3 md:px-8 md:py-4 whitespace-nowrap">
                       <div className="flex items-center gap-4">
                         <div className="h-14 w-14 rounded-2xl overflow-hidden shadow-sm border border-white/10 flex-shrink-0 bg-white/[0.02] relative">
                           {img.startsWith('/') || img.includes('supabase.co') ? (
@@ -288,12 +288,12 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4 md:px-8 md:py-5 whitespace-nowrap">
+                    <td className="px-4 py-3 md:px-6 md:py-4 whitespace-nowrap">
                       <span className="px-3 py-1 text-[9px] font-black uppercase tracking-[0.32em] rounded-full bg-white/[0.03] text-white/60 border border-white/10">
                         {categorias.find(c => c.id === producto.categoria_id)?.nombre || 'General'}
                       </span>
                     </td>
-                    <td className="px-4 py-4 md:px-8 md:py-5 whitespace-nowrap">
+                    <td className="px-4 py-3 md:px-6 md:py-4 whitespace-nowrap">
                       <div className="flex flex-col">
                         <span className="text-sm font-black text-white">
                           ${ producto.precio.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
@@ -305,7 +305,7 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-4 md:px-8 md:py-5 whitespace-nowrap">
+                    <td className="px-4 py-3 md:px-6 md:py-4 whitespace-nowrap">
                       {producto.stock_actual <= 0 ? (
                         <div className="flex flex-col gap-1">
                           <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">Agotado</span>
@@ -350,7 +350,7 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-4 md:px-8 md:py-5 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-4 py-3 md:px-8 md:py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:translate-x-4 lg:group-hover:translate-x-0 transition-all transform">
                         <button 
                           onClick={() => onEdit(producto)}

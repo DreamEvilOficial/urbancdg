@@ -79,15 +79,6 @@ export default function Footer() {
             <h4 className="text-[10px] font-black text-white uppercase tracking-[0.4em] mb-8">Atención</h4>
             <ul className="space-y-4">
               <li>
-                <a href={`https://wa.me/549${config.telefono.replace(/[^0-9]/g, '').slice(-10)}`} className="group flex items-start gap-4">
-                  <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0 border border-white/5 group-hover:border-white/10"><Phone className="w-3.5 h-3.5 text-gray-400 group-hover:text-white" /></div>
-                  <div>
-                    <p className="text-[9px] font-black uppercase text-white/50 tracking-widest mb-0.5">WhatsApp</p>
-                    <p className="text-xs font-bold text-white tracking-widest uppercase">{config.telefono}</p>
-                  </div>
-                </a>
-              </li>
-              <li>
                 <a href="https://maps.app.goo.gl/hpJmoi8HfohiNk7N7" target="_blank" rel="noopener noreferrer" className="group flex items-start gap-4">
                   <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0 border border-white/5 group-hover:border-white/10 group-hover:bg-white/10 transition-colors"><MapPin className="w-3.5 h-3.5 text-gray-400 group-hover:text-white" /></div>
                   <div>

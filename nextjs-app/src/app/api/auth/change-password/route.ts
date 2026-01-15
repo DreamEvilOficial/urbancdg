@@ -6,14 +6,67 @@ import bcrypt from 'bcryptjs'
 
 const SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET || 'secret-key-urban-cdg');
 
-export async function POST(request: Request) {
-  const sessionToken = cookies().get('session')?.value
+// Función para firmar datos (HMAC-SHA256) - Debe coincidir con login/route.ts
+async function signData(data: string, secret: string) {
+  const encoder = new TextEncoder()
+  const keyData = encoder.encode(secret)
+  const dataData = encoder.encode(data)
   
-  if (!sessionToken) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  )
+  
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, dataData)
+  return btoa(String.fromCharCode(...new Uint8Array(signature)))
+}
+
+export async function POST(request: Request) {
+  const cookieStore = cookies()
+  const sessionToken = cookieStore.get('session')?.value
+  const adminSessionToken = cookieStore.get('admin-session')?.value
+  
+  let userId: string | null = null;
 
   try {
-    const { payload } = await jwtVerify(sessionToken, SECRET_KEY)
-    const userId = payload.sub as string
+    // 1. Intentar validar sesión normal (JWT)
+    if (sessionToken) {
+      try {
+        const { payload } = await jwtVerify(sessionToken, SECRET_KEY)
+        userId = payload.sub as string
+      } catch (e) {
+        console.warn('Session JWT invalid:', e)
+      }
+    }
+
+    // 2. Si no hay usuario aún, intentar validar sesión de admin (Custom HMAC)
+    if (!userId && adminSessionToken) {
+      try {
+        const [payloadB64, signature] = adminSessionToken.split('.')
+        if (payloadB64 && signature) {
+          const secret = process.env.SUPABASE_SERVICE_ROLE_KEY || 'urban-fallback-secret-2024'
+          const sessionString = Buffer.from(payloadB64, 'base64').toString('utf-8')
+          
+          const expectedSignature = await signData(sessionString, secret)
+          
+          if (signature === expectedSignature) {
+            const session = JSON.parse(sessionString)
+            if (session.expiresAt && session.expiresAt > Date.now()) {
+              userId = session.user.id
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Admin session invalid:', e)
+      }
+    }
+
+    if (!userId) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
 
     const { currentPassword, newPassword } = await request.json()
     if (!currentPassword || !newPassword) {
@@ -28,7 +81,12 @@ export async function POST(request: Request) {
     if (user.password_hash) {
         valid = bcrypt.compareSync(currentPassword, user.password_hash);
     } else if (user.contrasena) {
-        valid = (currentPassword === user.contrasena);
+        // Fallback para usuarios legacy o dev
+        if (user.contrasena.startsWith('$2a$') || user.contrasena.startsWith('$2b$')) {
+             valid = bcrypt.compareSync(currentPassword, user.contrasena);
+        } else {
+             valid = (currentPassword === user.contrasena);
+        }
     }
 
     if (!valid) {
@@ -37,10 +95,15 @@ export async function POST(request: Request) {
 
     // Update password
     const newHash = bcrypt.hashSync(newPassword, 10);
-    // Update both for consistency, or just hash. 
-    // We update 'contrasena' to something dummy or same hash to avoid confusion in legacy, 
-    // but better to just populate password_hash and rely on it.
-    await db.run('UPDATE usuarios SET password_hash = ? WHERE id = ?', [newHash, userId]);
+    
+    // Actualizamos tanto password_hash (nuevo estándar) como contrasena (legacy compatibility)
+    // O mejor, solo password_hash y limpiamos contrasena para migrar.
+    // Pero para asegurar compatibilidad total por ahora, guardamos el hash en contrasena también si se usaba.
+    
+    // Estrategia segura: Usar password_hash como fuente de verdad.
+    // Si el usuario tenía 'contrasena' (legacy), la actualizamos a NULL o al hash para evitar confusiones.
+    
+    await db.run('UPDATE usuarios SET password_hash = ?, contrasena = ? WHERE id = ?', [newHash, newHash, userId]);
 
     return NextResponse.json({ success: true })
   } catch (e: any) {

@@ -76,10 +76,31 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
             if (val === '' || val === null || val === undefined) {
                 val = null;
             } else if (typeof val === 'string') {
-                // Remover símbolos de moneda si existen y convertir
                 const cleanVal = val.replace(/[$,]/g, ''); 
                 const num = parseFloat(cleanVal);
                 val = isNaN(num) ? null : num;
+            }
+        }
+
+        // Normalizar IDs de categoría / subcategoría
+        if (key === 'categoria_id' || key === 'subcategoria_id') {
+            if (
+                val === '' ||
+                val === null ||
+                val === undefined ||
+                val === 'null' ||
+                val === 'undefined' ||
+                val === 'Seleccionar...' ||
+                val === 'Ninguna'
+            ) {
+                val = null;
+            }
+        }
+
+        // Normalizar fecha de lanzamiento
+        if (key === 'fecha_lanzamiento') {
+            if (!val || val === '' || val === 'null' || val === 'undefined') {
+                val = null;
             }
         }
         
