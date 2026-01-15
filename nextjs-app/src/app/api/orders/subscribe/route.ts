@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import db from '@/lib/db'
+import { Resend } from 'resend'
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,8 +35,35 @@ export async function POST(request: NextRequest) {
       email: trimmedEmail
     })
 
-    // Here we would trigger the Edge Function for email confirmation
-    // e.g., fetch(`${process.env.SUPABASE_URL}/functions/v1/send-order-email`, ...)
+    // Send confirmation email directly
+    if (process.env.RESEND_API_KEY) {
+      try {
+        const { data, error } = await resend.emails.send({
+          from: 'Urban CDG <onboarding@resend.dev>', // Should be updated to verified domain in prod
+          to: [trimmedEmail],
+          subject: `Suscripción a actualizaciones del pedido ${trimmedOrder}`,
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+              <h1>¡Gracias por suscribirte!</h1>
+              <p>Te avisaremos cuando haya novedades sobre tu pedido <strong>${trimmedOrder}</strong>.</p>
+              <p>Puedes ver el estado en cualquier momento <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://urbancdg.com'}/seguimiento?id=${trimmedOrder}">aquí</a>.</p>
+              <hr />
+              <p style="font-size: 12px; color: #666;">Urban CDG - Indumentaria</p>
+            </div>
+          `,
+        })
+
+        if (error) {
+          console.error('Error enviando email con Resend:', error)
+        } else {
+          console.log('Email de suscripción enviado:', data)
+        }
+      } catch (emailErr) {
+        console.error('Excepción al enviar email:', emailErr)
+      }
+    } else {
+      console.warn('RESEND_API_KEY no configurada, email no enviado.')
+    }
     
     return NextResponse.json({ success: true })
   } catch (error: any) {
