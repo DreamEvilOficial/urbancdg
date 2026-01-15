@@ -22,6 +22,7 @@ import ReviewsManagement from './components/ReviewsManagement'
 import FeaturedProductsManagement from './components/FeaturedProductsManagement'
 import InventoryReport from './components/InventoryReport'
 import StatsDashboard from './components/StatsDashboard'
+import ShippingManagement from './components/ShippingManagement'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -86,7 +87,7 @@ export default function AdminPage() {
     }
 
     if (permissions.sales) {
-      allowedTabs.push('ventas', 'inventario', 'resenas', 'estadisticas')
+      allowedTabs.push('ventas', 'inventario', 'resenas', 'estadisticas', 'envios')
     }
 
     if (permissions.adminSales) {
@@ -481,6 +482,10 @@ export default function AdminPage() {
 
           {activeTab === 'estadisticas' && permissions.sales && (
             <StatsDashboard />
+          )}
+
+          {activeTab === 'envios' && permissions.sales && (
+            <ShippingManagement />
           )}
 
           {activeTab === 'ventas' && permissions.sales && (

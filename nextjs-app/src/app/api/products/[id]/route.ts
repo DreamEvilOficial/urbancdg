@@ -129,37 +129,13 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const values = keys.map(key => {
         let val = updates[key];
         
-        // Conversión explícita de tipos numéricos
         if (NUMERIC_FIELDS.includes(key)) {
             if (val === '' || val === null || val === undefined) {
-                // Para 'precio' y 'stock_actual', preferimos 0 a null para evitar constraints
                 val = (key === 'precio' || key === 'stock_actual') ? 0 : null;
             } else if (typeof val === 'string') {
-                const str = val.replace(/[$\s]/g, '').trim();
-                
-                // Lógica robusta espejo de formatters.ts:
-                // Si tiene coma, es formato ES-AR con decimales (1.234,56)
-                if (str.includes(',')) {
-                    const clean = str.replace(/\./g, '').replace(/,/g, '.');
-                    const num = parseFloat(clean);
-                    val = isNaN(num) ? 0 : num;
-                } else {
-                    // Si tiene múltiples puntos O termina en .XXX (3 digitos), asumimos separador de miles
-                    const dotCount = (str.match(/\./g) || []).length;
-                    const endsInThree = /\.\d{3}$/.test(str);
-                    
-                    if (dotCount > 1 || endsInThree) {
-                        const clean = str.replace(/\./g, '');
-                        const num = parseFloat(clean);
-                        val = isNaN(num) ? 0 : num;
-                    } else {
-                        // Formato estándar (1234.56 o 1000)
-                        const num = parseFloat(str);
-                        val = isNaN(num) ? 0 : num;
-                    }
-                }
+                const digits = val.replace(/[^0-9]/g, '');
+                val = digits ? Number(digits) : 0;
             }
-            // Si ya es number, lo dejamos tal cual
         }
 
         // Normalizar IDs de categoría / subcategoría
