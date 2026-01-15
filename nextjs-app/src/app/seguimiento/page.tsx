@@ -61,7 +61,7 @@ export default function OrderTrackingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white pt-24 pb-12 px-4">
+    <div className="min-h-screen bg-[#000000FA] text-white pt-24 pb-12 px-4">
       <div className="max-w-xl mx-auto space-y-8">
         <div className="text-center space-y-4">
           <h1 className="text-3xl md:text-4xl font-black uppercase italic tracking-tighter">

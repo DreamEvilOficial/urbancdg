@@ -102,7 +102,7 @@ export default function PaymentPage() {
   if (!deliveryData || items.length === 0) return null
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white flex justify-center">
+    <div className="min-h-screen bg-[#000000FA] text-white flex justify-center">
       <div className="max-w-5xl w-full px-4 md:px-6 relative z-10 py-10 scale-[1.25] origin-top transition-transform">
         <div className="pb-6 flex items-end justify-between">
           <div>

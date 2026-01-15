@@ -74,7 +74,7 @@ export default function CheckoutPage() {
   if (items.length === 0) return null
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center">
+    <div className="min-h-screen bg-[#000000FA] text-white flex flex-col items-center">
       <div className="fixed inset-0 pointer-events-none opacity-20">
         <div className="absolute top-[10%] left-[5%] w-[30%] h-[30%] bg-pink-500/5 rounded-full blur-[100px]" />
       </div>

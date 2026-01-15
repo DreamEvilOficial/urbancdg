@@ -13,6 +13,11 @@ if (process.env.NODE_ENV === 'production') {
 const client = supabaseAdmin || supabase;
 const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 
+// Singleton pattern para evitar saturar conexiones en desarrollo (Hot Reload)
+declare global {
+  var _postgresPool: Pool | undefined;
+}
+
 let pool: Pool | null = null;
 
 if (connectionString) {
@@ -22,7 +27,7 @@ if (connectionString) {
     finalConnectionString += (finalConnectionString.includes('?') ? '&' : '?') + 'sslmode=no-verify';
   }
 
-  pool = new Pool({
+  const poolConfig = {
     connectionString: finalConnectionString,
     ssl: {
       rejectUnauthorized: false
@@ -30,8 +35,23 @@ if (connectionString) {
     max: 10, // Reducido para mayor estabilidad en serverless
     idleTimeoutMillis: 20000,
     connectionTimeoutMillis: 15000,
-  });
+  };
 
+  if (process.env.NODE_ENV === 'production') {
+    pool = new Pool(poolConfig);
+  } else {
+    if (!global._postgresPool) {
+      global._postgresPool = new Pool(poolConfig);
+      // Solo adjuntar listener de error una vez
+      global._postgresPool.on('error', (err) => {
+        console.error('❌ Error crítico en Pool de Postgres:', err.message);
+      });
+    }
+    pool = global._postgresPool;
+  }
+}
+
+if (pool && process.env.NODE_ENV === 'production') {
   pool.on('error', (err) => {
     console.error('❌ Error crítico en Pool de Postgres:', err.message);
   });

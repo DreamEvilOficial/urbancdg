@@ -266,7 +266,7 @@ export default function AdminPage() {
 
   if (requireLogin) {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 selection:bg-white selection:text-black">
+      <div className="min-h-screen bg-[#000000FA] flex items-center justify-center p-4 selection:bg-white selection:text-black">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
         </div>
         <div className="w-full max-w-md relative">
