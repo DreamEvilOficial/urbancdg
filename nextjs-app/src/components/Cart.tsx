@@ -28,7 +28,7 @@ export default function Cart({ onClose }: CartProps) {
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     return () => {
-      document.body.style.overflow = 'unset'
+      document.body.style.overflow = ''
     }
   }, [])
 

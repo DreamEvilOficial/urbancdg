@@ -24,7 +24,7 @@ export default function SavedProducts({ onClose }: SavedProductsProps) {
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     return () => {
-      document.body.style.overflow = 'unset'
+      document.body.style.overflow = ''
     }
   }, [])
 

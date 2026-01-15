@@ -113,6 +113,8 @@ div {
 .min-h-screen {
   width: 100%;
   overflow-x: hidden;
+  position: relative;
+  z-index: 1;
 }
 
 .grid {
