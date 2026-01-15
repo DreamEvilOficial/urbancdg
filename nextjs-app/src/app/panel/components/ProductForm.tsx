@@ -281,8 +281,15 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                         value={formData.precio}
                         onChange={e => {
                           const raw = e.target.value
+                          // Permitir solo números, puntos y comas
                           const sanitized = raw.replace(/[^0-9.,]/g, '')
                           setFormData({...formData, precio: sanitized})
+                        }}
+                        onBlur={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            precio: formatPrice(prev.precio)
+                          }))
                         }}
                         className="w-full bg-[#111] border border-white/5 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold placeholder:text-white/20 focus:bg-black focus:border-white text-white transition-all outline-none"
                         placeholder="0"
@@ -330,6 +337,12 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                         const raw = e.target.value
                         const sanitized = raw.replace(/[^0-9.,]/g, '')
                         setFormData({...formData, precio_costo: sanitized})
+                      }}
+                      onBlur={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          precio_costo: formatPrice(prev.precio_costo)
+                        }))
                       }}
                       className="w-full bg-[#111] border border-white/5 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold placeholder:text-white/20 focus:bg-black focus:border-white text-white transition-all outline-none"
                       placeholder="0"
@@ -438,6 +451,12 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                                 const raw = e.target.value
                                 const sanitized = raw.replace(/[^0-9.,]/g, '')
                                 setFormData({...formData, precio_original: sanitized})
+                              }}
+                              onBlur={() => {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  precio_original: formatPrice(prev.precio_original)
+                                }))
                               }}
                               className="w-full bg-black border border-white/10 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold text-white/70 focus:border-white transition-all outline-none"
                               placeholder="0"

@@ -2,7 +2,7 @@ export const formatPrice = (value: number | string | null | undefined): string =
   if (value === null || value === undefined) return '0'
   
   const numberValue = typeof value === 'string' 
-    ? Number(value.replace(/\./g, '').replace(/,/g, '.')) 
+    ? toNumber(value)
     : value
 
   if (isNaN(numberValue)) return '0'
@@ -17,30 +17,28 @@ export const toNumber = (value: number | string | null | undefined): number => {
   if (value === null || value === undefined) return 0
   if (typeof value === 'number') return value
 
-  const str = String(value).replace(/[$\s]/g, '').trim()
+  let str = String(value).trim()
   if (!str) return 0
 
-  // Si tiene coma, asumo formato 1.234,56
+  // Eliminar símbolos de moneda y espacios
+  str = str.replace(/[$\s]/g, '')
+
+  // Lógica estricta para formato Argentina (1.234,56)
+  // 1. Si hay coma, es el separador decimal.
+  // 2. Si hay puntos, son separadores de miles.
+  
+  // Si encontramos (1.234,56) o (1,50)
   if (str.includes(',')) {
-    const clean = str.replace(/\./g, '').replace(/,/g, '.')
-    const num = Number(clean)
-    return isNaN(num) ? 0 : num
+    // Eliminar puntos (miles) y reemplazar coma por punto (decimal JS)
+    str = str.replace(/\./g, '').replace(',', '.')
+  } else {
+    // Si NO hay coma, asumimos que los puntos son miles (1.234 -> 1234)
+    // Excepción: Si el usuario escribe formato americano puro (1.5) sin coma...
+    // Pero en AR "1.500" es mil quinientos. "1.5" es raro, pero asumiremos miles si hay punto.
+    // Si el usuario quiere decimales, DEBE usar coma.
+    str = str.replace(/\./g, '')
   }
 
-  // Si tiene puntos
-  if (str.includes('.')) {
-    const dotCount = (str.match(/\./g) || []).length
-    const endsInThree = /\.\d{3}$/.test(str)
-
-    // Si tiene más de un punto o termina en .XXX, asumo miles (20.000 -> 20000)
-    if (dotCount > 1 || endsInThree) {
-      const clean = str.replace(/\./g, '')
-      const num = Number(clean)
-      return isNaN(num) ? 0 : num
-    }
-  }
-
-  // Formato estándar
   const num = Number(str)
   return isNaN(num) ? 0 : num
 }

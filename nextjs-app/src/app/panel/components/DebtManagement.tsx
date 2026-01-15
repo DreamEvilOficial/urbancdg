@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase, deudasAPI } from '@/lib/supabase'
 import toast from 'react-hot-toast'
 import { DollarSign, Plus, Search, Calendar, ChevronUp, ChevronDown, MessageCircle, Trash2 } from 'lucide-react'
-import { formatPrice } from '@/lib/formatters'
+import { formatPrice, toNumber } from '@/lib/formatters'
 import { v4 as uuidv4 } from 'uuid'
 
 interface Deuda {
@@ -146,7 +146,7 @@ export default function DebtManagement() {
     e.preventDefault()
     if (!selectedClient) return
     
-    const amount = Number(transactionData.monto)
+    const amount = toNumber(transactionData.monto)
     if (isNaN(amount) || amount <= 0) return toast.error('Monto inválido')
 
     let cuotasNumber: number | undefined
@@ -445,15 +445,19 @@ export default function DebtManagement() {
                                       <div className="space-y-3">
                                          <input 
                                            autoFocus 
-                                           type="number" 
+                                           type="text" 
                                            placeholder="Monto ($)" 
                                            value={transactionData.monto} 
-                                           onChange={e => setTransactionData({...transactionData, monto: e.target.value})} 
-                                           onKeyDown={(e) => {
-                                             if (e.key === '.' || e.key === ',') e.preventDefault()
+                                           onChange={e => {
+                                              const raw = e.target.value
+                                              setTransactionData({...transactionData, monto: raw.replace(/[^0-9.,]/g, '')})
+                                           }} 
+                                           onBlur={() => {
+                                              const val = toNumber(transactionData.monto)
+                                              if (val > 0) {
+                                                setTransactionData({...transactionData, monto: formatPrice(val)})
+                                              }
                                            }}
-                                           step="1"
-                                           min="0"
                                            className="w-full bg-black/40 border border-white/10 p-3 rounded-lg text-white font-mono" 
                                          />
                                          <input type="text" placeholder="Producto (opcional)" value={transactionData.producto} onChange={e => setTransactionData({...transactionData, producto: e.target.value})} className="w-full bg-black/40 border border-white/10 p-3 rounded-lg text-white" />

@@ -3,6 +3,7 @@ import db from '@/lib/db';
 import { sanitizeInput, sanitizeRichText } from '@/lib/security';
 import { cookies } from 'next/headers';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { toNumber } from '@/lib/formatters';
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   const id = params.id;
@@ -130,32 +131,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         let val = updates[key];
         
         if (NUMERIC_FIELDS.includes(key)) {
-            if (val === '' || val === null || val === undefined) {
-                val = (key === 'precio' || key === 'stock_actual') ? 0 : null;
-            } else if (typeof val === 'string') {
-                const str = val.replace(/[$\s]/g, '').trim();
-                
-                // Si tiene coma, es formato ES-AR con decimales (1.234,56)
-                if (str.includes(',')) {
-                    const clean = str.replace(/\./g, '').replace(/,/g, '.');
-                    const num = parseFloat(clean);
-                    val = isNaN(num) ? 0 : num;
-                } else {
-                    // Si tiene múltiples puntos O termina en .XXX (3 digitos), asumimos separador de miles
-                    const dotCount = (str.match(/\./g) || []).length;
-                    const endsInThree = /\.\d{3}$/.test(str);
-                    
-                    if (dotCount > 1 || endsInThree) {
-                        const clean = str.replace(/\./g, '');
-                        const num = parseFloat(clean);
-                        val = isNaN(num) ? 0 : num;
-                    } else {
-                        // Formato estándar (1234.56 o 1000)
-                        const num = parseFloat(str);
-                        val = isNaN(num) ? 0 : num;
-                    }
-                }
-            }
+            val = toNumber(val);
         }
 
         // Normalizar IDs de categoría / subcategoría

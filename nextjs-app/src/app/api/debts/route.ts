@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
+import { toNumber } from '@/lib/formatters';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,13 +38,16 @@ export async function POST(request: Request) {
 
     const id = uuidv4();
     
+    // Ensure total_deuda is parsed correctly if provided
+    const initialDebt = total_deuda ? toNumber(total_deuda) : 0;
+    
     await db.run(`
       INSERT INTO deudas (
         id, cliente_nombre, cliente_apellido, cliente_dni, cliente_celular, cliente_direccion, total_deuda, historial
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       id, cliente_nombre, cliente_apellido || '', cliente_dni || '', 
-      cliente_celular || '', cliente_direccion || '', total_deuda || 0, '[]'
+      cliente_celular || '', cliente_direccion || '', initialDebt, '[]'
     ]);
 
     const newDebt = await db.get('SELECT * FROM deudas WHERE id = ?', [id]);
@@ -112,10 +116,14 @@ export async function PUT(request: Request) {
             if (!debt) return NextResponse.json({ error: 'Debt not found' }, { status: 404 });
 
             const currentHistory = typeof debt.historial === 'string' ? JSON.parse(debt.historial) : (debt.historial || []);
+            
+            // Use toNumber for safe parsing
+            const amountSafe = toNumber(monto);
+            
             const newMovement = {
                 id: uuidv4(),
                 fecha: fecha || new Date().toISOString(),
-                monto,
+                monto: amountSafe,
                 descripcion: descripcion || (tipo === 'pago' ? 'Pago recibido' : 'Aumento de deuda'),
                 tipo,
                 producto: producto || ''
@@ -127,14 +135,17 @@ export async function PUT(request: Request) {
                 const configEntry = {
                     id: uuidv4(),
                     tipo: 'config',
-                    cuotas,
+                    cuotas: Number(cuotas),
                     frecuencia,
-                    frecuenciaDias,
+                    frecuenciaDias: Number(frecuenciaDias),
                     created_at: new Date().toISOString()
                 };
                 updatedHistory.push(configEntry);
             }
-            const newTotal = tipo === 'pago' ? Number(debt.total_deuda) - Number(monto) : Number(debt.total_deuda) + Number(monto);
+            
+            // Ensure debt.total_deuda is treated as number, and perform calculation
+            const currentTotal = toNumber(debt.total_deuda);
+            const newTotal = tipo === 'pago' ? currentTotal - amountSafe : currentTotal + amountSafe;
             const newStatus = newTotal <= 0 ? 'pagado' : 'pendiente';
 
             await db.run(`
@@ -156,7 +167,7 @@ export async function PUT(request: Request) {
             UPDATE deudas 
             SET total_deuda = ?, historial = ?, estado = ?, updated_at = NOW() 
             WHERE id = ?
-        `, [total_deuda, JSON.stringify(historial || []), estado || 'pendiente', id]);
+        `, [total_deuda !== undefined ? toNumber(total_deuda) : toNumber(monto), JSON.stringify(historial || []), estado || 'pendiente', id]);
 
         return NextResponse.json({ success: true });
     } catch (error: any) {
