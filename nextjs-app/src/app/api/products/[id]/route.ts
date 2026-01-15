@@ -64,11 +64,26 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         return NextResponse.json({ message: 'No changes provided' });
     }
 
+    // Campos que deben ser tratados como números
+    const NUMERIC_FIELDS = ['precio', 'precio_original', 'precio_costo', 'stock_actual', 'stock_minimo', 'descuento_porcentaje'];
+
     const setClause = keys.map(key => `${key} = ?`).join(', ');
     const values = keys.map(key => {
         let val = updates[key];
         
-        // Sanitize string inputs
+        // Conversión explícita de tipos numéricos
+        if (NUMERIC_FIELDS.includes(key)) {
+            if (val === '' || val === null || val === undefined) {
+                val = null;
+            } else if (typeof val === 'string') {
+                // Remover símbolos de moneda si existen y convertir
+                const cleanVal = val.replace(/[$,]/g, ''); 
+                const num = parseFloat(cleanVal);
+                val = isNaN(num) ? null : num;
+            }
+        }
+        
+        // Sanitize string inputs (solo si sigue siendo string)
         if (typeof val === 'string') {
             if (key === 'descripcion' || key === 'description') {
                 val = sanitizeRichText(val);
@@ -149,11 +164,26 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     return NextResponse.json(updated);
 
   } catch (err: any) {
-    console.error('Update Error:', err);
+    console.error('[Product Update Error] Full details:', err);
+    console.error('[Product Update Error] Stack:', err.stack);
+    
     if (err.message === 'PRODUCT_NOT_FOUND') {
         return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
-    return NextResponse.json({ error: 'Failed to update', details: err.message }, { status: 500 });
+    
+    // Identificar errores de validación de base de datos comunes
+    const msg = err.message || '';
+    if (msg.includes('NOT NULL constraint failed') || msg.includes('violates not-null constraint')) {
+        return NextResponse.json({ error: 'Faltan datos obligatorios (campos vacíos no permitidos)', details: msg }, { status: 400 });
+    }
+    if (msg.includes('CHECK constraint failed')) {
+        return NextResponse.json({ error: 'Datos inválidos (violación de reglas de validación)', details: msg }, { status: 400 });
+    }
+    if (msg.includes('syntax error')) {
+        return NextResponse.json({ error: 'Error de sintaxis en base de datos', details: msg }, { status: 500 });
+    }
+
+    return NextResponse.json({ error: 'Failed to update product', details: msg, originalError: err }, { status: 500 });
   }
 }
 
