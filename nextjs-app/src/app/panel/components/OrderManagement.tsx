@@ -474,6 +474,12 @@ export default function OrderManagement() {
                       </div>
                    </section>
 
+                   {/* Generador de Etiquetas Andreani */}
+                   <ShippingLabelGenerator 
+                      order={selectedOrder} 
+                      onLabelGenerated={(code) => setTrackingData(prev => ({ ...prev, code }))}
+                   />
+
                    {/* Seguimiento */}
                    <section className="bg-white/[0.03] border border-white/10 p-6 rounded-[24px]">
                       <h3 className="text-xs font-black text-white/40 uppercase tracking-[0.32em] mb-4 flex items-center gap-2">
