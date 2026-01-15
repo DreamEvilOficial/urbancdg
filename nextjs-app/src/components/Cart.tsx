@@ -1,7 +1,7 @@
 'use client'
 
 import { useCartStore } from '@/store/cartStore'
-import { X, Plus, Minus, Trash2, ArrowRight, ChevronDown } from 'lucide-react'
+import { X, Plus, Trash2, ArrowRight, ChevronDown } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { productosAPI } from '@/lib/supabase'
@@ -168,22 +168,7 @@ export default function Cart({ onClose }: CartProps) {
                         )}
                         <div className="flex items-center justify-between mt-auto">
                           <p className="text-white font-black text-sm md:text-base">${item.precio.toLocaleString()}</p>
-                          <div className="flex items-center bg-black/30 rounded-xl border border-white/10 px-1">
-                            <button
-                              onClick={() => handleUpdateQuantity(item.id, item.cantidad - 1)}
-                              className="p-1.5 hover:text-accent transition-colors"
-                            >
-                              <Minus className="w-3 h-3" />
-                            </button>
-                            <span className="w-6 text-center font-bold text-xs text-white">{item.cantidad}</span>
-                            <button
-                              onClick={() => handleUpdateQuantity(item.id, item.cantidad + 1)}
-                              className={`p-1.5 hover:text-accent transition-colors ${item.stock && item.cantidad >= item.stock ? 'opacity-30 cursor-not-allowed' : ''}`}
-                              disabled={item.stock !== undefined && item.cantidad >= item.stock}
-                            >
-                              <Plus className="w-3 h-3" />
-                            </button>
-                          </div>
+                          <span className="font-bold text-sm text-white/50">x{item.cantidad}</span>
                         </div>
                       </div>
                       <button
