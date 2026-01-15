@@ -196,63 +196,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
             // Sync variants table if variants are provided
             if (updates.variantes) {
-                let variantsList = updates.variantes;
-                if (typeof variantsList === 'string') {
-                    try { variantsList = JSON.parse(variantsList); } catch (e) { variantsList = []; }
-                }
-
-                if (Array.isArray(variantsList)) {
-                    // 1. Prepare list of valid variants to keep (based on talle + color_hex)
-                    // We use talle + color_hex as unique key for this product.
-                    const validKeys = [];
-
-                    for (const v of variantsList) {
-                        if (!v.talle || !v.color) continue; // v.color is HEX in frontend
-
-                        const colorHex = v.color; 
-                        const colorName = v.color_nombre || v.color;
-                        const stock = parseInt(v.stock || '0');
-                        
-                        // Generate SKU if not provided
-                        const cleanHex = colorHex.replace('#', '').substring(0,6);
-                        const sku = v.sku || `${id.substring(0,8)}-${v.talle}-${cleanHex}`.toUpperCase();
-                        const imagenUrl = v.imagen_url || null;
-
-                        // Upsert
-                        await db.run(`
-                            INSERT INTO variantes (producto_id, talle, color, color_hex, stock, sku, imagen_url, activo, updated_at)
-                            VALUES ($1, $2, $3, $4, $5, $6, $7, true, NOW())
-                            ON CONFLICT (producto_id, talle, color_hex) DO UPDATE SET
-                                stock = EXCLUDED.stock,
-                                color = EXCLUDED.color, -- Update name if changed
-                                imagen_url = EXCLUDED.imagen_url,
-                                activo = true,
-                                updated_at = NOW()
-                        `, [id, v.talle, colorName, colorHex, stock, sku, imagenUrl], tx);
-                        
-                        validKeys.push({ talle: v.talle, hex: colorHex });
-                    }
-
-                    // 2. Deactivate/Delete variants not in the list
-                    // Construct a NOT IN clause or iterate. Since variant count is small (<100), iteration is acceptable but batch delete is better.
-                    // We can't easily pass array of tuples to Postgres via node-postgres param without unnest.
-                    // Simpler approach: Mark all as inactive first? No, we want to keep stock history if possible.
-                    // Let's use a WHERE clause with ORs: NOT ( (talle=? AND color_hex=?) OR ... )
-                    
-                    if (validKeys.length > 0) {
-                        // This query can be large, but for <50 variants it's fine.
-                        const conditions = validKeys.map((_, i) => `NOT (talle = $${i*2 + 2} AND color_hex = $${i*2 + 3})`).join(' AND ');
-                        const params = [id, ...validKeys.flatMap(k => [k.talle, k.hex])];
-                        
-                        // Using DELETE to remove them entirely as requested by "sync" logic, 
-                        // or set stock=0 / active=false? 
-                        // If user removed from UI, they probably want it gone.
-                        await db.run(`DELETE FROM variantes WHERE producto_id = $1 AND (${conditions})`, params, tx);
-                    } else {
-                        // If empty list provided, delete all
-                        await db.run('DELETE FROM variantes WHERE producto_id = ?', [id], tx);
-                    }
-                }
+                await syncVariants(db, id, updates.variantes, tx);
             }
 
             // Log operation (Intentamos insertar log, pero no fallamos si falla el log)
@@ -271,6 +215,15 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
             
             if (result.changes === 0) {
                  return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+            }
+
+            // Attempt to sync variants without transaction
+            if (updates.variantes) {
+                try {
+                    await syncVariants(db, id, updates.variantes, null);
+                } catch (variantErr) {
+                    console.error('Error syncing variants in fallback:', variantErr);
+                }
             }
 
             try {
@@ -334,5 +287,69 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
         return NextResponse.json({ success: true });
     } catch (err) {
         return NextResponse.json({ error: 'Failed to delete' }, { status: 500 });
+    }
+}
+
+// Helper function to sync variants
+async function syncVariants(db: any, productId: string, variantsInput: any, tx: any) {
+    let variantsList = variantsInput;
+    if (typeof variantsList === 'string') {
+        try { variantsList = JSON.parse(variantsList); } catch (e) { variantsList = []; }
+    }
+
+    if (Array.isArray(variantsList)) {
+        const validKeys = [];
+
+        for (const v of variantsList) {
+            if (!v.talle || !v.color) continue;
+
+            const colorHex = v.color; 
+            const colorName = v.color_nombre || v.color;
+            const stock = parseInt(v.stock || '0');
+            
+            const cleanHex = colorHex.replace('#', '').substring(0,6);
+            const sku = v.sku || `${productId.substring(0,8)}-${v.talle}-${cleanHex}`.toUpperCase();
+            const imagenUrl = v.imagen_url || null;
+
+            // Upsert
+            const sql = `
+                INSERT INTO variantes (producto_id, talle, color, color_hex, stock, sku, imagen_url, activo, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, true, NOW())
+                ON CONFLICT (producto_id, talle, color_hex) DO UPDATE SET
+                    stock = EXCLUDED.stock,
+                    color = EXCLUDED.color,
+                    imagen_url = EXCLUDED.imagen_url,
+                    activo = true,
+                    updated_at = NOW()
+            `;
+            const params = [productId, v.talle, colorName, colorHex, stock, sku, imagenUrl];
+
+            if (tx) {
+                await db.run(sql, params, tx);
+            } else {
+                await db.run(sql, params);
+            }
+            
+            validKeys.push({ talle: v.talle, hex: colorHex });
+        }
+
+        if (validKeys.length > 0) {
+            const conditions = validKeys.map((_, i) => `NOT (talle = $${i*2 + 2} AND color_hex = $${i*2 + 3})`).join(' AND ');
+            const params = [productId, ...validKeys.flatMap(k => [k.talle, k.hex])];
+            const sql = `DELETE FROM variantes WHERE producto_id = $1 AND (${conditions})`;
+            
+            if (tx) {
+                await db.run(sql, params, tx);
+            } else {
+                await db.run(sql, params);
+            }
+        } else {
+            const sql = 'DELETE FROM variantes WHERE producto_id = ?';
+            if (tx) {
+                await db.run(sql, [productId], tx);
+            } else {
+                await db.run(sql, [productId]);
+            }
+        }
     }
 }
