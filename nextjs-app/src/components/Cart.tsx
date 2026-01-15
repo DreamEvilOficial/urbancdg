@@ -36,8 +36,17 @@ export default function Cart({ onClose }: CartProps) {
     const loadSuggested = async () => {
       try {
         const destacados = await productosAPI.obtenerDestacados()
-        // Filtrar los que ya están en el carrito
-        const filtered = destacados.filter(p => !items.find(i => i.id === String(p.id))).slice(0, 3)
+        const conStock = destacados.filter((p: any) => {
+          const baseStock = typeof p.stock_actual === 'number' ? p.stock_actual : 0
+          const variantesStock = Array.isArray(p.variantes)
+            ? p.variantes.reduce((sum: number, v: any) => sum + (v?.stock || 0), 0)
+            : 0
+          const totalStock = baseStock || variantesStock
+          return totalStock > 0
+        })
+        const filtered = conStock
+          .filter((p: any) => !items.find(i => i.id === String(p.id)))
+          .slice(0, 3)
         setSuggestedProducts(filtered)
       } catch (error) {
         console.error('Error loading suggestions:', error)
@@ -76,12 +85,19 @@ export default function Cart({ onClose }: CartProps) {
   }
 
   const handleAddSuggested = (product: any) => {
+    const baseStock = typeof product.stock_actual === 'number' ? product.stock_actual : 0
+    const variantesStock = Array.isArray(product.variantes)
+      ? product.variantes.reduce((sum: number, v: any) => sum + (v?.stock || 0), 0)
+      : 0
+    const totalStock = baseStock || variantesStock || undefined
+
     addItem({
       id: String(product.id),
       nombre: product.nombre,
       precio: product.precio,
       cantidad: 1,
-      imagen_url: product.imagen_url || (product.imagenes && product.imagenes.length > 0 ? product.imagenes[0] : '/proximamente.png')
+      imagen_url: product.imagen_url || (product.imagenes && product.imagenes.length > 0 ? product.imagenes[0] : '/proximamente.png'),
+      stock: totalStock
     })
     document.dispatchEvent(new Event('cartUpdated'))
   }

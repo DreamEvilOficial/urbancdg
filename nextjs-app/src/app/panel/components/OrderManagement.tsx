@@ -19,16 +19,18 @@ interface Orden {
   ciudad?: string
   provincia?: string
   codigo_postal?: string
-  items: any[] | string
-  subtotal: number
-  envio: number
-  total: number
+  items?: any[] | string
+  subtotal: number | string
+  envio: number | string
+  total: number | string
   estado: string
   metodo_pago?: string
   pago_id?: string
   mercadopago_payment_id?: number
   notas?: string
   metadata?: any
+  tracking_code?: string | null
+  tracking_url?: string | null
   created_at: string
 }
 
@@ -41,6 +43,7 @@ export default function OrderManagement() {
   const [selectedOrder, setSelectedOrder] = useState<Orden | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [trackingData, setTrackingData] = useState({ code: '', url: '' })
+  const [selectedOrderLoading, setSelectedOrderLoading] = useState(false)
 
   useEffect(() => {
     cargarOrdenes()
@@ -68,6 +71,25 @@ export default function OrderManagement() {
       toast.error('Error al cargar ventas')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleOpenOrder(orden: Orden) {
+    setShowModal(true)
+    setSelectedOrder(orden)
+    setSelectedOrderLoading(true)
+    try {
+      const res = await fetch(`/api/orders?id=${orden.id}`)
+      if (res.ok) {
+        const full = await res.json()
+        if (full) {
+          setSelectedOrder(full)
+        }
+      }
+    } catch (error) {
+      console.error('Error loading order detail:', error)
+    } finally {
+      setSelectedOrderLoading(false)
     }
   }
 
@@ -248,7 +270,7 @@ export default function OrderManagement() {
           filteredOrders.map((orden) => (
             <div 
               key={orden.id} 
-              onClick={() => { setSelectedOrder(orden); setShowModal(true); }}
+              onClick={() => { handleOpenOrder(orden) }}
               className="group bg-[#06070c]/70 backdrop-blur-2xl border border-white/10 p-5 rounded-[28px] hover:border-white/20 transition-all cursor-pointer shadow-[0_30px_120px_-90px_rgba(0,0,0,0.9)] hover:bg-white/[0.02] relative overflow-hidden active:scale-[0.98]"
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
@@ -328,6 +350,11 @@ export default function OrderManagement() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
+              {selectedOrderLoading && (
+                <div className="mb-6 flex items-center justify-center">
+                  <div className="w-8 h-8 border-2 border-white/20 border-t-accent rounded-full animate-spin" />
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
                 
                 {/* Columna Izquierda: Cliente y Envío */}
