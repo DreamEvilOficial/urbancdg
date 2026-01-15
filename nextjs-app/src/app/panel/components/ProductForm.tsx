@@ -128,11 +128,17 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
     setLoading(true)
 
     // Validaciones de descuento
+    const precioNumero = toNumber(formData.precio)
+    if (!formData.precio || !precioNumero || precioNumero <= 0) {
+      toast.error('Ingresa un precio válido utilizando solo números y puntos para miles')
+      setLoading(false)
+      return
+    }
+
     if (formData.descuento_activo) {
-      const precio = toNumber(formData.precio)
       const precioOriginal = toNumber(formData.precio_original)
       
-      if (!precioOriginal || precioOriginal <= precio) {
+      if (!precioOriginal || precioOriginal <= precioNumero) {
         toast.error('El precio original debe ser mayor al precio final cuando hay un descuento activo')
         setLoading(false)
         return
@@ -143,7 +149,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
       // Convertir precios a formato numérico limpio antes de guardar
       const dataToSave = {
         ...formData,
-        precio: toNumber(formData.precio),
+        precio: precioNumero,
         precio_original: toNumber(formData.precio_original),
         precio_costo: toNumber(formData.precio_costo)
       }
@@ -273,7 +279,11 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                       <input 
                         type="text"
                         value={formData.precio}
-                        onChange={e => setFormData({...formData, precio: e.target.value})}
+                        onChange={e => {
+                          const raw = e.target.value
+                          const sanitized = raw.replace(/[^0-9.,]/g, '')
+                          setFormData({...formData, precio: sanitized})
+                        }}
                         className="w-full bg-[#111] border border-white/5 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold placeholder:text-white/20 focus:bg-black focus:border-white text-white transition-all outline-none"
                         placeholder="0"
                         required={!formData.descuento_activo}
@@ -316,7 +326,11 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                     <input 
                       type="text"
                       value={formData.precio_costo}
-                      onChange={e => setFormData({...formData, precio_costo: e.target.value})}
+                      onChange={e => {
+                        const raw = e.target.value
+                        const sanitized = raw.replace(/[^0-9.,]/g, '')
+                        setFormData({...formData, precio_costo: sanitized})
+                      }}
                       className="w-full bg-[#111] border border-white/5 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold placeholder:text-white/20 focus:bg-black focus:border-white text-white transition-all outline-none"
                       placeholder="0"
                     />
@@ -411,7 +425,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                  )}
 
                  {formData.descuento_activo && (
-                   <div className="pt-4 mt-4 border-t border-white/5 animate-in fade-in slide-in-from-top-2">
+                 <div className="pt-4 mt-4 border-t border-white/5 animate-in fade-in slide-in-from-top-2">
                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                           <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Precio Original</label>
@@ -420,7 +434,11 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                             <input 
                               type="text"
                               value={formData.precio_original}
-                              onChange={e => setFormData({...formData, precio_original: e.target.value})}
+                              onChange={e => {
+                                const raw = e.target.value
+                                const sanitized = raw.replace(/[^0-9.,]/g, '')
+                                setFormData({...formData, precio_original: sanitized})
+                              }}
                               className="w-full bg-black border border-white/10 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold text-white/70 focus:border-white transition-all outline-none"
                               placeholder="0"
                               required={formData.descuento_activo}

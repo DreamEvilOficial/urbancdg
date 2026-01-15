@@ -12,7 +12,8 @@ import {
   Layout,
   DollarSign,
   MessageSquare,
-  X
+  X,
+  BarChart3
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { authAPI } from "@/lib/supabase";
@@ -168,6 +169,13 @@ export default function AdminSidebar({
         {(!permissions || permissions.sales) && (
           <div className="space-y-1">
             <h3 className="px-3 text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2">Operación y ventas</h3>
+            <SidebarItem
+              id="estadisticas"
+              icon={BarChart3}
+              label="Estadísticas"
+              activeTab={activeTab}
+              setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
+            />
             <SidebarItem
               id="ventas"
               icon={ShoppingBag}

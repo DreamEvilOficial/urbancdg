@@ -3,6 +3,7 @@
 import { revalidatePath, revalidateTag } from 'next/cache';
 import db from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
+import { toNumber } from '@/lib/formatters';
 
 /**
  * Server Actions optimizadas para el panel de administración
@@ -18,8 +19,8 @@ export async function createProduct(formData: FormData) {
       nombre: formData.get('nombre') as string,
       slug: formData.get('slug') as string,
       descripcion: formData.get('descripcion') as string,
-      precio: parseFloat(formData.get('precio') as string),
-      precio_original: parseFloat(formData.get('precio_original') as string),
+      precio: toNumber(formData.get('precio') as string),
+      precio_original: toNumber(formData.get('precio_original') as string),
       descuento_porcentaje: parseFloat(formData.get('descuento_porcentaje') as string || '0'),
       stock_actual: parseInt(formData.get('stock_actual') as string),
       stock_minimo: parseInt(formData.get('stock_minimo') as string || '0'),
@@ -36,7 +37,7 @@ export async function createProduct(formData: FormData) {
       dimensiones: JSON.parse(formData.get('dimensiones') as string || '{}'),
       proveedor_nombre: formData.get('proveedor_nombre') as string || '',
       proveedor_contacto: formData.get('proveedor_contacto') as string || '',
-      precio_costo: parseFloat(formData.get('precio_costo') as string || '0'),
+      precio_costo: toNumber(formData.get('precio_costo') as string || '0'),
       metadata: JSON.parse(formData.get('metadata') as string || '{}'),
     };
 
@@ -93,8 +94,8 @@ export async function updateProduct(id: string, formData: FormData) {
       nombre: formData.get('nombre') as string,
       slug: formData.get('slug') as string,
       descripcion: formData.get('descripcion') as string,
-      precio: parseFloat(formData.get('precio') as string),
-      precio_original: parseFloat(formData.get('precio_original') as string),
+      precio: toNumber(formData.get('precio') as string),
+      precio_original: toNumber(formData.get('precio_original') as string),
       descuento_porcentaje: parseFloat(formData.get('descuento_porcentaje') as string || '0'),
       stock_actual: parseInt(formData.get('stock_actual') as string),
       stock_minimo: parseInt(formData.get('stock_minimo') as string || '0'),
@@ -111,7 +112,7 @@ export async function updateProduct(id: string, formData: FormData) {
       dimensiones: JSON.parse(formData.get('dimensiones') as string || '{}'),
       proveedor_nombre: formData.get('proveedor_nombre') as string || '',
       proveedor_contacto: formData.get('proveedor_contacto') as string || '',
-      precio_costo: parseFloat(formData.get('precio_costo') as string || '0'),
+      precio_costo: toNumber(formData.get('precio_costo') as string || '0'),
       metadata: JSON.parse(formData.get('metadata') as string || '{}'),
     };
 

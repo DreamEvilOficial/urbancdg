@@ -21,6 +21,7 @@ import DebtManagement from './components/DebtManagement'
 import ReviewsManagement from './components/ReviewsManagement'
 import FeaturedProductsManagement from './components/FeaturedProductsManagement'
 import InventoryReport from './components/InventoryReport'
+import StatsDashboard from './components/StatsDashboard'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -85,7 +86,7 @@ export default function AdminPage() {
     }
 
     if (permissions.sales) {
-      allowedTabs.push('ventas', 'inventario', 'resenas')
+      allowedTabs.push('ventas', 'inventario', 'resenas', 'estadisticas')
     }
 
     if (permissions.adminSales) {
@@ -476,6 +477,10 @@ export default function AdminPage() {
 
           {activeTab === 'home' && permissions.catalog && (
             <HomepageManagement />
+          )}
+
+          {activeTab === 'estadisticas' && permissions.sales && (
+            <StatsDashboard />
           )}
 
           {activeTab === 'ventas' && permissions.sales && (
