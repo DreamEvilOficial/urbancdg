@@ -73,7 +73,6 @@ export async function POST(request: NextRequest) {
       // asumimos precio de lista o lo que corresponda según lógica de negocio.
       // Aquí usamos el precio de lista base para tarjeta/MP).
       const realPrice = Number(product.precio)
-      const quantity = Number(item.quantity)
 
       // Verificar discrepancia mayor a $10 (tolerancia pequeña)
       if (Math.abs(realPrice - Number(item.unit_price)) > 10) {
