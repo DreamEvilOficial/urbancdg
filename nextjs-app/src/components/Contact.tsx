@@ -45,16 +45,6 @@ export default function Contact() {
         
         <div className="flex flex-wrap justify-center gap-6">
           <a
-            href={`https://wa.me/${config.whatsapp.replace(/\s/g, '')}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-green-500 text-white px-6 py-3 rounded-full hover:bg-green-600 transition"
-          >
-            <Phone className="w-5 h-5" />
-            WhatsApp
-          </a>
-          
-          <a
             href={`https://instagram.com/${config.instagram.replace('@', '')}`}
             target="_blank"
             rel="noopener noreferrer"
