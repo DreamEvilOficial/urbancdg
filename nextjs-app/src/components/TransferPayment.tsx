@@ -142,15 +142,15 @@ ${config.mensaje_transferencia || ''}
   }
 
   return (
-    <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="modal-content glass-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '550px', maxHeight: '90vh', overflowY: 'auto' }}>
+    <div className="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4" onClick={handleOverlayClick}>
+      <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '550px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="p-6 md:p-8">
           <div className="flex justify-between items-start mb-6">
             <div>
               <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white">
                 Pago por <span className="text-pink-500">Transferencia</span>
               </h2>
-              <p className="text-white/40 text-xs font-bold uppercase tracking-widest mt-1">Orden #{orderNumber}</p>
+              <p className="text-white/40 text-xs font-bold uppercase tracking-widest mt-1">#{orderNumber}</p>
             </div>
             <button onClick={onClose} className="text-white/20 hover:text-white transition-colors">✕</button>
           </div>
