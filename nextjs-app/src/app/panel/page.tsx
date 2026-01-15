@@ -70,7 +70,7 @@ export default function AdminPage() {
   }, [])
 
   const permissions = {
-    catalog: !!(user?.admin || user?.permiso_categorias),
+    catalog: !!(user?.admin || user?.permiso_categorias || user?.permiso_productos),
     sales: !!(user?.admin || user?.permiso_productos),
     adminSales: !!(user?.admin || user?.permiso_ordenes),
     config: !!(user?.admin || user?.permiso_configuracion),

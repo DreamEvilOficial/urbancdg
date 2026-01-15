@@ -133,9 +133,9 @@ export default function FeaturedProductsManagement() {
     
     const updates = {
         descuento_activo: tempOfertaActive,
-        precio: tempPrices.current,
-        precio_original: tempPrices.original,
-        descuento_porcentaje: tempPrices.discount
+        precio: toNumber(tempPrices.current),
+        precio_original: toNumber(tempPrices.original),
+        descuento_porcentaje: Number(tempPrices.discount) || 0
     }
 
     try {
