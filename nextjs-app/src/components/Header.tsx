@@ -301,7 +301,15 @@ export default function Header({ theme, toggleTheme }: HeaderProps) {
                 {filtrosEspeciales.slice(0, 3).map((filtro) => {
                   let iconElement = null
                   if (filtro.imagen_url) {
-                    iconElement = <img src={filtro.imagen_url} alt={filtro.nombre} className="w-4 h-4 rounded" />
+                    iconElement = (
+                      <div className="relative w-6 h-6 flex-shrink-0">
+                        <img 
+                          src={filtro.imagen_url} 
+                          alt={filtro.nombre} 
+                          className="w-full h-full object-contain" 
+                        />
+                      </div>
+                    )
                   } else if (filtro.icono) {
                     iconElement = <span className="text-sm">{filtro.icono}</span>
                   } else if (['descuentos', 'nuevos', 'proximamente'].includes(filtro.clave)) {
