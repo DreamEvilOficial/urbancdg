@@ -77,7 +77,9 @@ export default async function Home() {
 
       <div className="relative z-20 -mt-10 md:-mt-16">
         <div className="pointer-events-none absolute inset-x-0 -top-10 md:-top-16 h-16 bg-gradient-to-b from-transparent to-[#05060a]" />
-        <div className="bg-[#06070c]/70 backdrop-blur-2xl border-t border-white/10 rounded-t-[42px] md:rounded-t-[64px] shadow-[0_-20px_80px_-30px_rgba(0,0,0,0.7)]">
+        <div className="bg-[#06070c]/70 backdrop-blur-2xl border-t border-white/10 rounded-t-[42px] md:rounded-t-[64px] shadow-[0_-20px_80px_-30px_rgba(0,0,0,0.7)] relative">
+          <div className="pointer-events-none absolute top-0 left-0 w-20 h-20 bg-black/40 blur-3xl rounded-br-full -z-10" />
+          <div className="pointer-events-none absolute top-0 right-0 w-20 h-20 bg-black/40 blur-3xl rounded-bl-full -z-10" />
           
           {showTopPicks && <TopProducts products={topProducts} />}
 

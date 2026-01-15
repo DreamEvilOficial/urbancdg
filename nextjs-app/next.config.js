@@ -19,6 +19,12 @@ const nextConfig = {
       }] : []),
       {
         protocol: 'https',
+        hostname: '**.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'media.discordapp.net',
         port: '',
         pathname: '/**',
@@ -36,7 +42,7 @@ const nextConfig = {
         pathname: '/**',
       }
     ],
-    domains: supabaseHost ? [supabaseHost, 'media.discordapp.net', 'static.wattpad.com'] : ['media.discordapp.net', 'static.wattpad.com'],
+    domains: supabaseHost ? [supabaseHost, 'media.discordapp.net', 'static.wattpad.com'] : ['bxrrldexzibiylgbheen.supabase.co', 'media.discordapp.net', 'static.wattpad.com'],
   },
   async headers() {
     return [

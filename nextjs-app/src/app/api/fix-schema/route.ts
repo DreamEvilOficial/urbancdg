@@ -132,9 +132,11 @@ export async function GET() {
             cliente_nombre TEXT NOT NULL,
             cliente_email TEXT,
             cliente_telefono TEXT,
+            direccion_envio TEXT,
             subtotal NUMERIC(10,2) DEFAULT 0,
             total NUMERIC(10,2) DEFAULT 0,
             envio NUMERIC(10,2) DEFAULT 0,
+            descuento NUMERIC(10,2) DEFAULT 0,
             estado TEXT DEFAULT 'pendiente',
             metodo_pago TEXT,
             notas TEXT,
@@ -143,7 +145,10 @@ export async function GET() {
             pago_id TEXT,
             pago_estado TEXT,
             pago_metodo TEXT,
-            factura_url TEXT
+            factura_url TEXT,
+            tracking_code TEXT,
+            tracking_url TEXT,
+            mercadopago_payment_id TEXT
         );
 
         -- Asegurar columnas en ORDENES (si la tabla ya existía)
@@ -157,6 +162,26 @@ export async function GET() {
 
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'ordenes' AND column_name = 'envio') THEN
             ALTER TABLE ordenes ADD COLUMN envio NUMERIC(10,2) DEFAULT 0;
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'ordenes' AND column_name = 'direccion_envio') THEN
+            ALTER TABLE ordenes ADD COLUMN direccion_envio TEXT;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'ordenes' AND column_name = 'descuento') THEN
+            ALTER TABLE ordenes ADD COLUMN descuento NUMERIC(10,2) DEFAULT 0;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'ordenes' AND column_name = 'tracking_code') THEN
+            ALTER TABLE ordenes ADD COLUMN tracking_code TEXT;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'ordenes' AND column_name = 'tracking_url') THEN
+            ALTER TABLE ordenes ADD COLUMN tracking_url TEXT;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'ordenes' AND column_name = 'mercadopago_payment_id') THEN
+            ALTER TABLE ordenes ADD COLUMN mercadopago_payment_id TEXT;
         END IF;
 
         -- 8. Asegurar tabla ORDEN_ITEMS
