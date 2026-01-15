@@ -237,7 +237,7 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
       </div>
 
       {/* Tabla Desktop */}
-      <div className="hidden md:block bg-[#06070c]/70 backdrop-blur-2xl rounded-[34px] border border-white/10 shadow-[0_30px_120px_-80px_rgba(0,0,0,0.9)] overflow-hidden scale-[0.8] origin-top-left w-[135%]">
+      <div className="hidden md:block bg-[#06070c]/70 backdrop-blur-2xl rounded-[28px] border border-white/10 shadow-[0_30px_120px_-80px_rgba(0,0,0,0.9)] overflow-hidden w-full">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-white/[0.03]">
@@ -351,7 +351,7 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
                       </div>
                     </td>
                     <td className="px-4 py-3 md:px-8 md:py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:translate-x-4 lg:group-hover:translate-x-0 transition-all transform">
+                      <div className="flex items-center justify-end gap-2">
                         <button 
                           onClick={() => onEdit(producto)}
                           className="w-10 h-10 flex items-center justify-center bg-white/[0.02] border border-white/10 rounded-xl text-white/55 hover:text-white hover:border-white/20 transition-all"
@@ -361,7 +361,7 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
                         </button>
                         <button 
                           onClick={() => onDelete(producto.id)}
-                          className="w-10 h-10 flex items-center justify-center bg-white/[0.02] border border-white/10 rounded-xl text-white/55 hover:text-red-300 hover:border-red-400/40 transition-all font-bold"
+                          className="w-10 h-10 flex items-center justify-center bg-white/[0.02] border border-white/10 rounded-xl text-white/55 hover:text-red-400 hover:border-red-500/30 transition-all"
                           title="Eliminar"
                         >
                           <Trash2 className="w-4 h-4" />
