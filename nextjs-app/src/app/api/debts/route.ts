@@ -57,9 +57,54 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
     try {
         const body = await request.json();
-        const { id, total_deuda, historial, estado, monto, descripcion, tipo, producto, fecha } = body;
+        const { 
+            id, 
+            total_deuda, 
+            historial, 
+            estado, 
+            monto, 
+            descripcion, 
+            tipo, 
+            producto, 
+            fecha,
+            cuotas,
+            frecuencia,
+            frecuenciaDias,
+            action,
+            via,
+            mensaje
+        } = body;
 
         if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
+
+        if (action === 'recordatorio') {
+            const debt = await db.get('SELECT * FROM deudas WHERE id = ?', [id]);
+            if (!debt) return NextResponse.json({ error: 'Debt not found' }, { status: 404 });
+
+            const currentHistory = typeof debt.historial === 'string' ? JSON.parse(debt.historial) : (debt.historial || []);
+            const reminder = {
+                id: uuidv4(),
+                tipo: 'recordatorio',
+                fecha: fecha || new Date().toISOString(),
+                via: via || 'manual',
+                mensaje: mensaje || 'Recordatorio de pago enviado'
+            };
+
+            const updatedHistory = [...currentHistory, reminder];
+
+            await db.run(`
+                UPDATE deudas 
+                SET historial = ?, updated_at = NOW() 
+                WHERE id = ?
+            `, [JSON.stringify(updatedHistory), id]);
+
+            const updatedDebt = await db.get('SELECT * FROM deudas WHERE id = ?', [id]);
+            if (updatedDebt && typeof updatedDebt.historial === 'string') {
+                updatedDebt.historial = JSON.parse(updatedDebt.historial);
+            }
+
+            return NextResponse.json(updatedDebt);
+        }
 
         // Si se proporciona 'monto' y 'tipo', es un nuevo movimiento
         if (monto && tipo) {
@@ -77,6 +122,18 @@ export async function PUT(request: Request) {
             };
 
             const updatedHistory = [...currentHistory, newMovement];
+
+            if (cuotas && frecuencia && frecuenciaDias && !currentHistory.some((h: any) => h.tipo === 'config')) {
+                const configEntry = {
+                    id: uuidv4(),
+                    tipo: 'config',
+                    cuotas,
+                    frecuencia,
+                    frecuenciaDias,
+                    created_at: new Date().toISOString()
+                };
+                updatedHistory.push(configEntry);
+            }
             const newTotal = tipo === 'pago' ? Number(debt.total_deuda) - Number(monto) : Number(debt.total_deuda) + Number(monto);
             const newStatus = newTotal <= 0 ? 'pagado' : 'pendiente';
 
@@ -86,7 +143,12 @@ export async function PUT(request: Request) {
                 WHERE id = ?
             `, [newTotal, JSON.stringify(updatedHistory), newStatus, id]);
 
-            return NextResponse.json({ success: true, newTotal, newStatus });
+            const updatedDebt = await db.get('SELECT * FROM deudas WHERE id = ?', [id]);
+            if (updatedDebt && typeof updatedDebt.historial === 'string') {
+                updatedDebt.historial = JSON.parse(updatedDebt.historial);
+            }
+
+            return NextResponse.json(updatedDebt);
         }
 
         // De lo contrario, es una actualización general

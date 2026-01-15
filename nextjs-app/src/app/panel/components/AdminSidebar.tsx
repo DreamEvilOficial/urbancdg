@@ -51,12 +51,20 @@ const SidebarItem = ({
   </button>
 );
 
+interface AdminPermissions {
+  catalog: boolean;
+  sales: boolean;
+  adminSales: boolean;
+  config: boolean;
+}
+
 interface AdminSidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   sidebarOpen: boolean;
   storeName: string;
   onNavigate?: () => void;
+  permissions?: AdminPermissions;
 }
 
 export default function AdminSidebar({
@@ -65,6 +73,7 @@ export default function AdminSidebar({
   sidebarOpen,
   storeName,
   onNavigate,
+  permissions,
 }: AdminSidebarProps) {
   const router = useRouter();
   const [version, setVersion] = useState("v1.0.8-JAN");
@@ -115,83 +124,88 @@ export default function AdminSidebar({
       </div>
 
       <nav className="flex-1 p-4 space-y-6 overflow-y-auto min-h-0 flex flex-col custom-scrollbar">
-        {/* Gestión del catálogo */}
-        <div className="space-y-1">
-          <h3 className="px-3 text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2">Gestión del catálogo</h3>
-          <SidebarItem
-            id="home"
-            icon={Layout}
-            label="Configurar Inicio"
-            activeTab={activeTab}
-            setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
-          />
-          <SidebarItem
-            id="productos"
-            icon={Package}
-            label="Productos"
-            activeTab={activeTab}
-            setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
-          />
-          <SidebarItem
-            id="categorias"
-            icon={Layers}
-            label="Categorías"
-            activeTab={activeTab}
-            setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
-          />
-          <SidebarItem
-            id="destacados"
-            icon={Star}
-            label="Destacados"
-            activeTab={activeTab}
-            setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
-          />
-          <SidebarItem
-            id="filtros"
-            icon={Filter}
-            label="Filtros Especiales"
-            activeTab={activeTab}
-            setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
-          />
-        </div>
+        {(!permissions || permissions.catalog) && (
+          <div className="space-y-1">
+            <h3 className="px-3 text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2">Gestión del catálogo</h3>
+            <SidebarItem
+              id="home"
+              icon={Layout}
+              label="Configurar Inicio"
+              activeTab={activeTab}
+              setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
+            />
+            <SidebarItem
+              id="productos"
+              icon={Package}
+              label="Productos"
+              activeTab={activeTab}
+              setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
+            />
+            <SidebarItem
+              id="categorias"
+              icon={Layers}
+              label="Categorías"
+              activeTab={activeTab}
+              setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
+            />
+            <SidebarItem
+              id="destacados"
+              icon={Star}
+              label="Destacados"
+              activeTab={activeTab}
+              setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
+            />
+            <SidebarItem
+              id="filtros"
+              icon={Filter}
+              label="Filtros Especiales"
+              activeTab={activeTab}
+              setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
+            />
+          </div>
+        )}
 
-        {/* Operación y ventas */}
-        <div className="space-y-1">
-          <h3 className="px-3 text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2">Operación y ventas</h3>
-          <SidebarItem
-            id="ventas"
-            icon={ShoppingBag}
-            label="Ventas"
-            activeTab={activeTab}
-            setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
-          />
-          <SidebarItem
-            id="resenas"
-            icon={MessageSquare}
-            label="Reseñas"
-            activeTab={activeTab}
-            setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
-          />
-        </div>
+        {(!permissions || permissions.sales) && (
+          <div className="space-y-1">
+            <h3 className="px-3 text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2">Operación y ventas</h3>
+            <SidebarItem
+              id="ventas"
+              icon={ShoppingBag}
+              label="Ventas"
+              activeTab={activeTab}
+              setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
+            />
+            <SidebarItem
+              id="resenas"
+              icon={MessageSquare}
+              label="Reseñas"
+              activeTab={activeTab}
+              setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
+            />
+          </div>
+        )}
 
-        {/* Gestión administrativa */}
-        <div className="space-y-1">
-          <h3 className="px-3 text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2">Gestión administrativa</h3>
-          <SidebarItem
-            id="operadores"
-            icon={Shield}
-            label="Operadores"
-            activeTab={activeTab}
-            setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
-          />
-          <SidebarItem
-            id="deudas"
-            icon={DollarSign}
-            label="Deudas"
-            activeTab={activeTab}
-            setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
-          />
-        </div>
+        {(!permissions || permissions.adminSales || permissions.config) && (
+          <div className="space-y-1">
+            <h3 className="px-3 text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2">Gestión administrativa</h3>
+            {(!permissions || permissions.adminSales) && (
+              <SidebarItem
+                id="deudas"
+                icon={DollarSign}
+                label="Deudas"
+                activeTab={activeTab}
+                setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
+              />
+            )}
+            <SidebarItem
+              id="operadores"
+              icon={Shield}
+              label="Operadores"
+              activeTab={activeTab}
+              setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
+            />
+          </div>
+        )}
 
         {/* Cuenta y configuración */}
         <div className="space-y-1 mt-auto">
@@ -206,13 +220,15 @@ export default function AdminSidebar({
             activeTab={activeTab}
             setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
           />
-          <SidebarItem
-            id="configuracion"
-            icon={Settings}
-            label="Configuración"
-            activeTab={activeTab}
-            setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
-          />
+          {(!permissions || permissions.config) && (
+            <SidebarItem
+              id="configuracion"
+              icon={Settings}
+              label="Configuración"
+              activeTab={activeTab}
+              setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
+            />
+          )}
           <button
             onClick={async () => {
               await authAPI.signOut();

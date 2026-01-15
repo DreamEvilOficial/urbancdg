@@ -146,10 +146,13 @@ export default function OperatorManagement() {
             <p className="text-sm font-bold text-white/70">Permisos iniciales:</p>
             <div className="flex flex-wrap gap-4 text-white">
               <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input type="checkbox" onChange={e => setFormData({...formData, permiso_categorias: e.target.checked})} className="accent-white" /> Categorías
+                <input type="checkbox" onChange={e => setFormData({...formData, permiso_categorias: e.target.checked})} className="accent-white" /> Gestión de catálogo
               </label>
               <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input type="checkbox" onChange={e => setFormData({...formData, permiso_productos: e.target.checked})} className="accent-white" /> Productos
+                <input type="checkbox" onChange={e => setFormData({...formData, permiso_productos: e.target.checked})} className="accent-white" /> Operación y ventas
+              </label>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" onChange={e => setFormData({...formData, permiso_ordenes: e.target.checked})} className="accent-white" /> Venta administrativa
               </label>
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <input type="checkbox" onChange={e => setFormData({...formData, permiso_configuracion: e.target.checked})} className="accent-white" /> Configuración
@@ -165,8 +168,9 @@ export default function OperatorManagement() {
           <thead>
             <tr className="bg-white/5 border-b border-white/10">
               <th className="p-4 font-semibold text-sm text-white/70">Operador</th>
-              <th className="p-4 font-semibold text-sm text-white/70">Categorías</th>
-              <th className="p-4 font-semibold text-sm text-white/70">Productos</th>
+              <th className="p-4 font-semibold text-sm text-white/70">Catálogo</th>
+              <th className="p-4 font-semibold text-sm text-white/70">Ventas</th>
+              <th className="p-4 font-semibold text-sm text-white/70">Venta Admin</th>
               <th className="p-4 font-semibold text-sm text-white/70">Config</th>
               <th className="p-4 font-semibold text-sm text-right text-white/70">Acciones</th>
             </tr>
@@ -184,6 +188,9 @@ export default function OperatorManagement() {
                 </td>
                 <td className="p-4">
                   <PermissionToggle active={op.permiso_productos} onClick={(v) => togglePermission(op.id, 'permiso_productos', v)} disabled={op.rol === 'admin'} />
+                </td>
+                <td className="p-4">
+                  <PermissionToggle active={op.permiso_ordenes} onClick={(v) => togglePermission(op.id, 'permiso_ordenes', v)} disabled={op.rol === 'admin'} />
                 </td>
                 <td className="p-4">
                   <PermissionToggle active={op.permiso_configuracion} onClick={(v) => togglePermission(op.id, 'permiso_configuracion', v)} disabled={op.rol === 'admin'} />

@@ -285,11 +285,31 @@ export const deudasAPI = {
     });
   },
   
-  async agregarMovimiento(data: { id: string, monto: number, descripcion: string, tipo: 'deuda' | 'pago', producto?: string, fecha?: string }) {
+  async agregarMovimiento(data: {
+    id: string,
+    monto: number,
+    descripcion: string,
+    tipo: 'deuda' | 'pago',
+    producto?: string,
+    fecha?: string,
+    cuotas?: number,
+    frecuencia?: string,
+    frecuenciaDias?: number
+  }) {
     return apiFetch('/debts', {
       method: 'PUT',
       body: JSON.stringify(data)
     });
+  },
+  
+  async enviarRecordatorio(data: { id: string, via: 'manual' | 'automatico', mensaje?: string, fecha?: string }) {
+    return apiFetch('/debts', {
+      method: 'PUT',
+      body: JSON.stringify({
+        action: 'recordatorio',
+        ...data
+      })
+    })
   },
   
   async eliminar(id: string) {

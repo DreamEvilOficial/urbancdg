@@ -67,6 +67,28 @@ export default function AdminPage() {
     checkAuthAndLoadData()
   }, [])
 
+  const permissions = {
+    catalog: !!(user?.admin || user?.permiso_categorias),
+    sales: !!(user?.admin || user?.permiso_productos),
+    adminSales: !!(user?.admin || user?.permiso_ordenes),
+    config: !!(user?.admin || user?.permiso_configuracion),
+  }
+
+  useEffect(() => {
+    if (!user) return
+    const orderedTabs = [
+      permissions.catalog && 'productos',
+      permissions.sales && 'ventas',
+      permissions.adminSales && 'deudas',
+      permissions.config && 'configuracion',
+      'perfil',
+    ].filter(Boolean) as string[]
+
+    if (!orderedTabs.includes(activeTab)) {
+      setActiveTab(orderedTabs[0] || 'perfil')
+    }
+  }, [user, permissions.catalog, permissions.sales, permissions.adminSales, permissions.config])
+
   if (!mounted) return null
 
   async function checkAuthAndLoadData() {
@@ -350,6 +372,7 @@ export default function AdminPage() {
           setActiveTab={setActiveTab} 
           sidebarOpen={true}
           storeName={storeName}
+          permissions={permissions}
           onNavigate={() => {}}
         />
       </div>
@@ -363,6 +386,7 @@ export default function AdminPage() {
             setActiveTab={setActiveTab} 
             sidebarOpen={true}
             storeName={storeName}
+            permissions={permissions}
             onNavigate={() => setSidebarOpen(false)}
           />
         </div>
@@ -386,7 +410,7 @@ export default function AdminPage() {
         </header>
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
-          {activeTab === 'productos' && (
+          {activeTab === 'productos' && permissions.catalog && (
             showProductForm ? (
               <ProductForm 
                 producto={editingProduct}
@@ -415,23 +439,23 @@ export default function AdminPage() {
             )
           )}
 
-          {activeTab === 'destacados' && (
+          {activeTab === 'destacados' && permissions.catalog && (
             <FeaturedProductsManagement />
           )}
 
-          {activeTab === 'categorias' && (
+          {activeTab === 'categorias' && permissions.catalog && (
             <CategoryManagement />
           )}
 
-          {activeTab === 'filtros' && (
+          {activeTab === 'filtros' && permissions.catalog && (
             <SpecialFiltersManagement />
           )}
 
-          {activeTab === 'home' && (
+          {activeTab === 'home' && permissions.catalog && (
             <HomepageManagement />
           )}
 
-          {activeTab === 'ventas' && (
+          {activeTab === 'ventas' && permissions.sales && (
             <OrderManagement />
           )}
 
@@ -443,7 +467,7 @@ export default function AdminPage() {
             <OperatorManagement />
           )}
 
-          {activeTab === 'deudas' && (
+          {activeTab === 'deudas' && permissions.adminSales && (
             <DebtManagement />
           )}
 
@@ -451,7 +475,7 @@ export default function AdminPage() {
             <ReviewsManagement />
           )}
 
-          {activeTab === 'configuracion' && (
+          {activeTab === 'configuracion' && permissions.config && (
             <ConfigurationPanel />
           )}
         </main>

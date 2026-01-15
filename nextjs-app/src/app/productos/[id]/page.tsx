@@ -55,7 +55,11 @@ export default function ProductDetailPage() {
       if (data && data.categoria_id) {
         const d = data as Producto
         const todos = await productosAPI.obtenerTodos()
-        setProductosRelacionados(todos.filter(p => p.categoria_id === d.categoria_id && p.id !== d.id).slice(0, 4))
+        setProductosRelacionados(
+          todos
+            .filter(p => p.categoria_id === d.categoria_id && p.id !== d.id && (p.stock_actual || 0) > 0)
+            .slice(0, 4)
+        )
       }
     } catch (error) {
       console.error('Error cargando producto:', error)

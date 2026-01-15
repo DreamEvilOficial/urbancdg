@@ -77,7 +77,6 @@ export async function POST(request: Request) {
         }
     }
     
-    // Mapear usuario para sesión
     const sessionUser = {
       id: user.id,
       email: user.email,
@@ -85,6 +84,10 @@ export async function POST(request: Request) {
       nombre: user.nombre,
       rol: user.rol,
       admin: user.rol === 'admin' || user.rol === 'superadmin' || !!user.admin,
+      permiso_categorias: !!user.permiso_categorias,
+      permiso_productos: !!user.permiso_productos,
+      permiso_configuracion: !!user.permiso_configuracion,
+      permiso_ordenes: !!user.permiso_ordenes,
     }
     
     const sessionPayload = {
