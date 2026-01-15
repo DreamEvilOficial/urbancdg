@@ -309,16 +309,20 @@ export default function OrderManagement() {
           <div className="bg-[#06070c] md:rounded-[40px] w-full max-w-4xl h-full md:h-auto md:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border-0 md:border border-white/10">
             {/* Header Modal */}
             <div className="p-6 md:p-8 border-b border-white/10 flex items-center justify-between flex-shrink-0 bg-white/[0.02]">
-               <div>
-                  <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
-                    <h2 className="font-display text-2xl md:text-3xl tracking-[0.06em] uppercase text-white">Orden #{selectedOrder.numero_orden}</h2>
-                    <span className={`self-start px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] ${resolveStatusPillClass(selectedOrder.estado)}`}>
-                      {selectedOrder.estado}
-                    </span>
-                  </div>
-                  <p className="text-white/45 font-bold mt-1 text-xs md:text-sm">{new Date(selectedOrder.created_at).toLocaleString('es-AR')}</p>
+               <div className="flex-1 flex flex-col items-center text-center gap-1">
+                 <div className="flex flex-col md:flex-row md:items-center md:justify-center gap-2 md:gap-3">
+                   <h2 className="font-display text-2xl md:text-3xl tracking-[0.06em] uppercase text-white">
+                     Orden #{selectedOrder.numero_orden}
+                   </h2>
+                   <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] ${resolveStatusPillClass(selectedOrder.estado)}`}>
+                     {selectedOrder.estado}
+                   </span>
+                 </div>
+                 <p className="text-white/45 font-bold text-xs md:text-sm">
+                   {new Date(selectedOrder.created_at).toLocaleString('es-AR')}
+                 </p>
                </div>
-               <button onClick={() => setShowModal(false)} className="w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/10 flex items-center justify-center hover:bg-accent hover:text-ink hover:border-accent/40 transition-all text-white/70">
+               <button onClick={() => setShowModal(false)} className="ml-4 w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/10 flex items-center justify-center hover:bg-accent hover:text-ink hover:border-accent/40 transition-all text-white/70">
                  <XCircle className="w-5 h-5 md:w-6 md:h-6" />
                </button>
             </div>

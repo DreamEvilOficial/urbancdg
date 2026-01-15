@@ -172,10 +172,16 @@ export default function ProductDetailPage() {
                       )}
                     </div>
                     <div className="flex items-baseline gap-3">
-                      <span className="text-3xl font-black tracking-tighter leading-none text-white">$<span suppressHydrationWarning>{producto.precio.toLocaleString()}</span></span>
+                      <span className="text-3xl font-black tracking-tighter leading-none text-white">
+                        $<span suppressHydrationWarning>
+                          { producto.precio.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                        </span>
+                      </span>
                       {producto.precio_original && discountPercent > 0 && (
                         <span className="text-lg font-bold text-white/30 line-through decoration-white/30">
-                          $<span suppressHydrationWarning>{producto.precio_original.toLocaleString()}</span>
+                          $<span suppressHydrationWarning>
+                            { producto.precio_original.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                          </span>
                         </span>
                       )}
                     </div>
@@ -183,11 +189,19 @@ export default function ProductDetailPage() {
                   <div className="space-y-3 pt-4 border-t border-white/10">
                     <div className="flex items-center justify-between">
                        <p className="text-[10px] font-black uppercase text-accent tracking-tight">Efectivo / Transf.</p>
-                       <span className="text-xl font-black text-accent">$<span suppressHydrationWarning>{precioTransferencia.toLocaleString()}</span></span>
+                       <span className="text-xl font-black text-accent">
+                         $<span suppressHydrationWarning>
+                           { precioTransferencia.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                         </span>
+                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                        <p className="text-[10px] font-black uppercase text-accent2 tracking-tight">6 cuotas fijas de</p>
-                       <span className="text-lg font-black text-accent2">$<span suppressHydrationWarning>{precioCuotas.toLocaleString()}</span></span>
+                       <span className="text-lg font-black text-accent2">
+                         $<span suppressHydrationWarning>
+                           { precioCuotas.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                         </span>
+                       </span>
                     </div>
                   </div>
                </div>

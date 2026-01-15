@@ -193,17 +193,31 @@ function ProductCard({ producto }: ProductCardProps) {
 
   const hasDiscount = productDiscount > 0
 
-  const formattedPrice = useMemo(() => productPrice.toLocaleString(), [productPrice])
+  const formattedPrice = useMemo(
+    () =>
+      productPrice.toLocaleString('es-AR', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }),
+    [productPrice]
+  )
   const formattedOriginalPrice = useMemo(
-    () => (productOriginalPrice ? productOriginalPrice.toLocaleString() : null),
+    () =>
+      productOriginalPrice
+        ? productOriginalPrice.toLocaleString('es-AR', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+          })
+        : null,
     [productOriginalPrice]
   )
   const transferPriceValue = useMemo(() => productPrice * 0.9, [productPrice])
   const transferPrice = useMemo(
-    () => transferPriceValue.toLocaleString(undefined, {
-      minimumFractionDigits: transferPriceValue % 1 === 0 ? 0 : 2,
-      maximumFractionDigits: 2
-    }),
+    () =>
+      transferPriceValue.toLocaleString('es-AR', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }),
     [transferPriceValue]
   )
 
@@ -348,9 +362,9 @@ function ProductCard({ producto }: ProductCardProps) {
             <div className="flex items-center gap-1 text-gray-400 text-[10px] md:text-xs whitespace-nowrap">
               <span className="opacity-80">6 cuotas sin interés de</span>
               <span className="font-bold text-white/90 underline decoration-gray-700 underline-offset-2">
-                $<span suppressHydrationWarning>{(productPrice / 6).toLocaleString(undefined, { 
-                  minimumFractionDigits: 2, 
-                  maximumFractionDigits: 2 
+                $<span suppressHydrationWarning>{(productPrice / 6).toLocaleString('es-AR', { 
+                  minimumFractionDigits: 0, 
+                  maximumFractionDigits: 0 
                 })}</span>
               </span>
             </div>

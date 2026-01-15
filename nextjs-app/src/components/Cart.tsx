@@ -180,7 +180,9 @@ export default function Cart({ onClose }: CartProps) {
                         )}
                         <div className="flex items-center justify-between mt-auto">
                           <div className="flex flex-col">
-                            <p className="text-white font-black text-sm md:text-base">${item.precio.toLocaleString()}</p>
+                            <p className="text-white font-black text-sm md:text-base">
+                              ${ item.precio.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                            </p>
                             {typeof item.stock === 'number' && item.stock <= 0 && (
                               <span className="text-[10px] font-bold text-red-500">Sin stock</span>
                             )}
@@ -188,7 +190,7 @@ export default function Cart({ onClose }: CartProps) {
                               <span className="text-[10px] font-bold text-amber-400">Stock insuficiente</span>
                             )}
                           </div>
-                          <span className="font-bold text-sm text-white/50">x{item.cantidad}</span>
+
                         </div>
                       </div>
                       <button
@@ -209,7 +211,11 @@ export default function Cart({ onClose }: CartProps) {
                     )}
                     <div className="mb-6">
                       <span className="block text-white/55 text-sm font-medium">Subtotal</span>
-                      <span className="block text-3xl font-black text-white tracking-tighter">$<span suppressHydrationWarning>{total().toLocaleString()}</span></span>
+                      <span className="block text-3xl font-black text-white tracking-tighter">
+                        $<span suppressHydrationWarning>
+                          { total().toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                        </span>
+                      </span>
                     </div>
                     <div className="space-y-3">
                       <button
@@ -266,7 +272,9 @@ export default function Cart({ onClose }: CartProps) {
                                 </div>
                               </div>
                               <p className="text-[11px] font-bold text-white truncate">{prod.nombre}</p>
-                              <p className="text-[10px] text-accent font-black">${prod.precio.toLocaleString()}</p>
+                              <p className="text-[10px] text-accent font-black">
+                                ${ prod.precio.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                              </p>
                             </div>
                           ))}
                         </div>

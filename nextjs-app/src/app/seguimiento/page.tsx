@@ -131,7 +131,9 @@ export default function OrderTrackingPage() {
 
                 <div className="flex justify-between text-sm">
                   <span className="text-white/50">Total</span>
-                  <span className="font-mono font-bold text-lg text-accent">${order.total?.toLocaleString()}</span>
+                  <span className="font-mono font-bold text-lg text-accent">
+                    ${ order.total?.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                  </span>
                 </div>
                 
                 {order.tracking_code && (

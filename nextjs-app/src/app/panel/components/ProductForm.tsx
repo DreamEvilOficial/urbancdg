@@ -266,7 +266,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                         value={formData.precio}
                         onChange={e => setFormData({...formData, precio: e.target.value})}
                         className="w-full bg-[#111] border border-white/5 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold placeholder:text-white/20 focus:bg-black focus:border-white text-white transition-all outline-none"
-                        placeholder="0.00"
+                        placeholder="0"
                         required={!formData.descuento_activo}
                       />
                     </div>
@@ -400,7 +400,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                               value={formData.precio_original}
                               onChange={e => setFormData({...formData, precio_original: e.target.value})}
                               className="w-full bg-black border border-white/10 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold text-white/70 focus:border-white transition-all outline-none"
-                              placeholder="0.00"
+                              placeholder="0"
                               required={formData.descuento_activo}
                             />
                           </div>
@@ -414,7 +414,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                               value={formData.precio}
                               onChange={e => setFormData({...formData, precio: e.target.value})}
                               className="w-full bg-pink-500/10 border border-pink-500/50 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold text-white focus:bg-pink-500/20 transition-all outline-none"
-                              placeholder="0.00"
+                              placeholder="0"
                               required={formData.descuento_activo}
                             />
                           </div>

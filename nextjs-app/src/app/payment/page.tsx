@@ -103,7 +103,7 @@ export default function PaymentPage() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white flex justify-center">
-      <div className="max-w-5xl w-full px-4 md:px-6 relative z-10 py-10 scale-[0.95] origin-top transition-transform">
+      <div className="max-w-5xl w-full px-4 md:px-6 relative z-10 py-10 scale-[1.25] origin-top transition-transform">
         <div className="pb-6 flex items-end justify-between">
           <div>
             <button onClick={() => router.back()} className="group flex items-center gap-2 text-gray-600 hover:text-white transition-all text-[10px] font-black uppercase tracking-[0.2em] mb-2">
@@ -162,12 +162,31 @@ export default function PaymentPage() {
             <div className="bg-white text-black p-6 rounded-[30px] shadow-2xl">
                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Total Final</h3>
                <div className="space-y-2 border-t border-black/5 pt-4">
-                  <div className="flex justify-between text-[9px] font-bold opacity-40 uppercase"><span>Subtotal</span><span>${total().toLocaleString()}</span></div>
-                  <div className="flex justify-between text-[9px] font-bold opacity-40 uppercase"><span>Envío</span><span>${deliveryData.shippingCost.toLocaleString()}</span></div>
-                  {isBank && <div className="flex justify-between text-[9px] font-black text-green-600 uppercase"><span>10% OFF</span><span>- ${discountAmount.toLocaleString()}</span></div>}
+                  <div className="flex justify-between text-[9px] font-bold opacity-40 uppercase">
+                    <span>Subtotal</span>
+                    <span>
+                      ${ total().toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-[9px] font-bold opacity-40 uppercase">
+                    <span>Envío</span>
+                    <span>
+                      ${ deliveryData.shippingCost.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                    </span>
+                  </div>
+                  {isBank && (
+                    <div className="flex justify-between text-[9px] font-black text-green-600 uppercase">
+                      <span>10% OFF</span>
+                      <span>
+                        - ${ discountAmount.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-end pt-2 border-t border-black/5 mt-2">
                     <span className="font-black text-sm uppercase">Total</span>
-                    <span className="text-4xl font-black tracking-tighter leading-none">${payableTotal.toLocaleString()}</span>
+                    <span className="text-4xl font-black tracking-tighter leading-none">
+                      ${ payableTotal.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                    </span>
                   </div>
                </div>
             </div>

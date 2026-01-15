@@ -244,7 +244,7 @@ export default function DebtManagement() {
     }
 
     const timing = getDebtTiming(client)
-    const message = `Hola ${client.cliente_nombre}, te recordamos que tenés un saldo pendiente de $${client.total_deuda.toLocaleString()} en tu cuenta de Urban CDG. Próximo vencimiento: ${timing.nextDueDate.toLocaleDateString()}.`
+    const message = `Hola ${client.cliente_nombre}, te recordamos que tenés un saldo pendiente de $${client.total_deuda.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} en tu cuenta de Urban CDG. Próximo vencimiento: ${timing.nextDueDate.toLocaleDateString()}.`
 
     const phone = client.cliente_celular.replace(/[^0-9]/g, '')
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
@@ -351,7 +351,7 @@ export default function DebtManagement() {
                              <div className="text-right">
                                 <p className="text-[10px] uppercase font-black tracking-widest text-white/30 mb-1">Saldo Actual</p>
                                 <p className={`text-2xl font-black tracking-tighter ${client.total_deuda > 0 ? 'text-red-400' : 'text-green-400'}`}>
-                                   ${client.total_deuda.toLocaleString()}
+                                   ${client.total_deuda.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                                 </p>
                              </div>
                           {expandedId === client.id ? <ChevronUp className="w-5 h-5 text-white/30" /> : <ChevronDown className="w-5 h-5 text-white/30" />}
@@ -539,7 +539,7 @@ export default function DebtManagement() {
                                       <p className="text-sm font-medium text-white truncate">{h.producto || '—'}</p>
                                       <p className="text-[10px] text-white/40">{new Date(h.fecha).toLocaleString()}</p>
                                       <span className={`font-mono font-bold ${h.tipo === 'deuda' ? 'text-red-400' : 'text-green-400'}`}>
-                                        {h.tipo === 'deuda' ? '+' : '-'}${Number(h.monto).toLocaleString()}
+                                        {h.tipo === 'deuda' ? '+' : '-'}${Number(h.monto).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                                       </span>
                                       <p className="text-[12px] text-white/70 truncate">{h.descripcion || 'Sin descripción'}</p>
                                     </div>

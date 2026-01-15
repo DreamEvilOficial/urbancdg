@@ -103,7 +103,9 @@ export default function CartPage() {
                           <span className="text-xs font-black min-w-[1.5rem] text-center">{item.cantidad}</span>
                           <button onClick={() => handleQuantityChange(item.id, item.cantidad + 1)} className="w-7 h-7 flex items-center justify-center hover:bg-white/[0.05] rounded-lg transition-colors"><Plus className="w-3.5 h-3.5" /></button>
                         </div>
-                        <p className="text-lg font-black tracking-tighter">${(item.precio * item.cantidad).toLocaleString()}</p>
+                        <p className="text-lg font-black tracking-tighter">
+                          ${ (item.precio * item.cantidad).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -122,7 +124,9 @@ export default function CartPage() {
                   <div className="space-y-4 mb-8">
                     <div className="flex justify-between text-sm">
                       <span className="font-bold opacity-60 uppercase text-[10px] tracking-widest text-white/60">Subtotal</span>
-                      <span className="font-black">${total().toLocaleString()}</span>
+                      <span className="font-black">
+                        ${ total().toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="font-bold opacity-60 uppercase text-[10px] tracking-widest text-white/60">Envío</span>
@@ -131,7 +135,11 @@ export default function CartPage() {
                     <div className="h-[1px] bg-white/10 my-4" />
                     <div className="flex justify-between items-end">
                       <span className="font-black uppercase tracking-tighter text-xl leading-none">Total</span>
-                      <span className="text-5xl font-black tracking-tighter leading-none">$<span suppressHydrationWarning>{total().toLocaleString()}</span></span>
+                      <span className="text-5xl font-black tracking-tighter leading-none">
+                        $<span suppressHydrationWarning>
+                          { total().toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                        </span>
+                      </span>
                     </div>
                   </div>
 
@@ -149,7 +157,7 @@ export default function CartPage() {
                     <Info className="w-4 h-4 text-accent2" />
                   </div>
                   <p className="text-[10px] font-bold text-gray-500 leading-relaxed uppercase tracking-widest">
-                    Envío gratuito en compras superiores a <span className="text-white">$50.000</span>
+                    Envío gratuito en compras superiores a <span className="text-white">$50.000 ARS</span>
                   </p>
                </div>
             </div>

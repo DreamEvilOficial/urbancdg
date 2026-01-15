@@ -82,7 +82,7 @@ export default function TransferPayment({ orderTotal, orderItems, orderId, order
       const attrs = [item.talle ? `Talle: ${item.talle}` : null, item.color ? `Color: ${item.color}` : null]
         .filter(Boolean)
         .join(' ')
-      return `• ${item.nombre} ${attrs ? '(' + attrs + ')' : ''} x${item.cantidad} - $${(item.precio * item.cantidad).toLocaleString()}`
+      return `• ${item.nombre} ${attrs ? '(' + attrs + ')' : ''} x${item.cantidad} - $${(item.precio * item.cantidad).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
     }).join('\n')
 
     const nombre = customer?.nombre || ''
@@ -95,7 +95,7 @@ ${orderNumber ? `# ${orderNumber}\n` : ''}
 📦 *Productos:*
 ${orderDetails}
 
-💰 *Total: $${orderTotal.toLocaleString()}*
+💰 *Total: $${orderTotal.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}*
 
 📋 Adjunto comprobante de transferencia y orden de compra
 
@@ -185,7 +185,9 @@ ${config.mensaje_transferencia || ''}
             <div className="bg-white text-black p-6 rounded-3xl flex items-center justify-between shadow-2xl">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Monto a transferir</p>
-                <p className="text-3xl font-black tracking-tighter">${orderTotal.toLocaleString()}</p>
+                <p className="text-3xl font-black tracking-tighter">
+                  ${ orderTotal.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                </p>
               </div>
               <div className="text-right">
                 <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Descuento aplicado</p>

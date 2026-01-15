@@ -202,9 +202,13 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
                        <div>
                           <p className="text-[9px] font-black text-white/35 uppercase tracking-wider mb-0.5">Precio</p>
                           <div className="flex items-baseline gap-2">
-                            <span className="text-lg font-black text-white">${producto.precio.toLocaleString()}</span>
+                            <span className="text-lg font-black text-white">
+                              ${ producto.precio.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                            </span>
                             {producto.precio_original && (
-                              <span className="text-xs text-white/35 line-through font-bold">${producto.precio_original.toLocaleString()}</span>
+                              <span className="text-xs text-white/35 line-through font-bold">
+                                ${ producto.precio_original.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                              </span>
                             )}
                           </div>
                        </div>
@@ -291,9 +295,13 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
                     </td>
                     <td className="px-4 py-4 md:px-8 md:py-5 whitespace-nowrap">
                       <div className="flex flex-col">
-                        <span className="text-sm font-black text-white">${producto.precio.toLocaleString()}</span>
+                        <span className="text-sm font-black text-white">
+                          ${ producto.precio.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                        </span>
                         {producto.precio_original && (
-                          <span className="text-[10px] text-white/35 line-through font-bold">${producto.precio_original.toLocaleString()}</span>
+                          <span className="text-[10px] text-white/35 line-through font-bold">
+                            ${ producto.precio_original.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }
+                          </span>
                         )}
                       </div>
                     </td>

@@ -446,7 +446,7 @@ export default function FeaturedProductsManagement() {
                                             }
                                         }}
                                         className="w-full bg-black border border-white/10 pl-10 pr-4 py-4 rounded-2xl text-sm font-bold text-white focus:border-pink-500 transition-all outline-none"
-                                        placeholder="0.00"
+                                        placeholder="0"
                                     />
                                 </div>
                             </div>
@@ -461,7 +461,7 @@ export default function FeaturedProductsManagement() {
                                             value={tempPrices.current}
                                             onChange={e => updateDiscountFromPrice(Number(e.target.value))}
                                             className="w-full bg-black border border-white/10 pl-10 pr-4 py-4 rounded-2xl text-sm font-bold text-white focus:border-pink-500 transition-all outline-none"
-                                            placeholder="0.00"
+                                            placeholder="0"
                                         />
                                     </div>
                                 </div>
