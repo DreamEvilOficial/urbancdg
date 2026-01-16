@@ -1,176 +1,255 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Copy, Check, Instagram } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Copy, Check, AlertTriangle, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useCartStore } from '@/store/cartStore'
-import { formatPrice } from '@/lib/formatters'
 
 interface TransferPaymentProps {
   orderTotal: number
-  orderItems: any[]
+  orderItems?: any[]
   orderId?: string
   orderNumber?: string
   customer?: { nombre?: string; apellido?: string }
   onClose: () => void
 }
 
-interface PaymentConfig {
-  cvu: string
-  alias: string
-  titular: string
-  banco: string
-  whatsapp: string
-  mensaje_transferencia: string
-  instagram?: string
-}
-
-export default function TransferPayment({ orderTotal, orderItems, orderId, orderNumber, customer, onClose }: TransferPaymentProps) {
-  const [mounted, setMounted] = useState(false)
-  const [config, setConfig] = useState<PaymentConfig | null>(null)
-  const [copied, setCopied] = useState<{ [key: string]: boolean }>({})
+export default function TransferPayment({ orderId, orderNumber, onClose }: TransferPaymentProps) {
   const [loading, setLoading] = useState(true)
+  const [config, setConfig] = useState<any>(null)
+  const [copied, setCopied] = useState<{ [key: string]: boolean }>({})
+  const [remainingTime, setRemainingTime] = useState<string>('Loading...')
+  const [uniqueAmount, setUniqueAmount] = useState<number | null>(null)
+  const [expiration, setExpiration] = useState<Date | null>(null)
+  const [checking, setChecking] = useState(false)
 
+  // 1. Initialize Transfer
   useEffect(() => {
-    setMounted(true)
-    cargarConfiguracion()
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = 'unset'
+    async function initTransfer() {
+      if (!orderId) {
+          // If no orderId (maybe preview mode?), just show loading or error
+          return
+      }
+      try {
+        const res = await fetch('/api/transfer/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId })
+        })
+        if (!res.ok) {
+            const err = await res.json()
+            throw new Error(err.error || 'Error iniciando transferencia')
+        }
+        const data = await res.json()
+        setConfig(data)
+        setUniqueAmount(Number(data.amount))
+        setExpiration(new Date(data.expiration))
+        setLoading(false)
+      } catch (error: any) {
+        console.error(error)
+        toast.error('Error al generar datos de transferencia')
+        // onClose() // Don't close immediately, let user see error or try again?
+      }
     }
-  }, [])
+    initTransfer()
+  }, [orderId])
 
-  async function cargarConfiguracion() {
-    try {
-      const res = await fetch('/api/config')
-      const tiendaConfig = await res.json()
-      
-      setConfig({
-        cvu: tiendaConfig.cvu || '',
-        alias: tiendaConfig.alias || '',
-        titular: tiendaConfig.titular_cuenta || tiendaConfig.nombre_tienda || 'Tienda',
-        banco: tiendaConfig.banco || 'Mercado Pago',
-        whatsapp: tiendaConfig.whatsapp_comprobante || tiendaConfig.whatsapp || tiendaConfig.telefono || '',
-        mensaje_transferencia: 'Gracias por tu compra. Confirmaremos tu pedido al recibir el pago.',
-        instagram: tiendaConfig.instagram || '@urban.cdg'
-      })
-    } catch (error) {
-      console.error('Error al cargar configuración:', error)
-      toast.error('Error al cargar datos de transferencia')
-    } finally {
-      setLoading(false)
+  // 2. Poll for payment
+  useEffect(() => {
+    if (!orderId || !uniqueAmount) return
+
+    const checkPayment = async () => {
+        try {
+            const res = await fetch('/api/transfer/check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId })
+            })
+            const data = await res.json()
+            if (data.paid) {
+                toast.success('¡Pago recibido!')
+                handleSuccess()
+            }
+        } catch (e) {
+            // silent fail
+        }
     }
-  }
+
+    const interval = setInterval(checkPayment, 5000)
+    return () => clearInterval(interval)
+  }, [orderId, uniqueAmount])
+
+  // 3. Timer
+  useEffect(() => {
+    if (!expiration) return
+    const update = () => {
+        const now = new Date().getTime()
+        const exp = expiration.getTime()
+        const diff = exp - now
+        
+        if (diff <= 0) {
+            setRemainingTime('EXPIRADO')
+        } else {
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+            setRemainingTime(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`)
+        }
+    }
+    const interval = setInterval(update, 1000)
+    update()
+    return () => clearInterval(interval)
+  }, [expiration])
 
   const copyToClipboard = async (text: string, field: string) => {
     try {
       await navigator.clipboard.writeText(text)
       setCopied({ ...copied, [field]: true })
+      toast.success(`${field.toUpperCase()} copiado`)
       setTimeout(() => {
         setCopied({ ...copied, [field]: false })
       }, 2000)
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
-  const handleFinish = () => {
+  const handleSuccess = () => {
     const cartStore = (window as any).cartStore || useCartStore.getState()
-    if (cartStore && cartStore.clearCart) {
-      cartStore.clearCart()
-    }
-    onClose()
+    if (cartStore && cartStore.clearCart) cartStore.clearCart()
+    
+    // Clear storage
+    try {
+        window.localStorage.removeItem('paymentOrder')
+        window.localStorage.removeItem('deliveryData')
+    } catch {}
+
     window.location.href = `/success?orden=${orderId || orderNumber || ''}`
   }
-
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose()
+  
+  const manualCheck = async () => {
+    setChecking(true)
+    try {
+        const res = await fetch('/api/transfer/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId })
+        })
+        const data = await res.json()
+        if (data.paid) {
+            toast.success('¡Pago confirmado!')
+            handleSuccess()
+        } else {
+            const msg = data.status === 'pending' ? 'Pago no detectado aún' : 'Estado: ' + data.status
+            toast(msg, { icon: '⏳' })
+        }
+    } catch {
+        toast.error('Error al verificar')
+    } finally {
+        setChecking(false)
     }
   }
 
-  if (loading || !config) {
+  const cancelTransaction = () => {
+     onClose();
+  }
+
+  if (loading) {
     return (
-      <div className="modal-overlay">
-        <div className="modal-content glass-card flex items-center justify-center p-12">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-8 h-8 border-4 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-white/50 text-xs font-bold uppercase tracking-widest">Cargando datos...</p>
-          </div>
+      <div className="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4">
+        <div className="glass-card flex flex-col items-center gap-4 p-8">
+            <Loader2 className="w-8 h-8 text-pink-500 animate-spin" />
+            <p className="text-white text-xs font-bold uppercase tracking-widest">Generando datos de transferencia...</p>
         </div>
       </div>
     )
   }
 
-  const instagramHandle = (config.instagram || '@urban.cdg').toUpperCase()
+  if (!config) {
+      return null;
+  }
 
   return (
-    <div className="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4" onClick={handleOverlayClick}>
-      <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '550px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
-        <div className="p-6 md:p-8">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white">
-                Pago por <span className="text-pink-500">Transferencia</span>
-              </h2>
-              <p className="text-white/40 text-xs font-bold uppercase tracking-widest mt-1">#{orderNumber}</p>
-            </div>
-            <button onClick={onClose} className="text-white/20 hover:text-white transition-colors">✕</button>
+    <div className="fixed inset-0 z-[10000] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4">
+       <div className="glass-card w-full max-w-[500px] relative overflow-hidden flex flex-col max-h-[90vh]">
+          {/* Header */}
+          <div className="p-6 pb-2 text-center">
+             <div className="w-16 h-16 mx-auto bg-blue-500/10 rounded-full flex items-center justify-center mb-4 border border-blue-500/20">
+                <span className="text-3xl font-black text-blue-400">i</span>
+             </div>
+             <h2 className="text-xl md:text-2xl font-black text-white uppercase italic tracking-tight">¡Transferencia Pendiente!</h2>
+             <p className="text-gray-400 text-xs font-bold mt-2 leading-relaxed">
+                Por favor, realiza tu transferencia bancaria al siguiente CBU para completar tu compra:
+             </p>
           </div>
 
-          <div className="space-y-6">
-            <div className="grid gap-3">
-              {[
-                { label: 'Alias', value: config.alias, copyable: true },
-                { label: 'CVU', value: config.cvu, copyable: true },
-                { label: 'Titular', value: config.titular },
-                { label: 'Banco', value: config.banco },
-              ].map((item, i) => item.value && (
-                <div key={i} className="bg-white/[0.03] border border-white/10 p-4 rounded-2xl flex items-center justify-between group hover:border-white/20 transition-all">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-1">{item.label}</p>
-                    <p className="font-bold text-white tracking-wide">{item.value}</p>
-                  </div>
-                  {item.copyable && (
-                    <button 
-                      onClick={() => copyToClipboard(item.value, item.label.toLowerCase())}
-                      className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-white text-white hover:text-black transition-all"
-                    >
-                      {copied[item.label.toLowerCase()] ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    </button>
-                  )}
+          <div className="px-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+             {/* CBU Box */}
+             <div className="bg-white rounded-2xl p-4 text-center shadow-xl border border-blue-500/30 relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-full h-1 bg-blue-500"></div>
+                <p className="text-blue-600 text-[10px] font-black uppercase tracking-[0.2em] mb-1">CBU</p>
+                <div 
+                    onClick={() => copyToClipboard(config.cbu, 'CBU')}
+                    className="text-lg md:text-2xl font-black text-gray-900 tracking-wider cursor-pointer hover:scale-105 transition-transform select-all break-all"
+                >
+                    {config.cbu}
                 </div>
-              ))}
-            </div>
+                <p className="text-gray-500 text-[10px] font-bold mt-1 uppercase">{config.titular}</p>
+                <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Copy className="w-4 h-4 text-gray-400" />
+                </div>
+             </div>
 
-            <div className="bg-white text-black p-6 rounded-3xl flex items-center justify-between shadow-2xl">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Monto a transferir</p>
-                <p className="text-3xl font-black tracking-tighter">
-                  ${ formatPrice(orderTotal) }
+             {/* Amount Box */}
+             <div className="bg-[#E8F5E9] rounded-2xl p-4 text-center shadow-xl border border-green-500/30 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-green-500 px-4"></div>
+                <p className="text-green-700 text-[10px] font-black uppercase tracking-[0.2em] mb-1">MONTO EXACTO:</p>
+                <div 
+                    onClick={() => copyToClipboard(String(uniqueAmount), 'Monto')}
+                    className="text-3xl font-black text-green-600 tracking-tighter cursor-pointer hover:scale-105 transition-transform"
+                >
+                    ${ uniqueAmount?.toLocaleString('es-AR', { minimumFractionDigits: 2 }) } ARS
+                </div>
+             </div>
+
+             <div className="text-center">
+                <p className="text-gray-500 text-xs font-bold">
+                    Quedan <span className="text-red-500 font-black text-base mx-1">{remainingTime}</span> minutos para completar la transferencia.
                 </p>
-              </div>
-              <div className="text-right">
-                <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Descuento aplicado</p>
-                <p className="text-xs font-black text-green-600">10% OFF EXTRA</p>
-              </div>
-            </div>
+             </div>
+             
+             <div className="border-t border-dashed border-white/10 my-4"></div>
 
-            <div className="space-y-3 pt-2">
-              <div className="w-full bg-[#25D366]/10 text-white/70 py-4 px-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 border border-[#25D366]/30">
-                <Instagram className="w-5 h-5 text-pink-500" />
-                <span>ENVIAR COMPROBANTE AL INSTAGRAM {instagramHandle}</span>
-              </div>
-              
-              <button
-                onClick={handleFinish}
-                className="w-full bg-white/5 text-white/50 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-white hover:text-black transition-all"
-              >
-                YA REALICÉ EL PAGO
-              </button>
-            </div>
+             {/* Important Warning */}
+             <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex gap-3 text-left">
+                <AlertTriangle className="w-10 h-10 text-red-500 shrink-0" />
+                <div>
+                    <h4 className="text-red-500 font-black uppercase text-xs mb-1">¡IMPORTANTE!</h4>
+                    <p className="text-gray-300 text-[10px] font-bold leading-relaxed">
+                        Para que el pedido se active automáticamente, debes enviar 
+                        el <span className="text-white underline">monto exacto</span>, con los centavos incluidos.
+                        Si no coincide, la compra no se procesará.
+                    </p>
+                </div>
+             </div>
           </div>
-        </div>
-      </div>
+
+          <div className="p-6 bg-black/20 mt-auto space-y-3">
+             <div className="flex justify-center mb-2 h-5">
+                 <Loader2 className="w-5 h-5 text-white/20 animate-spin" />
+             </div>
+             <button 
+                onClick={manualCheck}
+                disabled={checking}
+                className="w-full bg-white text-black py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-200 transition-all"
+             >
+                {checking ? 'Verificando...' : 'Ya transferí'}
+             </button>
+             <button 
+                onClick={cancelTransaction}
+                className="w-full text-white/30 text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors"
+             >
+                Cancelar Transacción
+             </button>
+          </div>
+       </div>
     </div>
   )
 }

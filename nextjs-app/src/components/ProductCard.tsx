@@ -131,13 +131,13 @@ function ProductCard({ producto }: ProductCardProps) {
   // Obtener talles únicos disponibles
   const availableSizes = useMemo(() => {
     if (!hasVariants) return []
-    return Array.from(new Set(variantes.map(v => v.talle))).filter(Boolean)
+    return Array.from(new Set(variantes.filter((v: any) => (v?.stock || 0) > 0).map((v: any) => v.talle))).filter(Boolean)
   }, [variantes, hasVariants])
 
   // Obtener todos los colores únicos
   const allColors = useMemo(() => {
     if (!hasVariants) return []
-    return Array.from(new Set(variantes.map(v => v.color))).filter(Boolean)
+    return Array.from(new Set(variantes.filter((v: any) => (v?.stock || 0) > 0).map((v: any) => v.color))).filter(Boolean)
   }, [variantes, hasVariants])
 
 

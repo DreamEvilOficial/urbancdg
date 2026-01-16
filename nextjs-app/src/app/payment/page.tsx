@@ -40,37 +40,52 @@ export default function PaymentPage() {
     if (savedDeliveryData) setDeliveryData(JSON.parse(savedDeliveryData))
     else router.push('/checkout')
 
+    const savedOrder = localStorage.getItem('paymentOrder')
+    if (savedOrder) {
+      try {
+        const parsed = JSON.parse(savedOrder)
+        setCreatedOrder(parsed)
+      } catch {}
+    } else {
+        // Si no hay orden, volver al checkout para crearla
+        router.push('/checkout')
+    }
+
     if (items.length === 0) router.push('/cart')
   }, [items.length, router])
 
   const handlePayment = async () => {
-    if (!deliveryData) return
+    if (!deliveryData || !createdOrder) {
+      toast.error('Error: No se encontró la orden')
+      return
+    }
     setLoading(true)
     try {
       const dummyEmail = config.email || 'cliente@tienda.com'
-      const numeroOrden = `orden-${Math.floor(10000 + Math.random() * 89999)}`
-      const direccionCompleta = deliveryData.deliveryMethod === 'shipping' 
-        ? `${deliveryData.formData.direccion} ${deliveryData.formData.numero}, ${deliveryData.formData.ciudad}`
-        : 'Retiro en Local'
-      
-      const orden = await ordenesAPI.crear({
-        numero_orden: numeroOrden,
-        cliente_nombre: `${deliveryData.formData.nombre} ${deliveryData.formData.apellido}`,
-        cliente_email: dummyEmail,
-        cliente_telefono: deliveryData.formData.telefono,
-        cliente_dni: deliveryData.formData.dniCuit,
-        direccion_envio: direccionCompleta,
-        envio: deliveryData.shippingCost,
-        subtotal: total(),
-        descuento: discountAmount,
-        total: payableTotal,
-        estado: 'pendiente',
-        metodo_pago: paymentMethod,
-        notas: `Nota: ${orderNote}`,
-        items: items // Fix: Send items to API
+
+      // Actualizar la orden existente con el método de pago seleccionado
+      await fetch('/api/orders', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: createdOrder.id,
+          metodo_pago: paymentMethod,
+          descuento: discountAmount,
+          total: payableTotal,
+          notas: `Nota: ${orderNote}`
+        })
       })
-      
-      setCreatedOrder(orden)
+
+      // Actualizar estado local
+      const updatedOrder = { 
+        ...createdOrder, 
+        metodo_pago: paymentMethod, 
+        descuento: discountAmount, 
+        total: payableTotal,
+        notas: `Nota: ${orderNote}`
+      }
+      setCreatedOrder(updatedOrder)
+      localStorage.setItem('paymentOrder', JSON.stringify(updatedOrder))
 
       if (paymentMethod === 'transferencia') {
         setShowTransferModal(true)
@@ -80,7 +95,7 @@ export default function PaymentPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             items: items.map(i => ({ 
-              id: i.id, // Incluir ID para validación en el servidor
+              id: i.id,
               title: i.nombre, 
               unit_price: i.precio, 
               quantity: i.cantidad,
@@ -88,7 +103,7 @@ export default function PaymentPage() {
               color: i.color
             })),
             shippingCost: deliveryData.shippingCost || 0,
-            ordenId: orden.id,
+            ordenId: createdOrder.id,
             payer: { email: dummyEmail, name: deliveryData.formData.nombre }
           })
         })

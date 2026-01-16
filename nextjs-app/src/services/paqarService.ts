@@ -22,6 +22,8 @@ export interface PaqarLabelData {
     localidad: string
     provincia: string
     cp: string
+    floor?: string
+    department?: string
   }
   package: {
     peso: number // kg
@@ -332,114 +334,272 @@ export const paqarService = {
 
   // Helper to generate the Label HTML for printing
   generateLabelHtml(data: PaqarLabelData): string {
+    const today = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    
     return `
+      <!DOCTYPE html>
       <html>
         <head>
           <title>Etiqueta Paq.ar - ${data.trackingNumber}</title>
+          <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
           <style>
-            body { font-family: 'Arial', sans-serif; padding: 0; margin: 0; }
+            @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap');
+            
+            body { 
+              font-family: 'Roboto', 'Arial', sans-serif; 
+              margin: 0; 
+              padding: 0; 
+              background-color: #f0f0f0;
+              -webkit-print-color-adjust: exact; 
+              print-color-adjust: exact;
+            }
+
+            .page-container {
+              display: flex;
+              justify-content: center;
+              padding: 20px;
+            }
+
             .label-page { 
               width: 100mm; 
               height: 150mm; 
-              border: 1px dashed #000; 
-              margin: 20px auto; 
-              padding: 15px;
+              background: white;
+              border: 1px solid #ddd;
+              padding: 5mm;
               box-sizing: border-box;
               position: relative;
+              display: flex;
+              flex-direction: column;
             }
-            .header { 
-              display: flex; 
-              justify-content: space-between; 
-              align-items: center; 
+
+            @media print {
+              body { background: white; }
+              .page-container { padding: 0; display: block; }
+              .label-page { 
+                border: none; 
+                width: 100mm; 
+                height: 150mm;
+                margin: 0;
+                page-break-after: always;
+              }
+              @page {
+                size: 100mm 150mm;
+                margin: 0;
+              }
+            }
+
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
               border-bottom: 2px solid #000;
               padding-bottom: 10px;
               margin-bottom: 10px;
             }
-            .logo { font-weight: 900; font-size: 24px; font-style: italic; color: #004b8d; }
-            .service-type { font-size: 32px; font-weight: bold; border: 2px solid #000; padding: 2px 10px; }
-            
-            .row { display: flex; margin-bottom: 10px; }
-            .col { flex: 1; }
-            
-            .box { 
-              border: 1px solid #000; 
-              padding: 5px; 
-              min-height: 80px;
-              margin-bottom: 5px;
+
+            .logo-text {
+              font-family: 'Arial', sans-serif;
+              font-style: italic;
+              font-weight: 900;
+              font-size: 20px;
+              color: #004b8d;
+              text-transform: uppercase;
+              letter-spacing: -0.5px;
             }
-            .box-title { font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
-            .box-content { font-size: 12px; line-height: 1.4; }
-            .bold { font-weight: bold; }
+            .logo-sub {
+              font-size: 10px;
+              color: #004b8d;
+              font-weight: bold;
+              margin-top: -2px;
+            }
+
+            .service-box {
+              border: 3px solid #000;
+              padding: 5px 15px;
+              font-size: 32px;
+              font-weight: 900;
+              text-align: center;
+              line-height: 1;
+              border-radius: 4px;
+            }
+
+            .section {
+              border: 1px solid #000;
+              border-radius: 4px;
+              padding: 8px;
+              margin-bottom: 8px;
+              position: relative;
+            }
+
+            .section-title {
+              font-size: 9px;
+              font-weight: bold;
+              text-transform: uppercase;
+              color: #666;
+              margin-bottom: 4px;
+              letter-spacing: 0.5px;
+            }
+
+            .content-lg {
+              font-size: 14px;
+              font-weight: bold;
+              line-height: 1.3;
+              text-transform: uppercase;
+            }
             
-            .barcode-area { 
-              text-align: center; 
-              margin-top: 20px; 
-              border-top: 2px solid #000;
+            .content-md {
+              font-size: 12px;
+              line-height: 1.3;
+              text-transform: uppercase;
+            }
+
+            .content-sm {
+              font-size: 10px;
+              line-height: 1.2;
+              color: #333;
+            }
+
+            .grid-2 {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 8px;
+            }
+
+            .barcode-container {
+              margin-top: auto;
+              text-align: center;
               padding-top: 10px;
+              border-top: 2px dashed #ccc;
             }
-            .barcode-lines { 
-              height: 60px; 
-              background: repeating-linear-gradient(to right, #000, #000 2px, #fff 2px, #fff 5px);
-              width: 90%;
-              margin: 0 auto 5px auto;
-            }
-            .tracking-code { font-size: 14px; font-weight: bold; letter-spacing: 2px; }
             
-            .footer { font-size: 9px; text-align: center; margin-top: 10px; }
+            svg#barcode {
+              width: 100%;
+              max-height: 80px;
+            }
+
+            .footer-info {
+              display: flex;
+              justify-content: space-between;
+              font-size: 8px;
+              margin-top: 5px;
+              color: #555;
+            }
+
+            .qr-placeholder {
+              position: absolute;
+              right: 8px;
+              top: 8px;
+              width: 50px;
+              height: 50px;
+            }
           </style>
         </head>
         <body>
-          <div class="label-page">
-            <div class="header">
-              <div class="logo">Correo Argentino</div>
-              <div class="service-type">${data.productType}</div>
-            </div>
-            
-            <div class="box">
-              <div class="box-title">DESTINATARIO</div>
-              <div class="box-content">
-                <span class="bold">${data.receiver.nombre}</span><br>
-                ${data.receiver.calle} ${data.receiver.numero}<br>
-                ${data.receiver.localidad} (${data.receiver.cp})<br>
-                ${data.receiver.provincia}
+          <div class="page-container">
+            <div class="label-page">
+              
+              <!-- Header -->
+              <div class="header">
+                <div>
+                  <div class="logo-text">Correo Argentino</div>
+                  <div class="logo-text" style="font-size: 16px; color: #000;">Paq.ar</div>
+                </div>
+                <div class="service-box">
+                  ${data.productType}
+                </div>
               </div>
-            </div>
 
-            <div class="box" style="min-height: 60px;">
-              <div class="box-title">REMITENTE</div>
-              <div class="box-content">
-                <span class="bold">${data.sender.nombre}</span><br>
-                ${data.sender.calle} ${data.sender.numero}<br>
-                ${data.sender.localidad} (${data.sender.cp})
+              <!-- Destinatario -->
+              <div class="section" style="flex-grow: 1; min-height: 120px;">
+                <div class="section-title">DESTINATARIO / RECEIVER</div>
+                
+                <div class="content-lg" style="font-size: 18px; margin-bottom: 5px;">
+                  ${data.receiver.nombre}
+                </div>
+                
+                <div class="content-md">
+                  ${data.receiver.calle} ${data.receiver.numero}
+                  ${data.receiver.floor ? 'Piso ' + data.receiver.floor : ''} 
+                  ${data.receiver.department ? 'Dpto ' + data.receiver.department : ''}
+                </div>
+                
+                <div class="content-lg" style="margin-top: 5px;">
+                  ${data.receiver.localidad}
+                </div>
+                
+                <div class="content-md">
+                  ${data.receiver.provincia}
+                </div>
+
+                <div style="font-size: 24px; font-weight: 900; margin-top: 10px; text-align: right;">
+                  CP ${data.receiver.cp}
+                </div>
+                
+                <div id="qrcode" class="qr-placeholder"></div>
               </div>
-            </div>
 
-            <div class="row">
-              <div class="col" style="margin-right: 5px;">
-                 <div class="box" style="min-height: 40px;">
-                    <div class="box-title">PESO (KG)</div>
-                    <div class="box-content bold" style="font-size: 16px;">${data.package.peso}</div>
-                 </div>
+              <!-- Remitente -->
+              <div class="section">
+                <div class="section-title">REMITENTE / SENDER</div>
+                <div class="content-sm">
+                  <b>${data.sender.nombre}</b><br>
+                  ${data.sender.calle} ${data.sender.numero}, ${data.sender.localidad} (${data.sender.cp})<br>
+                  ${data.sender.provincia}
+                </div>
               </div>
-              <div class="col">
-                 <div class="box" style="min-height: 40px;">
-                    <div class="box-title">PEDIDO</div>
-                    <div class="box-content bold">${data.trackingNumber.substring(0,8)}</div>
-                 </div>
+
+              <!-- Info Grid -->
+              <div class="grid-2">
+                <div class="section">
+                  <div class="section-title">PESO / WEIGHT</div>
+                  <div class="content-lg">${data.package.peso} KG</div>
+                </div>
+                <div class="section">
+                  <div class="section-title">PEDIDO / REF</div>
+                  <div class="content-lg" style="font-size: 12px; overflow: hidden; white-space: nowrap;">
+                    ${data.trackingNumber}
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div class="barcode-area">
-              <div class="barcode-lines"></div>
-              <div class="tracking-code">${data.trackingNumber}</div>
-            </div>
+              <!-- Barcode -->
+              <div class="barcode-container">
+                <svg id="barcode"></svg>
+                <div class="footer-info">
+                  <span>Impreso: ${today}</span>
+                  <span>Urban CDG e-Logistics</span>
+                </div>
+              </div>
 
-            <div class="footer">
-              PAQ.AR - Powered by Urban CDG<br>
-              ${new Date().toLocaleString()}
             </div>
           </div>
-          <script>window.onload = function() { window.print(); }</script>
+
+          <script>
+            window.onload = function() {
+              // Generate Barcode
+              JsBarcode("#barcode", "${data.trackingNumber}", {
+                format: "CODE128",
+                width: 2.5,
+                height: 70,
+                displayValue: true,
+                fontSize: 16,
+                marginTop: 10,
+                marginBottom: 10
+              });
+
+              // Generate QR (Optional, showing destination CP or Tracking URL)
+              new QRCode(document.getElementById("qrcode"), {
+                text: "${data.trackingNumber}",
+                width: 50,
+                height: 50
+              });
+
+              setTimeout(function() {
+                window.print();
+              }, 500);
+            }
+          </script>
         </body>
       </html>
     `

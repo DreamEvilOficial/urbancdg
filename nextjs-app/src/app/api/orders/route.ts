@@ -163,7 +163,7 @@ export async function POST(req: Request) {
                     throw new Error(`Item sin ID de producto válido: ${JSON.stringify(item)}`);
                 }
 
-                // Bloquear fila del producto para actualizar stock (evita condiciones de carrera)
+                // Bloquear fila del producto para validar stock de forma consistente
                 const productResult = await client.query(
                     'SELECT id, nombre, stock_actual FROM productos WHERE id = $1 FOR UPDATE',
                     [productId]
@@ -184,7 +184,7 @@ export async function POST(req: Request) {
                     color: item.color 
                 };
 
-                // Si hay información de variante, validar y descontar de la tabla de variantes
+                // Si hay información de variante, validar contra la tabla de variantes
                 if (varianteInfo.talle && varianteInfo.color) {
                     // Normalizar color (si viene hex o nombre, tratar de buscar coincidencia)
                     // Asumimos que el frontend envía el color tal cual está en la BD (hex o nombre)
@@ -222,12 +222,6 @@ export async function POST(req: Request) {
                         if (variante.stock < cantidad) {
                             throw new Error(`Stock insuficiente para "${product.nombre} (${varianteInfo.talle} ${varianteInfo.color})". Solicitado: ${cantidad}, Disponible: ${variante.stock}`);
                         }
-
-                        // Descontar stock de variante
-                        await client.query(
-                            'UPDATE variantes SET stock = stock - $1, updated_at = NOW() WHERE id = $2',
-                            [cantidad, variante.id]
-                        );
                     }
                 } else {
                     // Validar stock global si no es variante
@@ -236,7 +230,7 @@ export async function POST(req: Request) {
                     }
                 }
 
-                // Insertar item de orden
+                // Insertar item de orden (sin descontar stock todavía; se descuenta al completar la orden)
                 await client.query(`
                     INSERT INTO orden_items (
                         orden_id, producto_id, cantidad, precio_unitario, variante_info
@@ -248,13 +242,6 @@ export async function POST(req: Request) {
                     item.precio_unitario || item.precio || 0, 
                     JSON.stringify(varianteInfo)
                 ]);
-
-                // Actualizar stock global del producto (siempre se descuenta del total)
-                await client.query(`
-                    UPDATE productos 
-                    SET stock_actual = stock_actual - $1 
-                    WHERE id = $2
-                `, [cantidad, productId]);
             }
 
             return { orderId, numeroOrden };
@@ -302,7 +289,119 @@ export async function PUT(req: Request) {
         }
 
         if (estado) {
-            await db.run('UPDATE ordenes SET estado = ? WHERE id = ?', [estado, id]);
+            if (estado === 'completado') {
+                await db.transaction(async (client) => {
+                    const orderResult = await client.query(
+                        'SELECT id, estado FROM ordenes WHERE id = $1 FOR UPDATE',
+                        [id]
+                    );
+
+                    const orderRow = orderResult.rows[0];
+
+                    if (!orderRow) {
+                        throw new Error('Orden no encontrada');
+                    }
+
+                    const previousEstado = orderRow.estado;
+
+                    if (previousEstado !== 'completado') {
+                        const itemsResult = await client.query(
+                            'SELECT producto_id, cantidad, variante_info FROM orden_items WHERE orden_id = $1',
+                            [id]
+                        );
+
+                        for (const rawItem of itemsResult.rows as any[]) {
+                            const productId = rawItem.producto_id;
+                            if (!productId) continue;
+
+                            const cantidad = Number(rawItem.cantidad) || 1;
+
+                            const productResult = await client.query(
+                                'SELECT id, nombre, stock_actual FROM productos WHERE id = $1 FOR UPDATE',
+                                [productId]
+                            );
+
+                            const product = productResult.rows[0];
+
+                            if (!product) {
+                                throw new Error(`Producto no encontrado (ID: ${productId})`);
+                            }
+
+                            let varianteInfo: any = {};
+                            if (rawItem.variante_info) {
+                                try {
+                                    varianteInfo = typeof rawItem.variante_info === 'string'
+                                        ? JSON.parse(rawItem.variante_info)
+                                        : rawItem.variante_info;
+                                } catch {
+                                    varianteInfo = {};
+                                }
+                            }
+
+                            if (varianteInfo.talle && varianteInfo.color) {
+                                const variantQuery = `
+                                    SELECT id, stock, talle, color, color_hex 
+                                    FROM variantes 
+                                    WHERE producto_id = $1 
+                                    AND talle = $2 
+                                    AND (color = $3 OR color_hex = $3)
+                                    FOR UPDATE
+                                `;
+
+                                const variantResult = await client.query(variantQuery, [
+                                    productId,
+                                    varianteInfo.talle,
+                                    varianteInfo.color
+                                ]);
+
+                                const variante = variantResult.rows[0];
+
+                                if (!variante) {
+                                    console.warn(`[Order:PUT] Variante no encontrada en tabla: ${productId} ${varianteInfo.talle} ${varianteInfo.color}`);
+
+                                    if (product.stock_actual < cantidad) {
+                                        throw new Error(`Stock insuficiente para "${product.nombre}". Solicitado: ${cantidad}, Disponible: ${product.stock_actual}`);
+                                    }
+                                } else {
+                                    if (variante.stock < cantidad) {
+                                        throw new Error(`Stock insuficiente para "${product.nombre} (${varianteInfo.talle} ${varianteInfo.color})". Solicitado: ${cantidad}, Disponible: ${variante.stock}`);
+                                    }
+
+                                    await client.query(
+                                        'UPDATE variantes SET stock = stock - $1, updated_at = NOW() WHERE id = $2',
+                                        [cantidad, variante.id]
+                                    );
+                                }
+                            } else {
+                                if (product.stock_actual < cantidad) {
+                                    throw new Error(`Stock insuficiente para "${product.nombre}". Solicitado: ${cantidad}, Disponible: ${product.stock_actual}`);
+                                }
+                            }
+
+                            await client.query(
+                                `
+                                UPDATE productos 
+                                SET stock_actual = stock_actual - $1 
+                                WHERE id = $2
+                                `,
+                                [cantidad, productId]
+                            );
+                        }
+
+                        await client.query(
+                            'UPDATE ordenes SET estado = $1 WHERE id = $2',
+                            [estado, id]
+                        );
+                    } else {
+                        await client.query(
+                            'UPDATE ordenes SET estado = $1 WHERE id = $2',
+                            [estado, id]
+                        );
+                    }
+                });
+            } else {
+                await db.run('UPDATE ordenes SET estado = ? WHERE id = ?', [estado, id]);
+            }
         }
 
         if (tracking_code !== undefined || tracking_url !== undefined) {
@@ -328,5 +427,26 @@ export async function PUT(req: Request) {
     } catch (err: any) {
         console.error('[orders:PUT] Error:', err.message);
         return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}
+
+export async function DELETE(req: Request) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+        }
+
+        await db.transaction(async (client) => {
+            await client.query('DELETE FROM orden_items WHERE orden_id = $1', [id]);
+            await client.query('DELETE FROM ordenes WHERE id = $1', [id]);
+        });
+
+        return NextResponse.json({ success: true });
+    } catch (err: any) {
+        console.error('[orders:DELETE] Error:', err.message);
+        return NextResponse.json({ error: err.message || 'Error al eliminar orden' }, { status: 500 });
     }
 }

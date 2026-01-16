@@ -174,9 +174,14 @@ export default function Cart({ onClose }: CartProps) {
                         />
                       </div>
                       <div className="flex-1 min-w-0 py-1">
-                        <h3 className="font-bold text-white text-sm md:text-base leading-tight line-clamp-2 mb-1 group-hover:text-accent transition-colors">
-                          {item.nombre}
-                        </h3>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-bold text-white text-sm md:text-base leading-tight line-clamp-2 group-hover:text-accent transition-colors">
+                            {item.nombre}
+                          </h3>
+                          <span className="text-[10px] font-black text-white/70 bg-white/10 px-2 py-0.5 rounded-full border border-white/15">
+                            x{item.cantidad}
+                          </span>
+                        </div>
                         {(item.talle || item.color) && (
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2">
                             {item.talle && (

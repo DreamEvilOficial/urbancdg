@@ -142,10 +142,10 @@ export default function ProductDetailPage() {
     
     const uniqueColors = new Map()
     filtered.forEach(v => {
-      if (v.color && !uniqueColors.has(v.color)) {
+      if (v.color && v.stock > 0 && !uniqueColors.has(v.color)) {
         uniqueColors.set(v.color, {
           hex: v.color,
-          name: v.color_nombre || v.color, // Fallback a hex si no hay nombre
+          name: v.color_nombre || v.color,
           stock: v.stock
         })
       }

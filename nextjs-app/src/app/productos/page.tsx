@@ -41,6 +41,7 @@ function ProductosContent() {
     allProductos.forEach((p: any) => {
       const vars = p.variantes || []
       vars.forEach((v: any) => {
+        if ((v?.stock || 0) <= 0) return
         if (v.talle) sizes.add(String(v.talle))
         if (v.color) colors.add(String(v.color.toLowerCase()))
       })

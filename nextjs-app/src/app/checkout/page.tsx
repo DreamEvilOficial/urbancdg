@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import NextImage from 'next/image'
 import { useCartStore } from '@/store/cartStore'
 import { formatPrice } from '@/lib/formatters'
+import { ordenesAPI } from '@/lib/supabase'
 import { Truck, Store, MapPin, ArrowRight, ArrowLeft, ShieldCheck, ChevronRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -60,16 +61,51 @@ export default function CheckoutPage() {
     else setShippingCost(0)
   }, [formData.codigoPostal, deliveryMethod, shippingOption, config, items.length, total, calculateShipping])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.nombre || !formData.apellido || !formData.telefono || !formData.dniCuit) {
       toast.error('Completa los datos requeridos')
       return
     }
-    localStorage.setItem('deliveryData', JSON.stringify({
-      formData, deliveryMethod, shippingCost, shippingOption, finalTotal: total() + shippingCost
-    }))
-    router.push('/payment')
+
+    const toastId = toast.loading('Procesando pedido...')
+
+    try {
+      const finalTotal = total() + shippingCost
+      const numeroOrden = `orden-${Math.floor(10000 + Math.random() * 89999)}`
+      const dummyEmail = config?.email || 'cliente@tienda.com'
+      const direccionCompleta = deliveryMethod === 'shipping' 
+        ? `${formData.direccion} ${formData.numero}, ${formData.ciudad}`
+        : 'Retiro en Local'
+
+      localStorage.setItem('deliveryData', JSON.stringify({
+        formData, deliveryMethod, shippingCost, shippingOption, finalTotal
+      }))
+
+      const orden = await ordenesAPI.crear({
+        numero_orden: numeroOrden,
+        cliente_nombre: `${formData.nombre} ${formData.apellido}`,
+        cliente_email: dummyEmail,
+        cliente_telefono: formData.telefono,
+        cliente_dni: formData.dniCuit,
+        direccion_envio: direccionCompleta,
+        envio: shippingCost,
+        subtotal: total(),
+        descuento: 0,
+        total: finalTotal,
+        estado: 'pendiente',
+        metodo_pago: 'no_definido',
+        notas: '',
+        items: items
+      })
+
+      localStorage.setItem('paymentOrder', JSON.stringify(orden))
+      toast.success('Pedido creado', { id: toastId })
+      router.push('/payment')
+    } catch (error) {
+      console.error(error)
+      toast.error('Error al crear el pedido', { id: toastId })
+    }
   }
 
   if (items.length === 0) return null
@@ -124,8 +160,8 @@ export default function CheckoutPage() {
                     <h3 className="text-[9px] font-black text-gray-700 uppercase tracking-widest mb-4">Ubicación de Envío</h3>
                     <div className="grid grid-cols-12 gap-3">
                       <input required type="text" placeholder="DOMICILIO" className="col-span-8 bg-white/5 border border-white/10 p-3 rounded-xl outline-none focus:border-white/30 text-xs font-bold" value={formData.direccion} onChange={e => setFormData({...formData, direccion: e.target.value})} />
-                      <input required type="text" placeholder="Nº" className="col-span-4 bg-white/5 border border-white/10 p-3 rounded-xl outline-none focus:border-white/30 text-xs font-bold" value={formData.numero} onChange={e => setFormData({...formData, numero: e.target.value})} />
-                      <input required type="text" placeholder="CP" className="col-span-4 bg-white/5 border border-white/10 p-3 rounded-xl outline-none focus:border-white/30 text-xs font-bold" value={formData.codigoPostal} onChange={e => setFormData({...formData, codigoPostal: e.target.value})} />
+                      <input required type="text" placeholder="NUMEROº" className="col-span-4 bg-white/5 border border-white/10 p-3 rounded-xl outline-none focus:border-white/30 text-xs font-bold" value={formData.numero} onChange={e => setFormData({...formData, numero: e.target.value})} />
+                      <input required type="text" placeholder="CODIGO POSTAL" className="col-span-4 bg-white/5 border border-white/10 p-3 rounded-xl outline-none focus:border-white/30 text-xs font-bold" value={formData.codigoPostal} onChange={e => setFormData({...formData, codigoPostal: e.target.value})} />
                       <input required type="text" placeholder="CIUDAD" className="col-span-8 bg-white/5 border border-white/10 p-3 rounded-xl outline-none focus:border-white/30 text-xs font-bold uppercase" value={formData.ciudad} onChange={e => setFormData({...formData, ciudad: e.target.value})} />
                     </div>
                   </section>

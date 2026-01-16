@@ -1,15 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-
-// Almacenamiento simple en memoria para configuración bancaria
-let bankConfigStore = {
-  accountHolder: '',
-  bankName: '',
-  accountNumber: '',
-  cbu: '',
-  alias: '',
-  accountType: 'corriente'
-}
+import db from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,9 +16,27 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    const row = await db.get('SELECT valor FROM configuracion WHERE clave = ?', ['bank_config']);
+    let config = {
+      accountHolder: '',
+      bankName: '',
+      accountNumber: '',
+      cbu: '',
+      alias: '',
+      accountType: 'corriente'
+    };
+
+    if (row && row.valor) {
+        try {
+            config = { ...config, ...JSON.parse(row.valor) };
+        } catch (e) {
+            console.error('Error parsing bank config:', e);
+        }
+    }
+
     return NextResponse.json({
       success: true,
-      config: bankConfigStore
+      config
     })
 
   } catch (error) {
@@ -63,8 +72,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Actualizar configuración
-    bankConfigStore = {
+    const config = {
       accountHolder: data.accountHolder || '',
       bankName: data.bankName || '',
       accountNumber: data.accountNumber || '',
@@ -72,13 +80,23 @@ export async function POST(request: NextRequest) {
       alias: data.alias || '',
       accountType: data.accountType || 'corriente'
     }
-
-    console.log('Bank config updated:', Object.keys(bankConfigStore))
+    
+    const valStr = JSON.stringify(config);
+    
+    // Check if exists
+    const exists = await db.get('SELECT id FROM configuracion WHERE clave = ?', ['bank_config']);
+    
+    if (exists) {
+        await db.run('UPDATE configuracion SET valor = ?, updated_at = CURRENT_TIMESTAMP WHERE clave = ?', [valStr, 'bank_config']);
+    } else {
+        const { v4: uuidv4 } = require('uuid');
+        await db.run('INSERT INTO configuracion (id, clave, valor) VALUES (?, ?, ?)', [uuidv4(), 'bank_config', valStr]);
+    }
 
     return NextResponse.json({
       success: true,
       message: 'Configuración bancaria guardada exitosamente',
-      config: bankConfigStore
+      config
     })
 
   } catch (error) {
