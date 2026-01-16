@@ -21,8 +21,8 @@ const bebasNeue = Bebas_Neue({
 
 export async function generateMetadata(): Promise<Metadata> {
   let title = 'URBAN'
-  let description = 'Redefiniendo el Streetwear. Tu estilo, sin límites.'
-  let shareDescription = 'Redefiniendo el Streetwear. Tu estilo, sin límites. Descubrí los últimos drops y armá tu fit.'
+  let description = 'Tu estilo, sin límites.'
+  let shareDescription = 'URBAN: Tu estilo, sin límites. Descubrí los últimos drops y armá tu fit.'
 
   try {
     const { data } = await supabase
@@ -45,14 +45,26 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
   return {
-    title,
+    metadataBase: new URL('https://urbancdg.vercel.app'),
+    title: {
+      default: title,
+      template: `%s | ${title}`
+    },
     description,
     openGraph: {
-      title: `${title} | Streetwear & Drops`,
+      title: title,
       description: shareDescription,
       type: 'website',
       locale: 'es_AR',
       siteName: title,
+      images: [
+        {
+          url: '/og-image.jpg',
+          width: 1200,
+          height: 630,
+          alt: title,
+        }
+      ],
     },
     icons: {
       icon: '/favicon.svg',
