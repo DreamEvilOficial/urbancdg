@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 
+interface BankConfig {
+  cbu?: string
+  accountHolder?: string
+  bankName?: string
+  alias?: string
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -22,7 +29,7 @@ export async function POST(req: NextRequest) {
         const expDate = new Date(order.transferencia_expiracion);
         if (expDate > new Date()) {
              const row = await db.get('SELECT valor FROM configuracion WHERE clave = ?', ['bank_config']);
-             let bankConfig = {};
+             let bankConfig: BankConfig = {};
              if (row && row.valor) bankConfig = JSON.parse(row.valor);
              
              return NextResponse.json({
@@ -83,7 +90,7 @@ export async function POST(req: NextRequest) {
     
     // 5. Get Bank Config
     const row = await db.get('SELECT valor FROM configuracion WHERE clave = ?', ['bank_config']);
-    let bankConfig: any = {};
+    let bankConfig: BankConfig = {};
     if (row && row.valor) {
         try { bankConfig = JSON.parse(row.valor); } catch {}
     }
