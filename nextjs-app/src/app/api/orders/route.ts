@@ -126,6 +126,9 @@ export async function POST(req: Request) {
 
         // 2. Ejecutar transacción
         const result = await db.transaction(async (client) => {
+            // Asegurar que la columna cliente_dni exista (auto-migración segura)
+            await client.query('ALTER TABLE ordenes ADD COLUMN IF NOT EXISTS cliente_dni TEXT');
+
             // A. Crear la orden principal
             const insertOrderQuery = `
                 INSERT INTO ordenes (
