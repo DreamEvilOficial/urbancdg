@@ -413,79 +413,9 @@ export default function ConfigurationPanel() {
         </div>
       </div>
 
-      {/* MercadoPago */}
-      <div className="bg-[#06070c]/70 backdrop-blur-2xl rounded-[28px] shadow-[0_30px_120px_-90px_rgba(0,0,0,0.9)] border border-white/10 p-6">
-        <h2 className="font-display text-xl tracking-[0.08em] uppercase text-white mb-4">Mercado Pago</h2>
-        <div className="grid grid-cols-1 gap-4">
-          <div>
-            <label className="block text-[10px] font-black mb-2 text-white/45 uppercase tracking-[0.28em] px-1">Public Key</label>
-            <input
-              type="text"
-              value={config.mercadopago_public_key}
-              onChange={e => setConfig({ ...config, mercadopago_public_key: e.target.value })}
-              placeholder="TEST-xxxxx o APP_USR-xxxxx"
-              className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl font-mono text-sm font-bold focus:border-accent/40 transition outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-[10px] font-black mb-2 text-white/45 uppercase tracking-[0.28em] px-1">Access Token</label>
-            <input
-              type="password"
-              value={config.mercadopago_access_token}
-              onChange={e => setConfig({ ...config, mercadopago_access_token: e.target.value })}
-              placeholder="TEST-xxxxx o APP_USR-xxxxx"
-              className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl font-mono text-sm font-bold focus:border-accent/40 transition outline-none"
-            />
-          </div>
-        </div>
-      </div>
+{/* MercadoPago Section Removed by User Request */}
 
-      {/* Transferencia Bancaria */}
-      <div className="bg-[#06070c]/70 backdrop-blur-2xl rounded-[28px] shadow-[0_30px_120px_-90px_rgba(0,0,0,0.9)] border border-white/10 p-6">
-        <h2 className="font-display text-xl tracking-[0.08em] uppercase text-white mb-4">Transferencia</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-[10px] font-black mb-2 text-white/45 uppercase tracking-[0.28em] px-1">CVU</label>
-            <input
-              type="text"
-              value={config.cvu}
-              onChange={e => setConfig({ ...config, cvu: e.target.value })}
-              placeholder="0000003100010000000000"
-              className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl font-mono text-sm font-bold focus:border-accent/40 transition outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-[10px] font-black mb-2 text-white/45 uppercase tracking-[0.28em] px-1">Alias</label>
-            <input
-              type="text"
-              value={config.alias}
-              onChange={e => setConfig({ ...config, alias: e.target.value })}
-              placeholder="tu.alias.mp"
-              className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl text-sm font-bold focus:border-accent/40 transition outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-[10px] font-black mb-2 text-white/45 uppercase tracking-[0.28em] px-1">Titular de la Cuenta</label>
-            <input
-              type="text"
-              value={config.titular_cuenta}
-              onChange={e => setConfig({ ...config, titular_cuenta: e.target.value })}
-              placeholder="Juan Pérez"
-              className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl text-sm font-bold focus:border-accent/40 transition outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-[10px] font-black mb-2 text-white/45 uppercase tracking-[0.28em] px-1">Banco</label>
-            <input
-              type="text"
-              value={config.banco}
-              onChange={e => setConfig({ ...config, banco: e.target.value })}
-              placeholder="Banco Nación"
-              className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl text-sm font-bold focus:border-accent/40 transition outline-none"
-            />
-          </div>
-        </div>
-      </div>
+{/* Transferencia Bancaria Section Removed by User Request */}
 
       {/* Banners */}
       <div className="bg-[#06070c]/70 backdrop-blur-2xl rounded-[28px] shadow-[0_30px_120px_-90px_rgba(0,0,0,0.9)] border border-white/10 p-6">

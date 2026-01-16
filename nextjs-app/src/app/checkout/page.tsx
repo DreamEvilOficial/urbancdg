@@ -160,7 +160,7 @@ export default function CheckoutPage() {
                     <h3 className="text-[9px] font-black text-gray-700 uppercase tracking-widest mb-4">Ubicación de Envío</h3>
                     <div className="grid grid-cols-12 gap-3">
                       <input required type="text" placeholder="DOMICILIO" className="col-span-8 bg-white/5 border border-white/10 p-3 rounded-xl outline-none focus:border-white/30 text-xs font-bold" value={formData.direccion} onChange={e => setFormData({...formData, direccion: e.target.value})} />
-                      <input required type="text" placeholder="NUMEROº" className="col-span-4 bg-white/5 border border-white/10 p-3 rounded-xl outline-none focus:border-white/30 text-xs font-bold" value={formData.numero} onChange={e => setFormData({...formData, numero: e.target.value})} />
+                      <input required type="text" placeholder="NUMERO" className="col-span-4 bg-white/5 border border-white/10 p-3 rounded-xl outline-none focus:border-white/30 text-xs font-bold" value={formData.numero} onChange={e => setFormData({...formData, numero: e.target.value})} />
                       <input required type="text" placeholder="CODIGO POSTAL" className="col-span-4 bg-white/5 border border-white/10 p-3 rounded-xl outline-none focus:border-white/30 text-xs font-bold" value={formData.codigoPostal} onChange={e => setFormData({...formData, codigoPostal: e.target.value})} />
                       <input required type="text" placeholder="CIUDAD" className="col-span-8 bg-white/5 border border-white/10 p-3 rounded-xl outline-none focus:border-white/30 text-xs font-bold uppercase" value={formData.ciudad} onChange={e => setFormData({...formData, ciudad: e.target.value})} />
                     </div>
@@ -168,7 +168,7 @@ export default function CheckoutPage() {
                 ) : (
                   <div className="p-4 border border-dashed border-white/10 rounded-[25px] flex items-center gap-3">
                     <div className="w-8 h-8 bg-white text-black rounded-lg flex items-center justify-center shrink-0"><MapPin className="w-4 h-4" /></div>
-                    <p className="text-[10px] font-black uppercase tracking-widest">Bv Lopez 1183, CP 2144</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest">Mitre 692, Cañada de Gomez</p>
                   </div>
                 )}
 
