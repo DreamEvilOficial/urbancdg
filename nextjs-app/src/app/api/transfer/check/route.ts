@@ -26,9 +26,19 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Check Mercado Pago for matching payment
-    const token = process.env.MERCADOPAGO_ACCESS_TOKEN;
+    // First try DB Config, then ENV
+    let token = '';
+    const tokenRow = await db.get("SELECT valor FROM configuracion WHERE clave = 'mercadopago_access_token'");
+    if (tokenRow && tokenRow.valor) {
+        try { token = JSON.parse(tokenRow.valor); } catch { token = tokenRow.valor; }
+    }
+    
     if (!token) {
-        console.warn('[transfer/check] MERCADOPAGO_ACCESS_TOKEN not found in environment');
+        token = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
+    }
+
+    if (!token) {
+        console.warn('[transfer/check] MERCADOPAGO_ACCESS_TOKEN not found in database or environment');
         return NextResponse.json({ status: 'pending', paid: false, message: 'Verification disabled (no token)' });
     }
 

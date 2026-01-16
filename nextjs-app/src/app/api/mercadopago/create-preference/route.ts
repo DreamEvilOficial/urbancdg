@@ -5,12 +5,21 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { items, ordenId, payer, shippingCost } = body
 
-    // Usar SIEMPRE el Access Token del servidor
-    const token = process.env.MERCADOPAGO_ACCESS_TOKEN
+    // Obtener Access Token: Primero intentamos desde la DB, luego desde ENV
+    const db = (await import('@/lib/db')).default
+    let token = ''
+    const tokenRow = await db.get("SELECT valor FROM configuracion WHERE clave = 'mercadopago_access_token'")
+    if (tokenRow && tokenRow.valor) {
+        try { token = JSON.parse(tokenRow.valor) } catch { token = tokenRow.valor }
+    }
+    
+    if (!token) {
+        token = process.env.MERCADOPAGO_ACCESS_TOKEN || ''
+    }
 
     if (!token) {
       return NextResponse.json(
-        { error: 'MercadoPago no configurado en el servidor (MERCADOPAGO_ACCESS_TOKEN ausente).' },
+        { error: 'MercadoPago no configurado. Falta Access Token.' },
         { status: 400 }
       )
     }
@@ -28,7 +37,6 @@ export async function POST(request: NextRequest) {
     const notificationUrlObj = new URL('api/mercadopago/webhook', base)
     
     // Validar precios contra la base de datos
-    const db = (await import('@/lib/db')).default
     const validatedItems = []
     
     for (const item of items) {
