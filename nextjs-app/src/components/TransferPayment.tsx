@@ -191,88 +191,100 @@ export default function TransferPayment({ orderId, orderNumber, onClose }: Trans
 
   return (
     <div className="fixed inset-0 z-[10000] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4">
-       <div className="glass-card w-full max-w-[500px] relative overflow-hidden flex flex-col max-h-[90vh]">
-          {/* Header */}
-          <div className="p-6 pb-2 text-center">
-             <div className="w-16 h-16 mx-auto bg-blue-500/10 rounded-full flex items-center justify-center mb-4 border border-blue-500/20">
-                <span className="text-3xl font-black text-blue-400">i</span>
-             </div>
-             <h2 className="text-xl md:text-2xl font-black text-white uppercase italic tracking-tight">¡Transferencia Pendiente!</h2>
-             <p className="text-gray-400 text-xs font-bold mt-2 leading-relaxed">
-                Por favor, realiza tu transferencia bancaria al siguiente CBU para completar tu compra:
-             </p>
+      <div className="glass-card w-full max-w-[440px] md:max-w-[520px] relative flex flex-col max-h-[85vh]">
+        <div className="px-5 pt-5 pb-3 text-center">
+          <div className="w-12 h-12 mx-auto bg-blue-500/10 rounded-full flex items-center justify-center mb-3 border border-blue-500/20">
+            <span className="text-2xl font-black text-blue-400">i</span>
+          </div>
+          <h2 className="text-lg md:text-xl font-black text-white uppercase italic tracking-tight">
+            ¡Transferencia pendiente!
+          </h2>
+          <p className="text-gray-400 text-[11px] font-bold mt-2 leading-snug">
+            Realizá la transferencia al siguiente CVU/CBU usando el monto exacto:
+          </p>
+        </div>
+
+        <div className="px-5 pb-4 space-y-3">
+          <div className="space-y-3">
+            <div className="bg-white rounded-2xl px-4 py-3 text-center shadow-xl border border-blue-500/30 relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-full h-1 bg-blue-500" />
+              <p className="text-blue-600 text-[10px] font-black uppercase tracking-[0.2em] mb-1">
+                CVU / CBU
+              </p>
+              <div
+                onClick={() => copyToClipboard(config.cbu, 'CVU')}
+                className="text-base md:text-lg font-black text-gray-900 tracking-wider cursor-pointer hover:scale-105 transition-transform select-all break-all"
+              >
+                {config.cbu}
+              </div>
+              <p className="text-gray-500 text-[10px] font-bold mt-1 uppercase">
+                {config.titular}
+              </p>
+              <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Copy className="w-4 h-4 text-gray-400" />
+              </div>
+            </div>
+
+            <div className="bg-[#E8F5E9] rounded-2xl px-4 py-3 text-center shadow-xl border border-green-500/30 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-green-500" />
+              <p className="text-green-700 text-[10px] font-black uppercase tracking-[0.2em] mb-1">
+                Monto exacto
+              </p>
+              <div
+                onClick={() => copyToClipboard(String(uniqueAmount), 'Monto')}
+                className="text-2xl md:text-3xl font-black text-green-600 tracking-tight cursor-pointer hover:scale-105 transition-transform"
+              >
+                ${uniqueAmount?.toLocaleString('es-AR', { minimumFractionDigits: 2 })} ARS
+              </div>
+            </div>
           </div>
 
-          <div className="px-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
-             {/* CBU Box */}
-             <div className="bg-white rounded-2xl p-4 text-center shadow-xl border border-blue-500/30 relative overflow-hidden group">
-                <div className="absolute top-0 left-0 w-full h-1 bg-blue-500"></div>
-                <p className="text-blue-600 text-[10px] font-black uppercase tracking-[0.2em] mb-1">CBU</p>
-                <div 
-                    onClick={() => copyToClipboard(config.cbu, 'CBU')}
-                    className="text-lg md:text-2xl font-black text-gray-900 tracking-wider cursor-pointer hover:scale-105 transition-transform select-all break-all"
-                >
-                    {config.cbu}
-                </div>
-                <p className="text-gray-500 text-[10px] font-bold mt-1 uppercase">{config.titular}</p>
-                <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Copy className="w-4 h-4 text-gray-400" />
-                </div>
-             </div>
-
-             {/* Amount Box */}
-             <div className="bg-[#E8F5E9] rounded-2xl p-4 text-center shadow-xl border border-green-500/30 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-green-500 px-4"></div>
-                <p className="text-green-700 text-[10px] font-black uppercase tracking-[0.2em] mb-1">MONTO EXACTO:</p>
-                <div 
-                    onClick={() => copyToClipboard(String(uniqueAmount), 'Monto')}
-                    className="text-3xl font-black text-green-600 tracking-tighter cursor-pointer hover:scale-105 transition-transform"
-                >
-                    ${ uniqueAmount?.toLocaleString('es-AR', { minimumFractionDigits: 2 }) } ARS
-                </div>
-             </div>
-
-             <div className="text-center">
-                <p className="text-gray-500 text-xs font-bold">
-                    Quedan <span className="text-red-500 font-black text-base mx-1">{remainingTime}</span> minutos para completar la transferencia.
-                </p>
-             </div>
-             
-             <div className="border-t border-dashed border-white/10 my-4"></div>
-
-             {/* Important Warning */}
-             <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex gap-3 text-left">
-                <AlertTriangle className="w-10 h-10 text-red-500 shrink-0" />
-                <div>
-                    <h4 className="text-red-500 font-black uppercase text-xs mb-1">¡IMPORTANTE!</h4>
-                    <p className="text-gray-300 text-[10px] font-bold leading-relaxed">
-                        Para que el pedido se active automáticamente, debes enviar 
-                        el <span className="text-white underline">monto exacto</span>, con los centavos incluidos.
-                        Si no coincide, la compra no se procesará.
-                    </p>
-                </div>
-             </div>
+          <div className="text-center">
+            <p className="text-gray-500 text-[11px] font-bold">
+              Quedan{' '}
+              <span className="text-red-500 font-black text-sm mx-1">
+                {remainingTime}
+              </span>
+              minutos para completar la transferencia.
+            </p>
           </div>
 
-          <div className="p-6 bg-black/20 mt-auto space-y-3">
-             <div className="flex justify-center mb-2 h-5">
-                 <Loader2 className="w-5 h-5 text-white/20 animate-spin" />
-             </div>
-             <button 
-                onClick={manualCheck}
-                disabled={checking}
-                className="w-full bg-white text-black py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-200 transition-all"
-             >
-                {checking ? 'Verificando...' : 'Ya transferí'}
-             </button>
-             <button 
-                onClick={cancelTransaction}
-                className="w-full text-white/30 text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors"
-             >
-                Cancelar Transacción
-             </button>
+          <div className="border-t border-dashed border-white/10" />
+
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-3 flex items-start gap-2.5 text-left">
+            <AlertTriangle className="w-7 h-7 text-red-500 shrink-0" />
+            <div>
+              <h4 className="text-red-500 font-black uppercase text-[11px] mb-1">
+                ¡Importante!
+              </h4>
+              <p className="text-gray-300 text-[10px] font-bold leading-snug">
+                El pedido se activa automáticamente sólo si enviás el
+                <span className="text-white underline ml-1">monto exacto</span>
+                , con centavos incluidos. Si no coincide, la compra no se procesa.
+              </p>
+            </div>
           </div>
-       </div>
+        </div>
+
+        <div className="px-5 pb-5 pt-3 bg-black/25 space-y-2">
+          <div className="flex justify-center h-5">
+            <Loader2 className="w-5 h-5 text-white/20 animate-spin" />
+          </div>
+          <button
+            onClick={manualCheck}
+            disabled={checking}
+            className="w-full bg-white text-black py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-200 transition-all disabled:opacity-70"
+          >
+            {checking ? 'Verificando...' : 'Ya transferí'}
+          </button>
+          <button
+            onClick={cancelTransaction}
+            className="w-full text-white/40 text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors"
+          >
+            Cancelar transacción
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
