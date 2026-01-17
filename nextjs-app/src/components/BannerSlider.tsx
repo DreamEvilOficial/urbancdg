@@ -170,7 +170,7 @@ export default function BannerSlider() {
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#05060a] via-[#05060a]/80 to-transparent z-10 pointer-events-none" />
 
       <div className="relative z-20 h-full max-w-[1400px] mx-auto px-6 md:px-10 flex items-center">
-        <div className="w-full md:w-[60%] space-y-4">
+        <div className="w-full md:w-[60%] space-y-4 relative z-[40]">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2">
             <span className="h-2 w-2 rounded-full bg-accent2 shadow-[0_0_18px_rgba(0,229,255,0.45)]" />
             <span className="text-[10px] font-black uppercase tracking-[0.35em] text-white/70">
@@ -178,7 +178,7 @@ export default function BannerSlider() {
             </span>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 relative z-[40]">
             <div className="font-display text-white text-5xl md:text-7xl tracking-[0.06em] uppercase leading-none">
               {tienda.nombre}
             </div>
@@ -193,17 +193,17 @@ export default function BannerSlider() {
         <>
           <button
             onClick={prev}
-            className="absolute left-4 top-1/2 -translate-y-1/2 p-4 bg-black/25 hover:bg-black/50 text-white rounded-full backdrop-blur-md z-30"
+            className="absolute left-4 top-1/2 -translate-y-1/2 p-4 bg-black/25 hover:bg-black/50 text-white rounded-full backdrop-blur-md z-20"
           >
             <ChevronLeft />
           </button>
           <button
             onClick={next}
-            className="absolute right-4 top-1/2 -translate-y-1/2 p-4 bg-black/25 hover:bg-black/50 text-white rounded-full backdrop-blur-md z-30"
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-4 bg-black/25 hover:bg-black/50 text-white rounded-full backdrop-blur-md z-20"
           >
             <ChevronRight />
           </button>
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-30">
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-20">
             {banners.map((_, i) => (
               <button
                 key={i}

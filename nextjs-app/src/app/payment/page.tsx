@@ -122,7 +122,7 @@ export default function PaymentPage() {
 
   return (
     <div className="min-h-screen bg-[#000000FA] text-white flex justify-center">
-      <div className="max-w-5xl w-full px-4 md:px-6 relative z-10 py-10 scale-[1.25] origin-top transition-transform">
+      <div className="max-w-5xl w-full px-4 md:px-6 relative z-10 py-8 md:py-10 scale-100 md:scale-[1.03] origin-top transition-transform">
         <div className="pb-6 flex items-end justify-between">
           <div>
             <button onClick={() => router.back()} className="group flex items-center gap-2 text-gray-600 hover:text-white transition-all text-[10px] font-black uppercase tracking-[0.2em] mb-2">

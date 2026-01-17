@@ -500,9 +500,31 @@ function ProductCard({ producto }: ProductCardProps) {
             </h3>
           </div>
         ) : (
-          <div className="flex flex-col mb-2">
+          <div className="flex flex-col mb-1.5 min-h-[3.5rem] md:min-h-[4.5rem]">
+            {/* Reviews Stars - Moved Up & Numeric Added */}
+            <div className="flex items-center gap-1.5 mb-2">
+              <div className="flex items-center gap-1">
+                {(producto.avg_rating ?? 0) > 0 ? (
+                  <span className="text-[10px] font-black text-white/60">{(producto.avg_rating ?? 0).toFixed(1)}</span>
+                ) : (
+                  <span className="text-[10px] font-black text-white/20">0.0</span>
+                )}
+                <div className="flex text-yellow-500">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star 
+                      key={star} 
+                      className={`w-2.5 h-2.5 ${star <= Math.round(producto.avg_rating || 0) ? 'fill-current' : 'text-white/10'}`} 
+                    />
+                  ))}
+                </div>
+              </div>
+              {producto.review_count && producto.review_count > 0 ? (
+                <span className="text-[9px] font-bold text-white/40 uppercase tracking-tighter">({producto.review_count})</span>
+              ) : null}
+            </div>
+
             <Link href={productHref} className="block group/title">
-              <h3 className={`font-bold text-white transition-colors group-hover/title:text-accent leading-tight break-words line-clamp-2 min-h-[2.5rem] md:min-h-[3.5rem] ${
+              <h3 className={`font-bold text-white transition-colors group-hover/title:text-accent leading-tight break-words line-clamp-2 ${
                 producto.nombre.length > 25 
                   ? 'text-[13px] md:text-base' 
                   : 'text-[14px] md:text-lg'
@@ -510,21 +532,6 @@ function ProductCard({ producto }: ProductCardProps) {
                 {producto.nombre}
               </h3>
             </Link>
-            
-            {/* Reviews Stars */}
-            <div className="flex items-center gap-1.5 mt-1">
-              <div className="flex text-yellow-500">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star 
-                    key={star} 
-                    className={`w-3 h-3 ${star <= Math.round(producto.avg_rating || 0) ? 'fill-current' : 'text-white/10'}`} 
-                  />
-                ))}
-              </div>
-              {producto.review_count && producto.review_count > 0 ? (
-                <span className="text-[10px] font-bold text-white/40 uppercase tracking-tighter">({producto.review_count})</span>
-              ) : null}
-            </div>
           </div>
         )}
         

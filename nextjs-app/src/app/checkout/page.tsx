@@ -11,6 +11,19 @@ import toast from 'react-hot-toast'
 
 type DeliveryMethod = 'shipping' | 'pickup'
 
+type CheckoutFormData = {
+  nombre: string
+  apellido: string
+  telefono: string
+  direccion: string
+  numero: string
+  departamento: string
+  barrio: string
+  ciudad: string
+  codigoPostal: string
+  dniCuit: string
+}
+
 export default function CheckoutPage() {
   const router = useRouter()
   const { items, total } = useCartStore()
@@ -19,9 +32,19 @@ export default function CheckoutPage() {
   const [calculatingShipping, setCalculatingShipping] = useState(false)
   const [config, setConfig] = useState<any>({})
   
-  const [formData, setFormData] = useState({
-    nombre: '', apellido: '', telefono: '', direccion: '', numero: '', departamento: '', barrio: '', ciudad: '', codigoPostal: '', dniCuit: ''
+  const [formData, setFormData] = useState<CheckoutFormData>({
+    nombre: '',
+    apellido: '',
+    telefono: '',
+    direccion: '',
+    numero: '',
+    departamento: '',
+    barrio: '',
+    ciudad: '',
+    codigoPostal: '',
+    dniCuit: ''
   })
+  const [errors, setErrors] = useState<Partial<Record<keyof CheckoutFormData, string>>>({})
   
   const [shippingOption, setShippingOption] = useState<'correo' | 'andreani'>('correo')
 
@@ -41,6 +64,34 @@ export default function CheckoutPage() {
     window.addEventListener('config-updated', loadConfig)
     return () => window.removeEventListener('config-updated', loadConfig)
   }, [])
+
+  const validateField = (field: keyof CheckoutFormData, value: string) => {
+    if (field === 'nombre' || field === 'apellido') {
+      if (!value.trim()) return 'Este campo es obligatorio'
+      if (value.trim().length < 2) return 'Debe tener al menos 2 caracteres'
+    }
+    if (field === 'telefono') {
+      if (!value.trim()) return 'Ingresá un número válido'
+      if (!/^[0-9+\s()-]{6,}$/.test(value.trim())) return 'Formato de teléfono inválido'
+    }
+    if (field === 'dniCuit') {
+      if (!value.trim()) return 'Ingresá tu DNI o CUIT'
+      if (!/^[0-9.\-]{6,}$/.test(value.trim())) return 'Formato inválido'
+    }
+    if (deliveryMethod === 'shipping') {
+      if (field === 'direccion' || field === 'numero' || field === 'codigoPostal' || field === 'ciudad') {
+        if (!value.trim()) return 'Este campo es obligatorio'
+      }
+    }
+    return ''
+  }
+
+  const handleFieldChange = (field: keyof CheckoutFormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setFormData(prev => ({ ...prev, [field]: value }))
+    const error = validateField(field, value)
+    setErrors(prev => ({ ...prev, [field]: error }))
+  }
 
   const calculateShipping = useCallback(async () => {
     setCalculatingShipping(true)
@@ -63,8 +114,22 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.nombre || !formData.apellido || !formData.telefono || !formData.dniCuit) {
-      toast.error('Completa los datos requeridos')
+    const fieldsToValidate: (keyof CheckoutFormData)[] =
+      deliveryMethod === 'shipping'
+        ? ['nombre', 'apellido', 'telefono', 'dniCuit', 'direccion', 'numero', 'codigoPostal', 'ciudad']
+        : ['nombre', 'apellido', 'telefono', 'dniCuit']
+
+    const nextErrors: Partial<Record<keyof CheckoutFormData, string>> = {}
+    fieldsToValidate.forEach(field => {
+      const value = formData[field]
+      const error = validateField(field, value)
+      if (error) nextErrors[field] = error
+    })
+
+    setErrors(prev => ({ ...prev, ...nextErrors }))
+
+    if (Object.values(nextErrors).some(Boolean)) {
+      toast.error('Revisá los datos marcados en rojo')
       return
     }
 
@@ -116,7 +181,7 @@ export default function CheckoutPage() {
         <div className="absolute top-[10%] left-[5%] w-[30%] h-[30%] bg-pink-500/5 rounded-full blur-[100px]" />
       </div>
 
-      <div className="max-w-4xl w-full px-4 md:px-0 relative z-10 flex-1 pb-10 scale-[1.21] origin-top transition-transform">
+      <div className="max-w-4xl w-full px-4 md:px-6 relative z-10 flex-1 pb-10 scale-100 md:scale-[1.03] origin-top transition-transform">
         <div className="pt-8 pb-4 flex items-end justify-between">
           <div>
             <button onClick={() => router.back()} className="group flex items-center gap-2 text-gray-600 hover:text-white transition-colors text-[9px] font-black uppercase tracking-[0.2em] mb-2">
@@ -137,10 +202,10 @@ export default function CheckoutPage() {
           <div className="lg:col-span-7 space-y-4">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-1.5 p-1 bg-white/5 border border-white/10 rounded-2xl">
-                <button type="button" onClick={() => setDeliveryMethod('shipping')} className={`flex items-center justify-center gap-2 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${deliveryMethod === 'shipping' ? 'bg-white text-black shadow-lg' : 'text-gray-500 hover:text-white'}`}>
+                <button type="button" onClick={() => setDeliveryMethod('shipping')} className={`flex items-center justify-center gap-2 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${deliveryMethod === 'shipping' ? 'bg-white text-black shadow-lg' : 'text-gray-500 hover:text-white'}`}>
                   Envío
                 </button>
-                <button type="button" onClick={() => setDeliveryMethod('pickup')} className={`flex items-center justify-center gap-2 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${deliveryMethod === 'pickup' ? 'bg-white text-black shadow-lg' : 'text-gray-500 hover:text-white'}`}>
+                <button type="button" onClick={() => setDeliveryMethod('pickup')} className={`flex items-center justify-center gap-2 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${deliveryMethod === 'pickup' ? 'bg-white text-black shadow-lg' : 'text-gray-500 hover:text-white'}`}>
                   Retiro
                 </button>
               </div>
@@ -149,9 +214,39 @@ export default function CheckoutPage() {
                 <section className="bg-white/[0.03] border border-white/5 p-5 rounded-[30px]">
                   <h3 className="text-[9px] font-black text-gray-700 uppercase tracking-widest mb-4">Información Personal</h3>
                   <div className="grid grid-cols-2 gap-3">
-                    <input required type="text" placeholder="NOMBRE" value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} className="w-full bg-white/5 border border-white/10 p-3 rounded-xl outline-none focus:border-white/30 text-xs font-bold uppercase tracking-tight" />
-                    <input required type="text" placeholder="APELLIDO" value={formData.apellido} onChange={e => setFormData({...formData, apellido: e.target.value})} className="w-full bg-white/5 border border-white/10 p-3 rounded-xl outline-none focus:border-white/30 text-xs font-bold uppercase tracking-tight" />
-                    <input required type="tel" placeholder="WHATSAPP / CELULAR" className="col-span-2 w-full bg-white/5 border border-white/10 p-3 rounded-xl outline-none focus:border-white/30 text-xs font-bold uppercase tracking-tight" value={formData.telefono} onChange={e => setFormData({...formData, telefono: e.target.value})} />
+                    <div className="col-span-2 sm:col-span-1 space-y-1">
+                      <input
+                        required
+                        type="text"
+                        placeholder="NOMBRE"
+                        value={formData.nombre}
+                        onChange={handleFieldChange('nombre')}
+                        className={`w-full bg-white/5 border p-3 rounded-xl outline-none text-xs font-bold uppercase tracking-tight min-h-[48px] ${errors.nombre ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-white/30'}`}
+                      />
+                      {errors.nombre && <p className="text-[10px] text-red-500 font-semibold">{errors.nombre}</p>}
+                    </div>
+                    <div className="col-span-2 sm:col-span-1 space-y-1">
+                      <input
+                        required
+                        type="text"
+                        placeholder="APELLIDO"
+                        value={formData.apellido}
+                        onChange={handleFieldChange('apellido')}
+                        className={`w-full bg-white/5 border p-3 rounded-xl outline-none text-xs font-bold uppercase tracking-tight min-h-[48px] ${errors.apellido ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-white/30'}`}
+                      />
+                      {errors.apellido && <p className="text-[10px] text-red-500 font-semibold">{errors.apellido}</p>}
+                    </div>
+                    <div className="col-span-2 space-y-1">
+                      <input
+                        required
+                        type="tel"
+                        placeholder="WHATSAPP / CELULAR"
+                        className={`w-full bg-white/5 border p-3 rounded-xl outline-none text-xs font-bold uppercase tracking-tight min-h-[48px] ${errors.telefono ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-white/30'}`}
+                        value={formData.telefono}
+                        onChange={handleFieldChange('telefono')}
+                      />
+                      {errors.telefono && <p className="text-[10px] text-red-500 font-semibold">{errors.telefono}</p>}
+                    </div>
                   </div>
                 </section>
 
@@ -159,10 +254,50 @@ export default function CheckoutPage() {
                   <section className="bg-white/[0.03] border border-white/5 p-5 rounded-[30px] animate-in fade-in slide-in-from-top-2">
                     <h3 className="text-[9px] font-black text-gray-700 uppercase tracking-widest mb-4">Ubicación de Envío</h3>
                     <div className="grid grid-cols-12 gap-3">
-                      <input required type="text" placeholder="DOMICILIO" className="col-span-8 bg-white/5 border border-white/10 p-3 rounded-xl outline-none focus:border-white/30 text-xs font-bold" value={formData.direccion} onChange={e => setFormData({...formData, direccion: e.target.value})} />
-                      <input required type="text" placeholder="NUMERO" className="col-span-4 bg-white/5 border border-white/10 p-3 rounded-xl outline-none focus:border-white/30 text-xs font-bold" value={formData.numero} onChange={e => setFormData({...formData, numero: e.target.value})} />
-                      <input required type="text" placeholder="CODIGO POSTAL" className="col-span-4 bg-white/5 border border-white/10 p-3 rounded-xl outline-none focus:border-white/30 text-xs font-bold" value={formData.codigoPostal} onChange={e => setFormData({...formData, codigoPostal: e.target.value})} />
-                      <input required type="text" placeholder="CIUDAD" className="col-span-8 bg-white/5 border border-white/10 p-3 rounded-xl outline-none focus:border-white/30 text-xs font-bold uppercase" value={formData.ciudad} onChange={e => setFormData({...formData, ciudad: e.target.value})} />
+                      <div className="col-span-12 sm:col-span-8 space-y-1">
+                        <input
+                          required
+                          type="text"
+                          placeholder="DOMICILIO"
+                          className={`w-full bg-white/5 border p-3 rounded-xl outline-none text-xs font-bold min-h-[48px] ${errors.direccion ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-white/30'}`}
+                          value={formData.direccion}
+                          onChange={handleFieldChange('direccion')}
+                        />
+                        {errors.direccion && <p className="text-[10px] text-red-500 font-semibold">{errors.direccion}</p>}
+                      </div>
+                      <div className="col-span-12 sm:col-span-4 space-y-1">
+                        <input
+                          required
+                          type="text"
+                          placeholder="NUMERO"
+                          className={`w-full bg-white/5 border p-3 rounded-xl outline-none text-xs font-bold min-h-[48px] ${errors.numero ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-white/30'}`}
+                          value={formData.numero}
+                          onChange={handleFieldChange('numero')}
+                        />
+                        {errors.numero && <p className="text-[10px] text-red-500 font-semibold">{errors.numero}</p>}
+                      </div>
+                      <div className="col-span-12 sm:col-span-4 space-y-1">
+                        <input
+                          required
+                          type="text"
+                          placeholder="CODIGO POSTAL"
+                          className={`w-full bg-white/5 border p-3 rounded-xl outline-none text-xs font-bold min-h-[48px] ${errors.codigoPostal ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-white/30'}`}
+                          value={formData.codigoPostal}
+                          onChange={handleFieldChange('codigoPostal')}
+                        />
+                        {errors.codigoPostal && <p className="text-[10px] text-red-500 font-semibold">{errors.codigoPostal}</p>}
+                      </div>
+                      <div className="col-span-12 sm:col-span-8 space-y-1">
+                        <input
+                          required
+                          type="text"
+                          placeholder="CIUDAD"
+                          className={`w-full bg-white/5 border p-3 rounded-xl outline-none text-xs font-bold uppercase min-h-[48px] ${errors.ciudad ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-white/30'}`}
+                          value={formData.ciudad}
+                          onChange={handleFieldChange('ciudad')}
+                        />
+                        {errors.ciudad && <p className="text-[10px] text-red-500 font-semibold">{errors.ciudad}</p>}
+                      </div>
                     </div>
                   </section>
                 ) : (
@@ -173,7 +308,17 @@ export default function CheckoutPage() {
                 )}
 
                 <section className="bg-white/[0.03] border border-white/5 p-5 rounded-[30px]">
-                  <input required type="text" placeholder="DNI / CUIL DE FACTURACIÓN" value={formData.dniCuit} onChange={e => setFormData({...formData, dniCuit: e.target.value})} className="w-full bg-white/5 border border-white/10 p-3 rounded-xl outline-none focus:border-white/30 text-xs font-bold uppercase" />
+                  <div className="space-y-1">
+                    <input
+                      required
+                      type="text"
+                      placeholder="DNI / CUIL DE FACTURACIÓN"
+                      value={formData.dniCuit}
+                      onChange={handleFieldChange('dniCuit')}
+                      className={`w-full bg-white/5 border p-3 rounded-xl outline-none text-xs font-bold uppercase min-h-[48px] ${errors.dniCuit ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-white/30'}`}
+                    />
+                    {errors.dniCuit && <p className="text-[10px] text-red-500 font-semibold">{errors.dniCuit}</p>}
+                  </div>
                 </section>
               </div>
 

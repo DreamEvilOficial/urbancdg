@@ -125,7 +125,12 @@ export async function GET(request: Request) {
         const products = await db.all(sql, params);
         
         // Normalizar campos JSON si vienen como string (por compatibilidad)
-        const normalized = products.map(normalizeProduct);
+        const normalized = products.map(p => {
+            const n = normalizeProduct(p);
+            // Log for debugging specific product if needed (comment out later)
+            // if (n && n.nombre.includes('ADIDAS')) console.log(`[Products API] ${n.nombre}: avg=${n.avg_rating}, count=${n.review_count}`);
+            return n;
+        });
 
         return NextResponse.json(normalized);
     } catch (error: any) {
