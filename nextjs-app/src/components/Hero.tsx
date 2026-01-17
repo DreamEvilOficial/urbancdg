@@ -31,7 +31,8 @@ export default function Hero() {
 
   if (!mounted || !heroBannerUrl) return null
 
-  const isGif = heroBannerUrl.toLowerCase().endsWith('.gif')
+  const normalizedUrl = heroBannerUrl.split('?')[0].toLowerCase()
+  const isGif = normalizedUrl.endsWith('.gif')
 
   return (
     <div className="w-full">

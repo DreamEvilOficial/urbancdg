@@ -76,8 +76,9 @@ export default function CheckoutPage() {
       if (!/^[0-9+\s()-]{6,}$/.test(value.trim())) return 'Formato de teléfono inválido'
     }
     if (field === 'dniCuit') {
-      if (!value.trim()) return 'Ingresá tu DNI o CUIT'
-      if (!/^[0-9.\-]{6,}$/.test(value.trim())) return 'Formato inválido'
+      const trimmed = value.trim()
+      if (!trimmed) return 'Ingresá tu DNI o CUIT'
+      if (!/^[0-9]{6,11}$/.test(trimmed)) return 'Ingresá solo números (6 a 11 dígitos)'
     }
     if (deliveryMethod === 'shipping') {
       if (field === 'direccion' || field === 'numero' || field === 'codigoPostal' || field === 'ciudad') {
@@ -88,7 +89,10 @@ export default function CheckoutPage() {
   }
 
   const handleFieldChange = (field: keyof CheckoutFormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
+    let value = e.target.value
+    if (field === 'dniCuit') {
+      value = value.replace(/\D/g, '').slice(0, 11)
+    }
     setFormData(prev => ({ ...prev, [field]: value }))
     const error = validateField(field, value)
     setErrors(prev => ({ ...prev, [field]: error }))
@@ -313,6 +317,8 @@ export default function CheckoutPage() {
                       placeholder="DNI / CUIL DE FACTURACIÓN"
                       value={formData.dniCuit}
                       onChange={handleFieldChange('dniCuit')}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       className={`w-full bg-white/5 border p-3 rounded-xl outline-none text-xs font-bold uppercase min-h-[48px] ${errors.dniCuit ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-white/30'}`}
                     />
                     {errors.dniCuit && <p className="text-[10px] text-red-500 font-semibold">{errors.dniCuit}</p>}
