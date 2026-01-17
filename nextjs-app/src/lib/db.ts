@@ -96,7 +96,9 @@ class Database {
         const result = await executor.query(normalizeSql(sql), params);
         return result.rows as T[];
       } catch (err: any) {
-        console.error('❌ Postgres Pool Error (all):', err.message, { sql, params });
+        if (!err.message.includes('already exists')) {
+          console.error('❌ Postgres Pool Error (all):', err.message, { sql, params });
+        }
         throw err;
       }
     }
@@ -119,7 +121,9 @@ class Database {
         const result = await executor.query(normalizeSql(sql), params);
         return (result.rows[0] as T) || undefined;
       } catch (err: any) {
-        console.error('❌ Postgres Pool Error (get):', err.message, { sql, params });
+        if (!err.message.includes('already exists')) {
+          console.error('❌ Postgres Pool Error (get):', err.message, { sql, params });
+        }
         throw err;
       }
     }
@@ -150,7 +154,9 @@ class Database {
           changes: result.rowCount || 0
         };
       } catch (err: any) {
-        console.error('❌ Postgres Pool Error (run):', err.message, { sql, params });
+        if (!err.message.includes('already exists')) {
+          console.error('❌ Postgres Pool Error (run):', err.message, { sql, params });
+        }
         throw err;
       }
     }
@@ -170,7 +176,9 @@ class Database {
     try {
       return await pool.query(sql);
     } catch (err: any) {
-      console.error('❌ Postgres Pool Error (raw):', err.message, { sql });
+      if (!err.message.includes('already exists')) {
+        console.error('❌ Postgres Pool Error (raw):', err.message, { sql });
+      }
       throw err;
     }
   }

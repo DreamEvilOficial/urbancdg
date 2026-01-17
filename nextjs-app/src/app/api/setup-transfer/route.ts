@@ -6,12 +6,12 @@ export async function GET() {
   try {
     // 1. Add columns to ordenes
     try {
-        await db.raw('ALTER TABLE ordenes ADD COLUMN total_transferencia NUMERIC(15,2)');
+        await db.raw('ALTER TABLE ordenes ADD COLUMN IF NOT EXISTS total_transferencia NUMERIC(15,2)');
         results.push('Added total_transferencia to ordenes');
     } catch (e: any) { results.push('total_transferencia: ' + e.message); }
 
     try {
-        await db.raw('ALTER TABLE ordenes ADD COLUMN transferencia_expiracion TIMESTAMP');
+        await db.raw('ALTER TABLE ordenes ADD COLUMN IF NOT EXISTS transferencia_expiracion TIMESTAMP');
         results.push('Added transferencia_expiracion to ordenes');
     } catch (e: any) { results.push('transferencia_expiracion: ' + e.message); }
     

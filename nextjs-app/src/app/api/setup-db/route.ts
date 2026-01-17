@@ -18,7 +18,7 @@ export async function GET() {
     for (const colDef of columns) {
       const colName = colDef.split(' ')[0];
       try {
-        await db.raw(`ALTER TABLE productos ADD COLUMN ${colDef}`);
+        await db.raw(`ALTER TABLE productos ADD COLUMN IF NOT EXISTS ${colDef}`);
         results.push(`Added ${colName}`);
       } catch (err: any) {
         if (err.message.includes('already exists')) {

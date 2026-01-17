@@ -26,36 +26,53 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Check Mercado Pago for matching payment
-    // First try DB Config, then ENV
-    let token = '';
-    const tokenRow = await db.get("SELECT valor FROM configuracion WHERE clave = 'mercadopago_access_token'");
-    if (tokenRow && tokenRow.valor) {
-        try { token = JSON.parse(tokenRow.valor); } catch { token = tokenRow.valor; }
+    let token = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
+    
+    // If not in env, check database
+    if (!token) {
+        const tokenRow = await db.get("SELECT valor FROM configuracion WHERE clave = 'mercadopago_access_token'");
+        if (tokenRow && tokenRow.valor) {
+            try { token = JSON.parse(tokenRow.valor); } catch { token = tokenRow.valor; }
+        }
     }
     
     if (!token) {
-        token = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
-    }
-
-    if (!token) {
-        console.warn('[transfer/check] MERCADOPAGO_ACCESS_TOKEN not found in database or environment');
+        console.warn('[transfer/check] MERCADOPAGO_ACCESS_TOKEN not found in environment or database');
         return NextResponse.json({ status: 'pending', paid: false, message: 'Verification disabled (no token)' });
     }
 
-    // Search window: from 10 mins before order creation to now
+    // Search window: from 2 hours before order creation to now (broaden to avoid TZ issues)
     const orderTime = new Date(order.created_at);
-    const beginDate = new Date(orderTime.getTime() - 10 * 60000).toISOString();
-    const amount = Number(order.total_transferencia);
+    const beginDate = new Date(orderTime.getTime() - 120 * 60000).toISOString(); // 2 hours before
+    const targetAmount = Number(order.total_transferencia);
 
-    console.log(`[transfer/check] Searching for $${amount.toFixed(2)} since ${beginDate} (Order: ${order.numero_orden})`);
+    console.log(`[transfer/check] START CHECK - Order: ${order.numero_orden} ($${targetAmount})`);
+    
+    // Auth Check: Identify which account we are looking at
+    try {
+        const meRes = await fetch('https://api.mercadopago.com/users/me', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (meRes.ok) {
+            const meData = await meRes.json();
+            console.log(`[transfer/check] Using account: ${meData.first_name} ${meData.last_name} (ID: ${meData.id}, Email: ${meData.email})`);
+        } else {
+            console.error('[transfer/check] Token validation failed:', await meRes.text());
+        }
+    } catch (e) {
+        console.error('[transfer/check] Error validating token account:', e);
+    }
 
+    console.log(`[transfer/check] Search Window: ${beginDate} to NOW`);
+
+    // Broaden search: remove 'transaction_amount' from query to find it manually in the result set
+    // This avoids formatting issues with the API's amount filter
     const params = new URLSearchParams({
         'sort': 'date_created',
         'criteria': 'desc',
         'range': 'date_created',
         'begin_date': beginDate,
-        'transaction_amount': amount.toFixed(2),
-        'status': 'approved'
+        'limit': '50'
     });
 
     const mpRes = await fetch(`https://api.mercadopago.com/v1/payments/search?${params.toString()}`, {
@@ -65,15 +82,27 @@ export async function POST(req: NextRequest) {
     const mpData = await mpRes.json();
     
     if (!mpRes.ok) {
-        console.error('[transfer/check] MP Search failed:', mpData);
-        return NextResponse.json({ status: 'pending', error: 'MP Search failed' });
+        console.error('[transfer/check] MP API Error:', mpData);
+        // If it's a 401, maybe token is invalid
+        return NextResponse.json({ status: 'error', message: 'Error en API de Mercado Pago', details: mpData });
     }
 
     const payments = mpData.results || [];
+    console.log(`[transfer/check] Found ${payments.length} potential payments for amount ${targetAmount.toFixed(2)}`);
+
+    // Manual filter to find the BEST match
+    const validPayment = payments.find((p: any) => {
+        const pAmount = Number(p.transaction_amount);
+        const isMatch = Math.abs(pAmount - targetAmount) < 0.01; // Allow 1 cent difference just in case
+        const isApproved = p.status === 'approved';
+        
+        console.log(`   - Payment ID: ${p.id}, Status: ${p.status}, Type: ${p.operation_type}, Amount: ${pAmount}, Date: ${p.date_created}`);
+        
+        return isMatch && isApproved;
+    });
     
-    if (payments.length > 0) {
-        const payment = payments[0];
-        console.log(`[transfer/check] MATCH FOUND! MP Payment ID: ${payment.id} for Order: ${order.numero_orden}`);
+    if (validPayment) {
+        console.log(`[transfer/check] MATCH FOUND! ID: ${validPayment.id}`);
 
         // 3. Update order and deduct stock in a transaction
         await db.transaction(async (client) => {
@@ -97,7 +126,7 @@ export async function POST(req: NextRequest) {
                         : (item.variante_info || {});
                 } catch { varianteInfo = {}; }
 
-                // Update Variant Stock if applicable
+                // Update Variant Stock
                 if (varianteInfo.talle && varianteInfo.color) {
                     await client.query(`
                         UPDATE variantes 
@@ -122,13 +151,18 @@ export async function POST(req: NextRequest) {
                     notas = COALESCE(notas, '') || '\n[Verificado Automáticamente: MP ID ' || $1 || ']',
                     updated_at = NOW() 
                 WHERE id = $2
-            `, [payment.id, orderId]);
+            `, [validPayment.id, orderId]);
         });
 
-        return NextResponse.json({ status: 'approved', paid: true, payment_id: payment.id });
+        return NextResponse.json({ status: 'approved', paid: true, payment_id: validPayment.id });
     }
 
-    return NextResponse.json({ status: 'pending', paid: false });
+    return NextResponse.json({ 
+        status: 'pending', 
+        paid: false, 
+        message: `No se encontró el pago de $${targetAmount.toFixed(2)} en los últimos 50 movimientos (Escaneados: ${payments.length})`,
+        scanned_count: payments.length
+    });
 
   } catch (err: any) {
     console.error('[transfer/check] Critical error:', err);
