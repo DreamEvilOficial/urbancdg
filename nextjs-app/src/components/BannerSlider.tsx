@@ -171,21 +171,34 @@ export default function BannerSlider({ initialConfig }: { initialConfig?: any })
             typeof raw === "string" && raw.startsWith("/")
               ? raw
               : sanitizeURL(raw);
+          const isVid = isVideo(b.url);
+
           return (
             <div
               key={i}
               className={`absolute inset-0 transition-opacity duration-700`}
               style={{ opacity: current === i ? 1 : 0 }}
             >
-              <img
-                src={b.url}
-                alt=""
-                className="w-full h-full object-cover"
-                loading={i === 0 ? "eager" : "lazy"}
-                decoding="async"
-                fetchPriority={i === 0 ? "high" : "auto"}
-                draggable={false}
-              />
+              {isVid ? (
+                <video
+                  src={b.url}
+                  className="w-full h-full object-cover"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                />
+              ) : (
+                <img
+                  src={b.url}
+                  alt=""
+                  className="w-full h-full object-cover"
+                  loading={i === 0 ? "eager" : "lazy"}
+                  decoding="async"
+                  fetchPriority={i === 0 ? "high" : "auto"}
+                  draggable={false}
+                />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/50" />
               {safeLink && (
                 <a href={safeLink} className="absolute inset-0 z-10" />
