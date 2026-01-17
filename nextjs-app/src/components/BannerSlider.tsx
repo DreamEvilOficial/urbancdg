@@ -131,6 +131,10 @@ export default function BannerSlider({ initialConfig }: { initialConfig?: any })
     if (current >= banners.length && banners.length > 0) setCurrent(0);
   }, [banners.length]);
 
+  const isVideo = (url: string) => {
+    return url?.toLowerCase().match(/\.(mp4|webm|mov)$/);
+  };
+
   if (loading)
     return (
       <div className="w-full h-[320px] md:h-[55vh] lg:h-[65vh] bg-black animate-pulse" />
