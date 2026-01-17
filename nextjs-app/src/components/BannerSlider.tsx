@@ -169,7 +169,7 @@ export default function BannerSlider() {
 
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#05060a] via-[#05060a]/80 to-transparent z-10 pointer-events-none" />
 
-      <div className="relative z-20 h-full max-w-[1400px] mx-auto px-6 md:px-10 flex items-center">
+      <div className="relative z-20 h-full max-w-[1400px] mx-auto pl-12 md:pl-32 pr-6 md:pr-10 flex items-center">
         <div className="w-full md:w-[60%] space-y-4 relative z-[40]">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2">
             <span className="h-2 w-2 rounded-full bg-accent2 shadow-[0_0_18px_rgba(0,229,255,0.45)]" />

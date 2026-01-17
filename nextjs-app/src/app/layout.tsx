@@ -93,7 +93,7 @@ export default function RootLayout({
         <Toaster 
           position="top-right"
           containerStyle={{
-            top: 80,
+            top: 160,
             right: 20,
             zIndex: 9999999,
           }}
