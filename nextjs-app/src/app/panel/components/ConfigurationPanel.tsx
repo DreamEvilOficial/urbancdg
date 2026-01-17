@@ -62,7 +62,7 @@ export default function ConfigurationPanel() {
     anuncio_2: 'HASTA 6 CUOTAS SIN INTERÉS',
     anuncio_3: '10% EN TRANSFERENCIAS',
     slider_velocidad: '4000',
-    slider_marquesina_velocidad: '60'
+    slider_marquesina_velocidad: '30'
   })
 
   useEffect(() => {
@@ -127,7 +127,7 @@ export default function ConfigurationPanel() {
         anuncio_2: data.anuncio_2 || 'HASTA 6 CUOTAS SIN INTERÉS',
         anuncio_3: data.anuncio_3 || '10% EN TRANSFERENCIAS',
         slider_velocidad: data.slider_velocidad || '4000',
-        slider_marquesina_velocidad: data.slider_marquesina_velocidad || '60'
+        slider_marquesina_velocidad: data.slider_marquesina_velocidad || '30'
       })
     } catch (error) {
       console.error('Error loading config:', error)
@@ -729,7 +729,7 @@ export default function ConfigurationPanel() {
               min="10"
               max="200"
             />
-            <p className="text-xs text-white/40 mt-2 font-bold">Tiempo que tarda una vuelta completa. Menores segundos = más rápido. Recomendado: 60.</p>
+            <p className="text-xs text-white/40 mt-2 font-bold">Tiempo que tarda una vuelta completa. Menores segundos = más rápido. Recomendado: 30.</p>
           </div>
         </div>
       </div>

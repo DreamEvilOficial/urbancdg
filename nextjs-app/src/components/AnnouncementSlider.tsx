@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 
 export default function AnnouncementSlider() {
   const [mensajes, setMensajes] = useState<string[]>([])
-  const [velocidad, setVelocidad] = useState(60)
+  const [velocidad, setVelocidad] = useState(30)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -17,6 +17,8 @@ export default function AnnouncementSlider() {
         // Cargar velocidad
         if (config.slider_marquesina_velocidad) {
           setVelocidad(Number(config.slider_marquesina_velocidad))
+        } else {
+          setVelocidad(30) // Fallback Faster
         }
 
         // Cargar mensajes (unificar anuncio_1, 2, 3 o slider_mensajes)
@@ -61,7 +63,7 @@ export default function AnnouncementSlider() {
         {giantStrip.map((msg, i) => (
           <span 
             key={i} 
-            className="flex-shrink-0 px-28 text-[12px] font-black uppercase tracking-[0.5em] text-white/60"
+            className="flex-shrink-0 px-10 md:px-28 text-[12px] font-black uppercase tracking-[0.5em] text-white/60"
           >
             {msg}
           </span>
@@ -70,7 +72,7 @@ export default function AnnouncementSlider() {
         {giantStrip.map((msg, i) => (
           <span 
             key={`dup-${i}`} 
-            className="flex-shrink-0 px-28 text-[12px] font-black uppercase tracking-[0.5em] text-white/60"
+            className="flex-shrink-0 px-10 md:px-28 text-[12px] font-black uppercase tracking-[0.5em] text-white/60"
           >
             {msg}
           </span>
