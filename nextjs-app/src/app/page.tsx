@@ -1,5 +1,4 @@
 import { getSections, getProducts, getAllProducts, getConfig } from '@/lib/data'
-import Image from 'next/image'
 import { type Producto } from '@/lib/supabase'
 import ProductCard from '@/components/ProductCard'
 import TopProducts from '@/components/TopProducts'
@@ -88,11 +87,11 @@ export default async function Home() {
                 <div className="text-center mb-8 md:mb-12">
                   <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight flex items-center justify-center gap-1 md:gap-3 px-2 uppercase">
                     {section.gif_url && (
-                      <Image src={section.gif_url} alt="" width={64} height={64} className="w-8 h-8 md:w-16 md:h-16 flex-shrink-0 object-contain" unoptimized />
+                      <img src={section.gif_url} alt="" className="w-8 h-8 md:w-16 md:h-16 flex-shrink-0 object-contain" />
                     )}
                     <span className="text-center">{section.titulo}</span>
                     {section.gif_url && (
-                      <Image src={section.gif_url} alt="" width={64} height={64} className="w-8 h-8 md:w-16 md:h-16 flex-shrink-0 object-contain" unoptimized />
+                      <img src={section.gif_url} alt="" className="w-8 h-8 md:w-16 md:h-16 flex-shrink-0 object-contain" />
                     )}
                   </h2>
                   <div className="w-24 h-1 bg-white mx-auto"></div>
