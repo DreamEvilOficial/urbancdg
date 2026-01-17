@@ -284,7 +284,7 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
                           )}
                         </div>
                         <div>
-                          <div className="text-xs font-bold text-white transition">{producto.nombre}</div>
+                          <div className="text-xs font-bold text-white transition">{producto.nombre || 'SIN NOMBRE'}</div>
                           <div className="text-[9px] font-black text-white/45 uppercase tracking-[0.35em]">{producto.sku || 'SIN-REF'}</div>
                         </div>
                       </div>
