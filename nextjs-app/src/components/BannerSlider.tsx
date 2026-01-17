@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
 import { sanitizeURL } from "@/lib/security";
 
 type BannerItem = { url: string; link?: string };
@@ -193,14 +194,15 @@ export default function BannerSlider({ initialConfig }: { initialConfig?: any })
                   playsInline
                 />
               ) : (
-                <img
+                <Image
                   src={b.url}
-                  alt=""
-                  className="w-full h-full object-cover"
-                  loading={i === 0 ? "eager" : "lazy"}
-                  decoding="async"
-                  fetchPriority={i === 0 ? "high" : "auto"}
+                  alt="Banner"
+                  fill
+                  sizes="100vw"
+                  className="object-cover"
+                  priority={i === 0}
                   draggable={false}
+                  unoptimized={b.url.toLowerCase().endsWith('.gif')}
                 />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/50" />
