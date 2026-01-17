@@ -89,6 +89,8 @@ export default function TransferPayment({ orderId, orderNumber, onClose }: Trans
         
         if (diff <= 0) {
             setRemainingTime('EXPIRADO')
+            clearInterval(interval)
+            cancelTransfer()
         } else {
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
             const seconds = Math.floor((diff % (1000 * 60)) / 1000)
@@ -110,6 +112,23 @@ export default function TransferPayment({ orderId, orderNumber, onClose }: Trans
       }, 2000)
     } catch (error) {}
   }
+
+  const cancelTransfer = useCallback(async () => {
+    if (!orderId) return onClose()
+    const toastId = toast.loading('Cancelando pedido...')
+    try {
+      const res = await fetch(`/api/orders?id=${orderId}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('No se pudo eliminar el pedido')
+      
+      localStorage.removeItem('paymentOrder')
+      toast.success('Pedido cancelado', { id: toastId })
+      onClose()
+    } catch (error) {
+      console.error(error)
+      toast.error('Error al cancelar', { id: toastId })
+      onClose()
+    }
+  }, [orderId, onClose])
 
   const handleSuccess = () => {
     const cartStore = (window as any).cartStore || useCartStore.getState()
@@ -152,7 +171,7 @@ export default function TransferPayment({ orderId, orderNumber, onClose }: Trans
 }
 
   const cancelTransaction = () => {
-     onClose();
+     cancelTransfer();
   }
 
   if (loading) {

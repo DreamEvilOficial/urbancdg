@@ -46,51 +46,61 @@ export default function PaymentPage() {
         const parsed = JSON.parse(savedOrder)
         setCreatedOrder(parsed)
       } catch {}
-    } else {
-        // Si no hay orden, volver al checkout para crearla
-        router.push('/checkout')
     }
 
     if (items.length === 0) router.push('/cart')
   }, [items.length, router])
 
   const handlePayment = async () => {
-    if (!deliveryData || !createdOrder) {
-      toast.error('Error: No se encontró la orden')
+    if (!deliveryData || items.length === 0) {
+      toast.error('Error: Faltan datos del pedido')
       return
     }
+    
     setLoading(true)
+    const toastId = toast.loading('Creando pedido...')
+
     try {
       const dummyEmail = config.email || 'cliente@tienda.com'
-
-      // Actualizar la orden existente con el método de pago seleccionado
-      await fetch('/api/orders', {
-        method: 'PUT',
+      
+      // 1. Crear el pedido con todos los datos finales
+      const res = await fetch('/api/orders', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: createdOrder.id,
-          metodo_pago: paymentMethod,
+          cliente_nombre: `${deliveryData.formData.nombre} ${deliveryData.formData.apellido}`,
+          cliente_email: dummyEmail,
+          cliente_telefono: deliveryData.formData.telefono,
+          cliente_dni: deliveryData.formData.dniCuit,
+          direccion_envio: deliveryData.direccion_envio,
+          subtotal: total(),
+          envio: deliveryData.shippingCost,
           descuento: discountAmount,
           total: payableTotal,
-          notas: `Nota: ${orderNote}`
+          metodo_pago: paymentMethod,
+          notas: orderNote ? `Nota: ${orderNote}` : '',
+          items: items.map(i => ({
+            producto_id: i.id,
+            cantidad: i.cantidad,
+            precio_unitario: i.precio,
+            talle: i.talle,
+            color: i.color
+          }))
         })
       })
 
-      // Actualizar estado local
-      const updatedOrder = { 
-        ...createdOrder, 
-        metodo_pago: paymentMethod, 
-        descuento: discountAmount, 
-        total: payableTotal,
-        notas: `Nota: ${orderNote}`
-      }
-      setCreatedOrder(updatedOrder)
-      localStorage.setItem('paymentOrder', JSON.stringify(updatedOrder))
+      const orderData = await res.json()
+      if (!res.ok) throw new Error(orderData.error || 'Error al crear el pedido')
 
+      toast.success('Pedido creado!', { id: toastId })
+      setCreatedOrder(orderData)
+      localStorage.setItem('paymentOrder', JSON.stringify(orderData))
+
+      // 2. Procesar según método elegido
       if (paymentMethod === 'transferencia') {
         setShowTransferModal(true)
       } else {
-        const response = await fetch('/api/mercadopago/create-preference', {
+        const mpResponse = await fetch('/api/mercadopago/create-preference', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -103,16 +113,17 @@ export default function PaymentPage() {
               color: i.color
             })),
             shippingCost: deliveryData.shippingCost || 0,
-            ordenId: createdOrder.id,
+            ordenId: orderData.id,
             payer: { email: dummyEmail, name: deliveryData.formData.nombre }
           })
         })
-        const data = await response.json()
-        if (!response.ok) throw new Error(data.error)
-        window.location.href = data.init_point
+        const mpData = await mpResponse.json()
+        if (!mpResponse.ok) throw new Error(mpData.error)
+        window.location.href = mpData.init_point
       }
     } catch (error: any) {
-      toast.error(error.message || 'Error procesando el pago')
+      console.error(error)
+      toast.error(error.message || 'Error procesando el pedido', { id: toastId })
     } finally {
       setLoading(false)
     }

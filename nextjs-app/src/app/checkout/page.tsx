@@ -31,7 +31,8 @@ export default function CheckoutPage() {
   const [shippingCost, setShippingCost] = useState(0)
   const [calculatingShipping, setCalculatingShipping] = useState(false)
   const [config, setConfig] = useState<any>({})
-  
+  const [isSubmitting, setIsSubmitting] = useState(false)
+ 
   const [formData, setFormData] = useState<CheckoutFormData>({
     nombre: '',
     apellido: '',
@@ -114,6 +115,7 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSubmitting) return
     const fieldsToValidate: (keyof CheckoutFormData)[] =
       deliveryMethod === 'shipping'
         ? ['nombre', 'apellido', 'telefono', 'dniCuit', 'direccion', 'numero', 'codigoPostal', 'ciudad']
@@ -133,43 +135,30 @@ export default function CheckoutPage() {
       return
     }
 
-    const toastId = toast.loading('Procesando pedido...')
+    setIsSubmitting(true)
+    const toastId = toast.loading('Guardando datos de entrega...')
 
     try {
       const finalTotal = total() + shippingCost
-      const numeroOrden = `orden-${Math.floor(10000 + Math.random() * 89999)}`
-      const dummyEmail = config?.email || 'cliente@tienda.com'
       const direccionCompleta = deliveryMethod === 'shipping' 
         ? `${formData.direccion} ${formData.numero}, ${formData.ciudad}`
         : 'Retiro en Local'
 
       localStorage.setItem('deliveryData', JSON.stringify({
-        formData, deliveryMethod, shippingCost, shippingOption, finalTotal
+        formData, 
+        deliveryMethod, 
+        shippingCost, 
+        shippingOption, 
+        finalTotal,
+        direccion_envio: direccionCompleta
       }))
 
-      const orden = await ordenesAPI.crear({
-        numero_orden: numeroOrden,
-        cliente_nombre: `${formData.nombre} ${formData.apellido}`,
-        cliente_email: dummyEmail,
-        cliente_telefono: formData.telefono,
-        cliente_dni: formData.dniCuit,
-        direccion_envio: direccionCompleta,
-        envio: shippingCost,
-        subtotal: total(),
-        descuento: 0,
-        total: finalTotal,
-        estado: 'pendiente',
-        metodo_pago: 'no_definido',
-        notas: '',
-        items: items
-      })
-
-      localStorage.setItem('paymentOrder', JSON.stringify(orden))
-      toast.success('Pedido creado', { id: toastId })
+      toast.success('Datos guardados', { id: toastId })
       router.push('/payment')
     } catch (error) {
       console.error(error)
-      toast.error('Error al crear el pedido', { id: toastId })
+      toast.error('Error al procesar los datos', { id: toastId })
+      setIsSubmitting(false)
     }
   }
 
@@ -322,8 +311,15 @@ export default function CheckoutPage() {
                 </section>
               </div>
 
-              <button type="submit" className="w-full bg-white text-black py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-gray-200 transition-all flex items-center justify-center gap-2 group">
-                CONTINUAR AL PAGO <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className={`w-full bg-white text-black py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 group ${
+                  isSubmitting ? 'opacity-60 cursor-not-allowed' : 'hover:bg-gray-200'
+                }`}
+              >
+                {isSubmitting ? 'PROCESANDO...' : 'CONTINUAR AL PAGO'}
+                <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </button>
             </form>
           </div>

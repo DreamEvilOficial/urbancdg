@@ -44,7 +44,13 @@ export async function getProducts(options: {
   category_slug?: string;
   slug?: string;
 } = {}) {
-  let query = 'SELECT * FROM productos WHERE 1=1';
+  let query = `
+    SELECT p.*, 
+           COALESCE((SELECT ROUND(AVG(r.calificacion), 1) FROM resenas r WHERE r.producto_id = p.id AND r.aprobado = TRUE), 0) as avg_rating,
+           (SELECT COUNT(*) FROM resenas r WHERE r.producto_id = p.id AND r.aprobado = TRUE) as review_count
+    FROM productos p 
+    WHERE 1=1
+  `;
   let params: any[] = [];
 
   if (options.active) {
