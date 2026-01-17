@@ -104,9 +104,25 @@ export interface Orden {
   created_at: string
 }
 
+export interface Cupon {
+  id: string
+  codigo: string
+  descripcion?: string
+  tipo: 'porcentaje' | 'fijo'
+  valor: number
+  minimo_compra?: number
+  max_uso_total?: number
+  usos_actuales?: number
+  config?: any
+  valido_desde?: string
+  valido_hasta?: string
+  activo: boolean
+  created_at: string
+  updated_at?: string
+}
+
 // Helper para fetch
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
-  // 1. Construir URL con prefijo /api y timestamp para evitar cache
   const separator = endpoint.includes('?') ? '&' : '?';
   const url = endpoint.startsWith('/') 
     ? `/api${endpoint}${options.method === 'GET' || !options.method ? `${separator}t=${Date.now()}` : ''}` 
@@ -132,10 +148,9 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
     return data;
   } catch (error: any) {
     console.error(`[apiFetch] Fetch Error (${url}):`, error.message);
-    
-    // Devolvemos un array vacío como fallback seguro para evitar .map() errors si es un GET de listas
+
     if (!options.method || options.method === 'GET') {
-      const isListEndpoint = ['products', 'categories', 'tags', 'orders', 'debts', 'sections', 'reviews'].some(e => url.includes(e));
+      const isListEndpoint = ['products', 'categories', 'tags', 'orders', 'debts', 'sections', 'reviews', 'coupons'].some(e => url.includes(e));
       if (isListEndpoint) {
         return [];
       }
@@ -320,4 +335,60 @@ export const deudasAPI = {
       method: 'DELETE'
     });
   }
+}
+
+export const cuponesAPI = {
+  async listar() {
+    return apiFetch('/coupons') as Promise<Cupon[]>
+  },
+
+  async obtenerPorCodigo(codigo: string) {
+    return apiFetch(`/coupons?code=${encodeURIComponent(codigo)}`) as Promise<Cupon[]>
+  },
+
+  async crear(cupon: Partial<Cupon>) {
+    return apiFetch('/coupons', {
+      method: 'POST',
+      body: JSON.stringify(cupon),
+    }) as Promise<{ success: boolean; id: string }>
+  },
+
+  async actualizar(id: string, cupon: Partial<Cupon>) {
+    return apiFetch('/coupons', {
+      method: 'PUT',
+      body: JSON.stringify({ id, ...cupon }),
+    }) as Promise<{ success: boolean }>
+  },
+
+  async eliminar(id: string) {
+    return apiFetch(`/coupons?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }) as Promise<{ success: boolean }>
+  },
+
+  async validar(payload: { code: string; items?: { id: string; cantidad: number }[]; total?: number }) {
+    return apiFetch('/coupons/validate', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }) as Promise<{
+      valid: boolean
+      code?: string
+      tipo?: 'porcentaje' | 'fijo'
+      valor?: number
+      appliedTo?: number
+      discountAmount?: number
+      finalTotal?: number
+      categorias_ids?: string[]
+      minimo_compra?: number
+      message?: string
+      error?: string
+    }>
+  },
+
+  async canjear(code: string) {
+    return apiFetch('/coupons/redeem', {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    }) as Promise<{ success: boolean }>
+  },
 }

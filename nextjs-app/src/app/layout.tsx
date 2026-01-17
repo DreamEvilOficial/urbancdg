@@ -95,15 +95,19 @@ export const viewport: Viewport = {
   maximumScale: 1,
 }
 
-export default function RootLayout({
+import { getConfig } from '@/lib/data'
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const config = await getConfig()
+
   return (
     <html lang="es" suppressHydrationWarning className="h-full">
       <body className={`${urbanist.variable} ${bebasNeue.variable} h-full font-sans antialiased`}>
-        <ClientLayout>
+        <ClientLayout initialConfig={config}>
           {children}
         </ClientLayout>
         <DevToolsProtection />

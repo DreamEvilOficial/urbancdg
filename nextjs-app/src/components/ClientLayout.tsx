@@ -10,7 +10,13 @@ import Header from './Header'
 import Navbar from './Navbar'
 import Footer from './Footer'
 
-export default function ClientLayout({ children }: { children: React.ReactNode }) {
+export default function ClientLayout({ 
+  children, 
+  initialConfig 
+}: { 
+  children: React.ReactNode,
+  initialConfig?: any 
+}) {
   const [mounted, setMounted] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [theme, setTheme] = useState('dark')
@@ -131,7 +137,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   return (
     <>
       {!isAdmin && !isCheckout && !isPayment && !isCart && (
-        <Header theme={theme} toggleTheme={toggleTheme} />
+        <Header theme={theme} toggleTheme={toggleTheme} initialConfig={initialConfig} />
       )}
       <main className="min-h-screen">{children}</main>
       {!isAdmin && !isCheckout && !isPayment && !isCart && !isProductDetail && !isLegal && <Footer />}

@@ -6,14 +6,39 @@ import { sanitizeURL } from "@/lib/security";
 
 type BannerItem = { url: string; link?: string };
 
-export default function BannerSlider() {
-  const [banners, setBanners] = useState<BannerItem[]>([]);
+export default function BannerSlider({ initialConfig }: { initialConfig?: any }) {
+  const getInitialBanners = () => {
+    let parsed: BannerItem[] = [];
+    const raw = initialConfig?.banner_urls;
+    if (Array.isArray(raw)) parsed = raw;
+    else if (typeof raw === "string") {
+      try {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) parsed = arr;
+      } catch {}
+    }
+
+    if (parsed.length === 0) {
+      const hero = typeof initialConfig?.hero_banner_url === "string" ? initialConfig.hero_banner_url : "";
+      return hero
+        ? [{ url: hero, link: "/productos" }]
+        : [
+            {
+              url: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&h=900&fit=crop",
+              link: "/productos",
+            },
+          ];
+    }
+    return parsed.filter((b) => b && typeof b.url === "string" && b.url.trim().length);
+  };
+
+  const [banners, setBanners] = useState<BannerItem[]>(getInitialBanners());
   const [current, setCurrent] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [intervalo, setIntervalo] = useState(4000);
+  const [loading, setLoading] = useState(!initialConfig);
+  const [intervalo, setIntervalo] = useState(Number(initialConfig?.slider_velocidad) || 4000);
   const [tienda, setTienda] = useState({
-    nombre: "URBAN",
-    lema: "Streetwear — drops — fits",
+    nombre: initialConfig?.nombre_tienda || "URBAN",
+    lema: initialConfig?.lema_tienda || initialConfig?.subtitulo_lema || "Streetwear — drops — fits",
   });
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
   const hoverRef = useRef(false);
@@ -30,12 +55,18 @@ export default function BannerSlider() {
       const res = await fetch("/api/config");
       const data = await res.json();
 
-      setTienda({
-        nombre: data.nombre_tienda || "URBAN",
-        lema: data.lema_tienda || "Streetwear — drops — fits",
+      setTienda((prev) => {
+        const next = {
+          nombre: data.nombre_tienda || "URBAN",
+          lema: data.lema_tienda || data.subtitulo_lema || "Streetwear — drops — fits",
+        };
+        return JSON.stringify(prev) === JSON.stringify(next) ? prev : next;
       });
 
-      if (data.slider_velocidad) setIntervalo(Number(data.slider_velocidad));
+      if (data.slider_velocidad) {
+        const nextInt = Number(data.slider_velocidad);
+        setIntervalo((prev) => (prev === nextInt ? prev : nextInt));
+      }
 
       let parsed: BannerItem[] = [];
       const raw = data.banner_urls;
@@ -47,33 +78,30 @@ export default function BannerSlider() {
         } catch {}
       }
 
+      let nextBanners: BannerItem[] = [];
       if (parsed.length === 0) {
         const hero =
           typeof data.hero_banner_url === "string" ? data.hero_banner_url : "";
-        setBanners(
-          hero
-            ? [{ url: hero, link: "/productos" }]
-            : [
-                {
-                  url: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&h=900&fit=crop",
-                  link: "/productos",
-                },
-              ]
-        );
+        nextBanners = hero
+          ? [{ url: hero, link: "/productos" }]
+          : [
+              {
+                url: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&h=900&fit=crop",
+                link: "/productos",
+              },
+            ];
       } else {
-        setBanners(
-          parsed.filter(
-            (b) => b && typeof b.url === "string" && b.url.trim().length
-          )
+        nextBanners = parsed.filter(
+          (b) => b && typeof b.url === "string" && b.url.trim().length
         );
       }
-    } catch {
-      setBanners([
-        {
-          url: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&h=900&fit=crop",
-          link: "/productos",
-        },
-      ]);
+
+      setBanners((prev) => {
+        return JSON.stringify(prev) === JSON.stringify(nextBanners) ? prev : nextBanners;
+      });
+
+    } catch (e) {
+      console.error('Error loading banner config:', e);
     } finally {
       setLoading(false);
     }

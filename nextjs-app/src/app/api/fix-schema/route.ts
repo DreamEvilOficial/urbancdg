@@ -209,7 +209,25 @@ export async function GET() {
             ALTER TABLE orden_items ADD COLUMN variante_info JSONB DEFAULT '{}';
         END IF;
 
-        -- 9. Asegurar tabla ADMIN_LOGS
+        -- 9. Asegurar tabla CUPONES
+        CREATE TABLE IF NOT EXISTS cupones (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            codigo VARCHAR(50) UNIQUE NOT NULL,
+            descripcion TEXT,
+            tipo VARCHAR(20) NOT NULL DEFAULT 'porcentaje',
+            valor NUMERIC(10,2) NOT NULL DEFAULT 0,
+            minimo_compra NUMERIC(10,2) DEFAULT 0,
+            max_uso_total INTEGER,
+            usos_actuales INTEGER DEFAULT 0,
+            config JSONB DEFAULT '{}',
+            valido_desde TIMESTAMPTZ,
+            valido_hasta TIMESTAMPTZ,
+            activo BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        );
+
+        -- 10. Asegurar tabla ADMIN_LOGS
         CREATE TABLE IF NOT EXISTS admin_logs (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             action VARCHAR(100) NOT NULL,
@@ -219,7 +237,7 @@ export async function GET() {
             created_at TIMESTAMPTZ DEFAULT NOW()
         );
 
-        -- 10. ACTUALIZACIÓN DE STOCK PARA PRUEBAS (SOLO SI ES BAJO)
+        -- 11. ACTUALIZACIÓN DE STOCK PARA PRUEBAS (SOLO SI ES BAJO)
         UPDATE productos SET stock_actual = 100 WHERE stock_actual < 10;
 
       END $$;

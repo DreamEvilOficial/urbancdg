@@ -16,9 +16,10 @@ const MusicPanel = dynamic(() => import('./MusicPanel'), { ssr: false })
 interface HeaderProps {
   theme?: string
   toggleTheme?: () => void
+  initialConfig?: any
 }
 
-export default function Header({ theme, toggleTheme }: HeaderProps) {
+export default function Header({ theme, toggleTheme, initialConfig }: HeaderProps) {
   const router = useRouter()
   const items = useCartStore((state) => state.items)
   const totalItems = items.reduce((sum, item) => sum + item.cantidad, 0)
@@ -49,12 +50,21 @@ export default function Header({ theme, toggleTheme }: HeaderProps) {
 
   // Estados de Datos
   const [config, setConfig] = useState<any>({
-    nombre_tienda: 'URBAN',
-    logo_url: '',
-    lema_tienda: ''
+    nombre_tienda: initialConfig?.nombre_tienda || 'URBAN',
+    logo_url: initialConfig?.logo_url || '',
+    lema_tienda: initialConfig?.lema_tienda || initialConfig?.subtitulo_lema || ''
   })
-  const [mensajes, setMensajes] = useState<string[]>([])
-  const [velocidad, setVelocidad] = useState(30)
+  
+  const getInitialMensajes = () => {
+    const msgs = []
+    if (initialConfig?.anuncio_1) msgs.push(initialConfig.anuncio_1)
+    if (initialConfig?.anuncio_2) msgs.push(initialConfig.anuncio_2)
+    if (initialConfig?.anuncio_3) msgs.push(initialConfig.anuncio_3)
+    return msgs
+  }
+
+  const [mensajes, setMensajes] = useState<string[]>(getInitialMensajes())
+  const [velocidad, setVelocidad] = useState(Number(initialConfig?.slider_marquesina_velocidad) || 30)
   const [categorias, setCategorias] = useState<Array<{id: string, nombre: string, slug: string, icono?: string, subcategorias?: Array<{id: string, nombre: string, slug: string}>}>>([])
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
   const [filtrosEspeciales, setFiltrosEspeciales] = useState<Array<{id: string, nombre: string, clave: string, icono?: string, imagen_url?: string, activo: boolean}>>([])
@@ -79,30 +89,43 @@ export default function Header({ theme, toggleTheme }: HeaderProps) {
         if (data) {
           const newConfig: any = {}
           if (Array.isArray(data)) {
-             data.forEach((item: any) => {
-                try { newConfig[item.clave] = JSON.parse(item.valor) } catch { newConfig[item.clave] = item.valor }
-             })
+            data.forEach((item: any) => {
+              try {
+                newConfig[item.clave] = JSON.parse(item.valor)
+              } catch {
+                newConfig[item.clave] = item.valor
+              }
+            })
           } else {
-             Object.assign(newConfig, data)
+            Object.assign(newConfig, data)
           }
-          
-          setConfig({
-            nombre_tienda: newConfig.nombre_tienda || 'URBAN',
-            logo_url: newConfig.logo_url || '',
-            lema_tienda: newConfig.lema_tienda || newConfig.subtitulo_lema || ''
+
+          setConfig((prev: any) => {
+            const next = {
+              nombre_tienda: newConfig.nombre_tienda || 'URBAN',
+              logo_url: newConfig.logo_url || '',
+              lema_tienda: newConfig.lema_tienda || newConfig.subtitulo_lema || ''
+            }
+            if (JSON.stringify(prev) === JSON.stringify(next)) return prev
+            return next
           })
 
-          // Velocidad
           if (newConfig.slider_marquesina_velocidad) {
-            setVelocidad(Number(newConfig.slider_marquesina_velocidad))
+            const nextVel = Number(newConfig.slider_marquesina_velocidad)
+            setVelocidad((prev: number) => (prev === nextVel ? prev : nextVel))
           }
 
-          // Mensajes
-          const nuevosMensajes = []
+          const nuevosMensajes: string[] = []
           if (newConfig.anuncio_1) nuevosMensajes.push(newConfig.anuncio_1)
           if (newConfig.anuncio_2) nuevosMensajes.push(newConfig.anuncio_2)
           if (newConfig.anuncio_3) nuevosMensajes.push(newConfig.anuncio_3)
-          if (nuevosMensajes.length > 0) setMensajes(nuevosMensajes)
+
+          if (nuevosMensajes.length > 0) {
+            setMensajes((prev: string[]) => {
+              if (JSON.stringify(prev) === JSON.stringify(nuevosMensajes)) return prev
+              return nuevosMensajes
+            })
+          }
         }
       } catch (error) {
         console.error('Error loading config:', error)
@@ -168,8 +191,6 @@ export default function Header({ theme, toggleTheme }: HeaderProps) {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
-
-  if (!mounted) return null
 
   return (
     <>
@@ -399,7 +420,7 @@ export default function Header({ theme, toggleTheme }: HeaderProps) {
                 className="relative h-10 w-10 flex items-center justify-center rounded-full text-white/70 hover:bg-white/5 hover:text-white transition-colors"
               >
                 <ShoppingCart className="w-4 h-4" />
-                {totalItems > 0 && (
+                {mounted && totalItems > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-accent text-ink text-[10px] font-black border border-black shadow-md">
                     {totalItems}
                   </span>
@@ -518,9 +539,9 @@ export default function Header({ theme, toggleTheme }: HeaderProps) {
         )}
       </AnimatePresence>
       
-      {showCart && <Cart onClose={() => setShowCart(false)} />}
-      {showSaved && <SavedProducts onClose={() => setShowSaved(false)} />}
-      <MusicPanel open={showMusic} onClose={() => setShowMusic(false)} />
+      {mounted && showCart && <Cart onClose={() => setShowCart(false)} />}
+      {mounted && showSaved && <SavedProducts onClose={() => setShowSaved(false)} />}
+      {mounted && <MusicPanel open={showMusic} onClose={() => setShowMusic(false)} />}
     </>
   )
 }

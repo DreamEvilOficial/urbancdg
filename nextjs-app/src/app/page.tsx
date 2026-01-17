@@ -73,7 +73,7 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-transparent relative z-10">
-      <BannerSlider />
+      <BannerSlider initialConfig={config} />
 
       <div className="relative z-20 -mt-10 md:-mt-16">
         <div className="pointer-events-none absolute inset-x-0 -top-10 md:-top-16 h-16 bg-gradient-to-b from-transparent to-[#05060a]" />
