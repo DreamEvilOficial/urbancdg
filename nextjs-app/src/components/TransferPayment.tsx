@@ -137,8 +137,8 @@ export default function TransferPayment({ orderId, orderNumber, onClose }: Trans
             toast.success('¡Pago confirmado!')
             handleSuccess()
         } else {
-            const msg = data.status === 'pending' ? 'Pago no detectado aún' : 'Estado: ' + data.status
-            toast(msg, { icon: '⏳' })
+            const msg = data.message || (data.status === 'pending' ? 'Pago no detectado aún' : 'Estado: ' + data.status)
+            toast(msg, { icon: data.status === 'error' ? '❌' : '⏳' })
         }
     } catch {
         toast.error('Error al verificar')
