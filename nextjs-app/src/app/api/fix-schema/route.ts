@@ -96,6 +96,10 @@ export async function GET() {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'fecha_lanzamiento') THEN
             ALTER TABLE productos ADD COLUMN fecha_lanzamiento TIMESTAMPTZ;
         END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'desbloqueado_desde') THEN
+            ALTER TABLE productos ADD COLUMN desbloqueado_desde TIMESTAMPTZ;
+        END IF;
         
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'productos' AND column_name = 'proveedor_nombre') THEN
             ALTER TABLE productos ADD COLUMN proveedor_nombre TEXT;

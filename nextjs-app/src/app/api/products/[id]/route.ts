@@ -48,6 +48,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         variantes: variantsData,
         dimensiones: product.dimensiones ? (typeof product.dimensiones === 'string' ? JSON.parse(product.dimensiones) : product.dimensiones) : null,
         metadata: product.metadata ? (typeof product.metadata === 'string' ? JSON.parse(product.metadata) : product.metadata) : null,
+        desbloqueado_desde: product.desbloqueado_desde || null,
     };
     
     return NextResponse.json(parsedProduct);
@@ -88,6 +89,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const isNowAvailable = (updates.proximamente === false || updates.proximo_lanzamiento === false);
     
     if (wasUpcoming && isNowAvailable) {
+        const nowIso = new Date().toISOString();
+        (updates as any).desbloqueado_desde = nowIso;
+
         (async () => {
             try {
                 const notifications = await db.all('SELECT * FROM proximamente_notificaciones WHERE producto_id = ? AND notificado = FALSE', [id]);
@@ -147,6 +151,13 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         // Normalizar fecha de lanzamiento
         if (key === 'fecha_lanzamiento') {
             if (!val || val === '' || val === 'null' || val === 'undefined') {
+                val = null;
+            }
+        }
+
+        // Normalizar fecha de desbloqueo (permitir null explícito para limpiar estado)
+        if (key === 'desbloqueado_desde') {
+            if (!val) {
                 val = null;
             }
         }

@@ -64,16 +64,16 @@ function ProductCard({ producto }: ProductCardProps) {
   }
 
   const isProximoLanzamiento = !!((producto as any).proximamente || (producto as any).proximo_lanzamiento)
-  const fechaLanzamientoRaw = (producto as any).fecha_lanzamiento
-  const fechaLanzamiento = fechaLanzamientoRaw ? new Date(fechaLanzamientoRaw) : null
+  const desbloqueadoDesdeRaw = (producto as any).desbloqueado_desde as string | undefined | null
+  const desbloqueadoDesde = desbloqueadoDesdeRaw ? new Date(desbloqueadoDesdeRaw) : null
   const ahora = new Date()
   const MILISEGUNDOS_DIA = 24 * 60 * 60 * 1000
-  const diasRecientes = 3
+  const diasDesbloqueado = 7
+
   const isRecienDesbloqueado =
     !isProximoLanzamiento &&
-    !!fechaLanzamiento &&
-    fechaLanzamiento.getTime() <= ahora.getTime() &&
-    ahora.getTime() - fechaLanzamiento.getTime() <= diasRecientes * MILISEGUNDOS_DIA
+    !!desbloqueadoDesde &&
+    ahora.getTime() - desbloqueadoDesde.getTime() <= MILISEGUNDOS_DIA * diasDesbloqueado
 
   // Verificar si es producto TOP
   const isTopProduct = (producto as any).isTopProduct || false

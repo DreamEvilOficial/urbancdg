@@ -31,7 +31,8 @@ export async function GET(request: Request) {
                 metadata: typeof p.metadata === 'string' ? JSON.parse(p.metadata) : (p.metadata || {}),
                 dimensiones: typeof p.dimensiones === 'string' ? JSON.parse(p.dimensiones) : (p.dimensiones || null),
                 avg_rating: Number(p.avg_rating) || 0,
-                review_count: Number(p.review_count) || 0
+                review_count: Number(p.review_count) || 0,
+                desbloqueado_desde: p.desbloqueado_desde || null
             };
         };
 

@@ -55,6 +55,7 @@ export interface Producto {
   review_count?: number
   created_at: string
   updated_at?: string
+  desbloqueado_desde?: string | null
 }
 
 export interface Categoria {
