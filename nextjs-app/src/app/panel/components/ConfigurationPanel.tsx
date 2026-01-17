@@ -171,13 +171,19 @@ export default function ConfigurationPanel() {
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
-        
-        // Comprimir si es banner (suelen ser grandes)
-        const blob = await compressImage(file)
-        const compressedFile = new File([blob], file.name, { type: 'image/jpeg' })
+        let uploadFile: File = file
+
+        const isGif =
+          file.type === 'image/gif' ||
+          file.name.toLowerCase().endsWith('.gif')
+
+        if (!isGif) {
+          const blob = await compressImage(file)
+          uploadFile = new File([blob], file.name, { type: 'image/jpeg' })
+        }
 
         const formData = new FormData()
-        formData.append('file', compressedFile)
+        formData.append('file', uploadFile)
         formData.append('folder', 'banners')
 
       const res = await fetch('/api/upload', { method: 'POST', body: formData })
