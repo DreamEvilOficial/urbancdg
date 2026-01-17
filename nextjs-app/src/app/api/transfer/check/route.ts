@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Order not configured for transfer' }, { status: 400 });
     }
 
-    // 2. Check Mercado Pago for matching payment
+    // 2. Token Acquisition
     let token = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
     
     // If not in env, check database
@@ -38,35 +38,41 @@ export async function POST(req: NextRequest) {
     
     if (!token) {
         console.warn('[transfer/check] MERCADOPAGO_ACCESS_TOKEN not found in environment or database');
-        return NextResponse.json({ status: 'pending', paid: false, message: 'Verification disabled (no token)' });
+        return NextResponse.json({ status: 'pending', paid: false, message: 'Falta configuración de Mercado Pago (Token)' });
     }
 
-    // Search window: from 2 hours before order creation to now (broaden to avoid TZ issues)
-    const orderTime = new Date(order.created_at);
-    const beginDate = new Date(orderTime.getTime() - 120 * 60000).toISOString(); // 2 hours before
-    const targetAmount = Number(order.total_transferencia);
+    // Trim token to avoid accidental spaces from Vercel/DB
+    token = token.trim();
 
-    console.log(`[transfer/check] START CHECK - Order: ${order.numero_orden} ($${targetAmount})`);
-    
-    // Auth Check: Identify which account we are looking at
+    // 2. Check Mercado Pago for matching payment
+    // Identify which account we are looking at (Diagnostic)
+    let accountInfo = 'Desconocida';
     try {
         const meRes = await fetch('https://api.mercadopago.com/users/me', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (meRes.ok) {
             const meData = await meRes.json();
-            console.log(`[transfer/check] Using account: ${meData.first_name} ${meData.last_name} (ID: ${meData.id}, Email: ${meData.email})`);
+            accountInfo = `${meData.first_name || ''} ${meData.last_name || ''} (${meData.email})`;
+            console.log(`[transfer/check] Account: ${accountInfo}`);
         } else {
-            console.error('[transfer/check] Token validation failed:', await meRes.text());
+            const meErr = await meRes.text();
+            console.error('[transfer/check] Token check failed:', meErr);
+            return NextResponse.json({ 
+                status: 'error', 
+                message: 'Token de Mercado Pago inválido o expirado',
+                details: meErr
+            });
         }
-    } catch (e) {
-        console.error('[transfer/check] Error validating token account:', e);
+    } catch (e: any) {
+        console.error('[transfer/check] Auth request failed:', e.message);
     }
 
-    console.log(`[transfer/check] Search Window: ${beginDate} to NOW`);
+    // Search window: broaden to 24 hours to avoid ANY timezone issues during debug
+    const orderTime = new Date(order.created_at);
+    const beginDate = new Date(orderTime.getTime() - 24 * 60 * 60000).toISOString();
+    const targetAmount = Number(order.total_transferencia);
 
-    // Broaden search: remove 'transaction_amount' from query to find it manually in the result set
-    // This avoids formatting issues with the API's amount filter
     const params = new URLSearchParams({
         'sort': 'date_created',
         'criteria': 'desc',
@@ -82,17 +88,16 @@ export async function POST(req: NextRequest) {
     const mpData = await mpRes.json();
     
     if (!mpRes.ok) {
-        console.error('[transfer/check] MP API Error Details:', JSON.stringify(mpData));
-        // If it's a 401, maybe token is invalid
+        console.error('[transfer/check] MP Search Error:', JSON.stringify(mpData));
         return NextResponse.json({ 
             status: 'error', 
-            message: 'Error en API de Mercado Pago', 
-            details: mpData.message || mpData 
+            message: `Error MP: ${mpData.message || 'Error desconocido'}`,
+            details: mpData 
         });
     }
 
     const payments = mpData.results || [];
-    console.log(`[transfer/check] Found ${payments.length} potential payments in the last 2 hours`);
+    console.log(`[transfer/check] Scanning ${payments.length} payments for ${accountInfo}`);
 
     // Manual filter to find the BEST match
     const validPayment = payments.find((p: any) => {
