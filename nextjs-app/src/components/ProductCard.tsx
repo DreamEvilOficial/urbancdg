@@ -504,8 +504,8 @@ function ProductCard({ producto }: ProductCardProps) {
             {/* Reviews Stars - Moved Up & Numeric Added */}
             <div className="flex items-center gap-1.5 mb-2">
               <div className="flex items-center gap-1">
-                {(producto.avg_rating ?? 0) > 0 ? (
-                  <span className="text-[10px] font-black text-white/60">{(producto.avg_rating ?? 0).toFixed(1)}</span>
+                {(Number(producto.avg_rating) || 0) > 0 ? (
+                  <span className="text-[10px] font-black text-white/60">{(Number(producto.avg_rating) || 0).toFixed(1)}</span>
                 ) : (
                   <span className="text-[10px] font-black text-white/20">0.0</span>
                 )}
