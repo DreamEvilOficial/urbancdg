@@ -58,9 +58,9 @@ export default function ConfigurationPanel() {
     mensaje_sin_stock: 'Producto sin stock',
     mensaje_carrito_vacio: 'Tu carrito está vacío',
     mensaje_compra_exitosa: '¡Gracias por tu compra!',
-    anuncio_1: '🔥 EN TRANSFERENCIA - MYSTERY BOXES CON 70% OFF',
-    anuncio_2: 'HASTA 6 CUOTAS SIN INTERÉS',
-    anuncio_3: '10% EN TRANSFERENCIAS',
+    anuncio_1: '',
+    anuncio_2: '',
+    anuncio_3: '',
     slider_velocidad: '4000',
     slider_marquesina_velocidad: '30'
   })
@@ -123,9 +123,9 @@ export default function ConfigurationPanel() {
         mensaje_sin_stock: data.mensaje_sin_stock || 'Producto sin stock',
         mensaje_carrito_vacio: data.mensaje_carrito_vacio || 'Tu carrito está vacío',
         mensaje_compra_exitosa: data.mensaje_compra_exitosa || '¡Gracias por tu compra!',
-        anuncio_1: data.anuncio_1 || '🔥 EN TRANSFERENCIA - MYSTERY BOXES CON 70% OFF',
-        anuncio_2: data.anuncio_2 || 'HASTA 6 CUOTAS SIN INTERÉS',
-        anuncio_3: data.anuncio_3 || '10% EN TRANSFERENCIAS',
+        anuncio_1: data.anuncio_1 || '',
+        anuncio_2: data.anuncio_2 || '',
+        anuncio_3: data.anuncio_3 || '',
         slider_velocidad: data.slider_velocidad || '4000',
         slider_marquesina_velocidad: data.slider_marquesina_velocidad || '30'
       })

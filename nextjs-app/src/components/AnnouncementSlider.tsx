@@ -31,17 +31,13 @@ export default function AnnouncementSlider() {
           try {
             msgs = JSON.parse(config.slider_mensajes)
           } catch {
-            msgs = ['DROP NUEVO — TODOS LOS VIERNES', '10% OFF EN TRANSFERENCIA', 'ENVÍOS A TODO EL PAÍS']
+            msgs = []
           }
-        }
-
-        if (msgs.length === 0) {
-          msgs = ['DROP NUEVO — TODOS LOS VIERNES', '10% OFF EN TRANSFERENCIA', 'ENVÍOS A TODO EL PAÍS']
         }
         
         setMensajes(msgs)
       } catch (error) {
-        setMensajes(['DROP NUEVO — TODOS LOS VIERNES', '10% OFF EN TRANSFERENCIA', 'ENVÍOS A TODO EL PAÍS'])
+        setMensajes([])
       }
     }
     loadConfig()
@@ -58,7 +54,10 @@ export default function AnnouncementSlider() {
     <div className="bg-[#05060a]/90 backdrop-blur-xl border-b border-white/10 text-white h-[68px] flex items-center overflow-hidden relative z-[99999]">
       <div 
         className="flex animate-marquee-horizontal whitespace-nowrap"
-        style={{ animationDuration: `${velocidad}s` }}
+        style={{ 
+          '--speed': `${velocidad}s`,
+          '--speed-mobile': `${velocidad / 2}s` 
+        } as React.CSSProperties}
       >
         {giantStrip.map((msg, i) => (
           <span 
@@ -85,11 +84,16 @@ export default function AnnouncementSlider() {
           100% { transform: translateX(-50%); }
         }
         .animate-marquee-horizontal {
-          animation: marquee-horizontal linear infinite;
+          animation: marquee-horizontal var(--speed) linear infinite;
           display: flex !important;
           flex-direction: row !important;
           flex-wrap: nowrap !important;
           width: fit-content !important;
+        }
+        @media (max-width: 768px) {
+          .animate-marquee-horizontal {
+             animation-duration: var(--speed-mobile);
+          }
         }
         .animate-marquee-horizontal:hover {
           animation-play-state: paused;

@@ -6,9 +6,9 @@ export async function GET() {
     nombre_tienda: 'URBAN',
     logo_url: '/logo.svg',
     favicon_url: '/favicon.svg',
-    anuncio_1: '🔥 EN TRANSFERENCIA - MYSTERY BOXES CON 70% OFF',
-    anuncio_2: 'HASTA 6 CUOTAS SIN INTERÉS',
-    anuncio_3: '10% EN TRANSFERENCIAS',
+    anuncio_1: '',
+    anuncio_2: '',
+    anuncio_3: '',
     banner_urls: [
       {
         "url": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&h=600&fit=crop",
