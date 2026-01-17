@@ -31,6 +31,11 @@ export default function Navbar() {
   const [lastScrollY, setLastScrollY] = useState(0)
   const [filtrosEspeciales, setFiltrosEspeciales] = useState<Array<{id: string, nombre: string, clave: string, icono: string, activo: boolean, imagen_url?: string}>>([])
   
+  const isImageUrl = (url: string) => {
+    if (!url) return false
+    return url.startsWith('http') || url.startsWith('https') || url.startsWith('/') || url.includes('.gif') || url.includes('.png') || url.includes('.jpg') || url.includes('.jpeg') || url.includes('.svg') || url.includes('.webp')
+  }
+  
   const totalItems = items.reduce((sum, item) => sum + item.cantidad, 0)
 
   // Prefetch automático de páginas principales
@@ -323,16 +328,18 @@ export default function Navbar() {
               {/* Filtros especiales */}
               {filtrosEspeciales.map((filtro) => {
                 let iconElement = null
-                if (filtro.imagen_url) {
-                  iconElement = <img src={filtro.imagen_url} alt={filtro.nombre} className="w-5 h-5 object-contain" />
-                } else if (filtro.clave === 'descuentos') {
+                const iconToUse = filtro.imagen_url || (isImageUrl(filtro.icono) ? filtro.icono : null)
+
+                if (iconToUse) {
+                  iconElement = <img src={iconToUse} alt={filtro.nombre} className="w-5 h-5 object-contain" />
+                } else if (filtro.clave === 'descuentos' || filtro.clave === 'Descuentos') {
                   iconElement = <Image src="/discount-icon.gif" alt="Descuento" width={20} height={20} className="w-5 h-5" unoptimized />
-                } else if (filtro.clave === 'nuevos') {
+                } else if (filtro.clave === 'nuevos' || filtro.clave === 'Nuevos' || filtro.clave === 'nuevos-ingresos') {
                   iconElement = <Image src="/new-label.gif" alt="Nuevo" width={20} height={20} className="w-5 h-5" unoptimized />
-                } else if (filtro.clave === 'proximamente') {
+                } else if (filtro.clave === 'proximamente' || filtro.clave === 'Proximamente') {
                   iconElement = <Image src="/fire.gif" alt="Próximamente" width={20} height={20} className="w-5 h-5" unoptimized />
                 } else {
-                  iconElement = <span className="text-base">{filtro.icono}</span>
+                  iconElement = <span className="text-base">{filtro.icono || '🏷️'}</span>
                 }
                 
                 return (
@@ -425,16 +432,18 @@ export default function Navbar() {
                 {filtrosEspeciales.length > 0 && <div className="border-t border-gray-800 my-1" />}
                 {filtrosEspeciales.map((filtro) => {
                   let iconElement = null
-                  if (filtro.imagen_url) {
-                    iconElement = <img src={filtro.imagen_url} alt={filtro.nombre} className="w-5 h-5 object-contain" />
-                  } else if (filtro.clave === 'descuentos') {
+                  const iconToUse = filtro.imagen_url || (isImageUrl(filtro.icono) ? filtro.icono : null)
+
+                  if (iconToUse) {
+                    iconElement = <img src={iconToUse} alt={filtro.nombre} className="w-5 h-5 object-contain" />
+                  } else if (filtro.clave === 'descuentos' || filtro.clave === 'Descuentos') {
                     iconElement = <Image src="/discount-icon.gif" alt="Descuento" width={20} height={20} className="w-5 h-5" unoptimized />
-                  } else if (filtro.clave === 'nuevos') {
+                  } else if (filtro.clave === 'nuevos' || filtro.clave === 'Nuevos' || filtro.clave === 'nuevos-ingresos') {
                     iconElement = <Image src="/new-label.gif" alt="Nuevo" width={20} height={20} className="w-5 h-5" unoptimized />
-                  } else if (filtro.clave === 'proximamente') {
+                  } else if (filtro.clave === 'proximamente' || filtro.clave === 'Proximamente') {
                     iconElement = <Image src="/fire.gif" alt="Próximamente" width={20} height={20} className="w-5 h-5" unoptimized />
                   } else {
-                    iconElement = <span className="text-base">{filtro.icono}</span>
+                    iconElement = <span className="text-base">{filtro.icono || '🏷️'}</span>
                   }
 
                   return (

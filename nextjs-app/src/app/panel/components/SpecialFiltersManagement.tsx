@@ -28,6 +28,11 @@ export default function SpecialFiltersManagement() {
   const [productos, setProductos] = useState<any[]>([])
   const [categorias, setCategorias] = useState<any[]>([])
   const [vistaPrevia, setVistaPrevia] = useState<any[] | null>(null)
+
+  const isImageUrl = (url: string) => {
+    if (!url) return false
+    return url.startsWith('http') || url.startsWith('https') || url.startsWith('/') || url.includes('.gif') || url.includes('.png') || url.includes('.jpg') || url.includes('.jpeg') || url.includes('.svg') || url.includes('.webp')
+  }
   
   const [formData, setFormData] = useState<Partial<FiltroEspecial>>({
     nombre: '',
@@ -114,6 +119,7 @@ export default function SpecialFiltersManagement() {
       setFormData({
         nombre: '',
         clave: '',
+        icono: '',
         imagen_url: '',
         activo: true,
         orden: 0,
@@ -223,7 +229,25 @@ export default function SpecialFiltersManagement() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h1 className="text-2xl md:text-3xl font-bold text-white uppercase tracking-wider">Filtros Especiales</h1>
         <button
-          onClick={() => { setIsCreating(true); setEditingId(null); setVistaPrevia(null); setFormData({ nombre: '', clave: '', imagen_url: '', activo: true, orden: filtros.length, tipo: 'producto', config: { contenidoTipo: 'productos', contenidoCategoriaIds: [], contenidoProductoIds: [] } }); }}
+          onClick={() => { 
+            setIsCreating(true); 
+            setEditingId(null); 
+            setVistaPrevia(null); 
+            setFormData({ 
+              nombre: '', 
+              clave: '', 
+              icono: '',
+              imagen_url: '', 
+              activo: true, 
+              orden: filtros.length, 
+              tipo: 'producto', 
+              config: { 
+                contenidoTipo: 'productos', 
+                contenidoCategoriaIds: [], 
+                contenidoProductoIds: [] 
+              } 
+            }); 
+          }}
           className="w-full md:w-auto flex items-center justify-center gap-2 bg-white text-black px-6 py-3 rounded-xl hover:bg-gray-200 transition font-bold shadow-[0_10px_20px_-10px_rgba(255,255,255,0.3)] active:scale-95"
         >
           <Plus className="w-5 h-5" /> Nuevo Filtro
@@ -429,8 +453,15 @@ export default function SpecialFiltersManagement() {
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center overflow-hidden border border-white/10">
-                  {filtro.imagen_url ? (
-                    <img src={filtro.imagen_url} alt="" className="w-full h-full object-contain" />
+                  {filtro.imagen_url || isImageUrl(filtro.icono) ? (
+                    <img 
+                      src={filtro.imagen_url || filtro.icono} 
+                      alt="" 
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/48?text=Error'
+                      }}
+                    />
                   ) : (
                     <span className="text-2xl">{filtro.icono || '🏷️'}</span>
                   )}
