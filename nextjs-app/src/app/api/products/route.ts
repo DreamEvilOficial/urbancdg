@@ -27,15 +27,24 @@ export async function GET(request: Request) {
                 nuevo_lanzamiento: p.nuevo_lanzamiento === true || p.nuevo_lanzamiento === 1 || p.nuevo_lanzamiento === 'true',
                 descuento_activo: p.descuento_activo === true || p.descuento_activo === 1 || p.descuento_activo === 'true',
                 imagenes: typeof p.imagenes === 'string' ? JSON.parse(p.imagenes) : (p.imagenes || []),
-                // variantes: handled separately for single product fetch, fallback to JSON for list
                 variantes: typeof p.variantes === 'string' ? JSON.parse(p.variantes) : (p.variantes || []),
                 metadata: typeof p.metadata === 'string' ? JSON.parse(p.metadata) : (p.metadata || {}),
                 dimensiones: typeof p.dimensiones === 'string' ? JSON.parse(p.dimensiones) : (p.dimensiones || null),
+                avg_rating: Number(p.avg_rating) || 0,
+                review_count: Number(p.review_count) || 0
             };
         };
 
         if (id) {
-            const product = await db.get('SELECT * FROM productos WHERE id = ?', [id]);
+            const product = await db.get(`
+                SELECT p.*, 
+                       COALESCE(AVG(r.calificacion), 0) as avg_rating, 
+                       COUNT(r.id) as review_count 
+                FROM productos p 
+                LEFT JOIN resenas r ON p.id = r.producto_id AND r.aprobado = TRUE
+                WHERE p.id = ?
+                GROUP BY p.id
+            `, [id]);
             if (!product) return NextResponse.json(null);
 
             // Fetch real-time variants from dedicated table
@@ -44,22 +53,23 @@ export async function GET(request: Request) {
             if (variants && variants.length > 0) {
                 normalized.variantes = variants.map((v: any) => ({
                     ...v,
-                    // Ensure compatibility with frontend expected shape
-                    color_nombre: v.color, // DB has color as name, color_hex as hex
-                    color: v.color_hex // Frontend expects 'color' to be hex usually, or we adjust frontend.
-                    // Wait, let's check frontend usage.
+                    color_nombre: v.color, 
+                    color: v.color_hex 
                 }));
-                // Frontend ProductDetailPage.tsx: 
-                // v.color is used for HEX (lines 106, 117)
-                // v.color_nombre is used for name (line 108)
-                // DB: color (text), color_hex (text)
-                // So we map: color -> color_nombre, color_hex -> color
             }
             return NextResponse.json(normalized);
         }
 
         if (slug) {
-            const product = await db.get('SELECT * FROM productos WHERE slug = ?', [slug]);
+            const product = await db.get(`
+                SELECT p.*, 
+                       COALESCE(AVG(r.calificacion), 0) as avg_rating, 
+                       COUNT(r.id) as review_count 
+                FROM productos p 
+                LEFT JOIN resenas r ON p.id = r.producto_id AND r.aprobado = TRUE
+                WHERE p.slug = ?
+                GROUP BY p.id
+            `, [slug]);
             if (!product) return NextResponse.json([]);
             
             // Fetch real-time variants from dedicated table
@@ -75,35 +85,42 @@ export async function GET(request: Request) {
             return NextResponse.json([normalized]);
         }
 
-        let sql = 'SELECT * FROM productos WHERE activo = TRUE';
+        let sql = `
+            SELECT p.*, 
+                   COALESCE(AVG(r.calificacion), 0) as avg_rating, 
+                   COUNT(r.id) as review_count 
+            FROM productos p 
+            LEFT JOIN resenas r ON p.id = r.producto_id AND r.aprobado = TRUE
+            WHERE p.activo = TRUE
+        `;
         const params: any[] = [];
 
         if (category) {
-            sql += ' AND categoria_id = ?';
+            sql += ' AND p.categoria_id = ?';
             params.push(category);
         }
 
         if (featured === 'true') {
-            sql += ' AND destacado = TRUE';
+            sql += ' AND p.destacado = TRUE';
         }
         
         // New Filters
         const isNew = searchParams.get('new');
         if (isNew === 'true') {
-            sql += ' AND nuevo_lanzamiento = TRUE';
+            sql += ' AND p.nuevo_lanzamiento = TRUE';
         }
 
         const isUpcoming = searchParams.get('upcoming');
         if (isUpcoming === 'true') {
-            sql += ' AND proximamente = TRUE';
+            sql += ' AND p.proximamente = TRUE';
         }
 
         const isDiscount = searchParams.get('discount');
         if (isDiscount === 'true') {
-            sql += ' AND descuento_activo = TRUE';
+            sql += ' AND p.descuento_activo = TRUE';
         }
 
-        sql += ' ORDER BY created_at DESC';
+        sql += ' GROUP BY p.id ORDER BY p.created_at DESC';
 
         const products = await db.all(sql, params);
         

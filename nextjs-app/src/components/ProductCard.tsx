@@ -4,7 +4,7 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { type Producto } from '@/lib/supabase'
 import { useCartStore } from '@/store/cartStore'
 import { formatPrice } from '@/lib/formatters'
-import { ShoppingBag, ShoppingCart, Bookmark, Clock } from 'lucide-react'
+import { ShoppingBag, ShoppingCart, Bookmark, Clock, Star } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
@@ -500,15 +500,32 @@ function ProductCard({ producto }: ProductCardProps) {
             </h3>
           </div>
         ) : (
-          <Link href={productHref} className="block mb-2 group/title">
-            <h3 className={`font-bold text-white transition-colors group-hover/title:text-accent leading-tight break-words line-clamp-2 min-h-[2.5rem] md:min-h-[3.5rem] ${
-              producto.nombre.length > 25 
-                ? 'text-[13px] md:text-base' 
-                : 'text-[14px] md:text-lg'
-            }`}>
-              {producto.nombre}
-            </h3>
-          </Link>
+          <div className="flex flex-col mb-2">
+            <Link href={productHref} className="block group/title">
+              <h3 className={`font-bold text-white transition-colors group-hover/title:text-accent leading-tight break-words line-clamp-2 min-h-[2.5rem] md:min-h-[3.5rem] ${
+                producto.nombre.length > 25 
+                  ? 'text-[13px] md:text-base' 
+                  : 'text-[14px] md:text-lg'
+              }`}>
+                {producto.nombre}
+              </h3>
+            </Link>
+            
+            {/* Reviews Stars */}
+            <div className="flex items-center gap-1.5 mt-1">
+              <div className="flex text-yellow-500">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star 
+                    key={star} 
+                    className={`w-3 h-3 ${star <= Math.round(producto.avg_rating || 0) ? 'fill-current' : 'text-white/10'}`} 
+                  />
+                ))}
+              </div>
+              {producto.review_count && producto.review_count > 0 ? (
+                <span className="text-[10px] font-bold text-white/40 uppercase tracking-tighter">({producto.review_count})</span>
+              ) : null}
+            </div>
+          </div>
         )}
         
         <div className="mt-auto">

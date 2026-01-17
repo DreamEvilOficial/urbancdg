@@ -51,6 +51,8 @@ export interface Producto {
   proveedor_contacto?: string
   precio_costo?: number
   metadata?: any
+  avg_rating?: number
+  review_count?: number
   created_at: string
   updated_at?: string
 }

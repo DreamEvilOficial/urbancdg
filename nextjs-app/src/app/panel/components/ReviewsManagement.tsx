@@ -16,10 +16,10 @@ import toast from 'react-hot-toast'
 
 interface Review {
   id: string
-  nombre: string
-  calificacion: number
+  usuario_nombre: string
+  rating: number
   comentario: string
-  fecha: string
+  created_at: string
   aprobado: boolean
   producto_id?: string
   producto_nombre?: string
@@ -57,7 +57,7 @@ export default function ReviewsManagement() {
 
   function calculateStats(data: Review[]) {
     const total = data.length
-    const sum = data.reduce((acc, r) => acc + (Number(r.calificacion) || 0), 0)
+    const sum = data.reduce((acc, r) => acc + (Number(r.rating) || 0), 0)
     const avg = total > 0 ? (sum / total).toFixed(1) : '0.0'
     const pending = data.filter(r => !r.aprobado).length
     
@@ -253,10 +253,10 @@ export default function ReviewsManagement() {
                         <User className="w-5 h-5 text-white/70" />
                       </div>
                       <div>
-                        <p className="font-bold text-white text-sm truncate">{review.nombre}</p>
+                        <p className="font-bold text-white text-sm truncate">{review.usuario_nombre}</p>
                         <p className="text-xs text-white/40 flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
-                          {new Date(review.fecha).toLocaleDateString()}
+                          {new Date(review.created_at).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
@@ -265,7 +265,7 @@ export default function ReviewsManagement() {
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star 
                           key={star} 
-                          className={`w-4 h-4 ${star <= review.calificacion ? 'fill-current' : 'text-white/20'}`} 
+                          className={`w-4 h-4 ${star <= review.rating ? 'fill-current' : 'text-white/20'}`} 
                         />
                       ))}
                     </div>
