@@ -14,12 +14,14 @@ function mapProduct(p: any): Producto {
     destacado: !!p.destacado,
     top: !!p.top,
     nuevo_lanzamiento: !!p.nuevo_lanzamiento,
-    proximo_lanzamiento: !!p.proximamente, // Note: DB column is proximamente, interface likely expects proximo_lanzamiento or similar. Let's check type Producto.
+    proximo_lanzamiento: !!p.proximamente,
     descuento_activo: !!p.descuento_activo,
     imagenes: safeParse(p.imagenes, []),
     variantes: safeParse(p.variantes, []),
     dimensiones: safeParse(p.dimensiones, null),
     metadata: safeParse(p.metadata, null),
+    avg_rating: p.avg_rating ? Number(p.avg_rating) : 0,
+    review_count: p.review_count ? Number(p.review_count) : 0
   };
 }
 
