@@ -105,8 +105,17 @@ export default function CheckoutPage() {
   }, [formData.codigoPostal, shippingOption])
 
   useEffect(() => {
-    const threshold = Number(config?.envio_gratis_umbral ?? 50000)
-    const forceFree = config?.envio_gratis_forzado === true || config?.envio_gratis_forzado === 'true'
+    let threshold = 50000
+    let forceFree = false
+
+    if (config?.shipping_rules) {
+      threshold = Number(config.shipping_rules.threshold)
+      forceFree = config.shipping_rules.enabled
+    } else {
+      threshold = Number(config?.envio_gratis_umbral ?? 50000)
+      forceFree = config?.envio_gratis_forzado === true || config?.envio_gratis_forzado === 'true'
+    }
+
     const isFree = deliveryMethod === 'pickup' || forceFree || total() >= threshold
     if (isFree) { setShippingCost(0); return; }
     if (formData.codigoPostal.length >= 4) calculateShipping()

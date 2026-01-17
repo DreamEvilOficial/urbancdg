@@ -8,6 +8,7 @@ import { ShoppingBag, ChevronLeft, ChevronRight, Minus, Plus, ShieldCheck, Credi
 import Image from 'next/image'
 import toast from 'react-hot-toast'
 import ProductCard from '@/components/ProductCard'
+import CountdownTimer from '@/components/CountdownTimer'
 import dynamic from 'next/dynamic'
 import { formatPrice } from '@/lib/formatters'
 
@@ -324,6 +325,9 @@ export default function ProductDetailPage() {
               
               {producto.proximamente ? (
                 <div className="py-8 text-center space-y-6">
+                  {producto.fecha_lanzamiento && (
+                    <CountdownTimer targetDate={producto.fecha_lanzamiento} />
+                  )}
                   <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10">
                     <Bell className="w-8 h-8 text-white/40" />
                   </div>

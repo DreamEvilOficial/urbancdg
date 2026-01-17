@@ -35,19 +35,32 @@ export default function ShippingManagement() {
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'todos' | 'pendiente' | 'enviado' | 'completado' | 'cancelado'>('todos')
+  
+  const [freeShippingEnabled, setFreeShippingEnabled] = useState(false)
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState(50000)
 
   useEffect(() => {
-    const loadSender = async () => {
+    const loadData = async () => {
       try {
         const res = await fetch('/api/config')
         const data = await res.json()
-        if (data && data.shipping_sender) {
-          setSenderData(data.shipping_sender as SenderData)
-          lastSavedRef.current = data.shipping_sender as SenderData
+        if (data) {
+          if (data.shipping_sender) {
+            setSenderData(data.shipping_sender as SenderData)
+            lastSavedRef.current = data.shipping_sender as SenderData
+          }
+          if (data.shipping_rules) {
+            setFreeShippingEnabled(data.shipping_rules.enabled)
+            setFreeShippingThreshold(data.shipping_rules.threshold)
+          } else {
+             // Fallback to legacy top-level keys if shipping_rules doesn't exist yet
+             if (data.envio_gratis_umbral) setFreeShippingThreshold(Number(data.envio_gratis_umbral))
+             if (data.envio_gratis_forzado !== undefined) setFreeShippingEnabled(data.envio_gratis_forzado === true || data.envio_gratis_forzado === 'true')
+          }
         }
       } catch (error) {}
     }
-    loadSender()
+    loadData()
   }, [])
 
   const isSenderValid = () => {
@@ -161,6 +174,34 @@ export default function ShippingManagement() {
     }
   }
 
+  const saveShippingRules = async () => {
+    try {
+      setSaving(true)
+      const res = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          clave: 'shipping_rules', 
+          valor: { 
+            enabled: freeShippingEnabled, 
+            threshold: Number(freeShippingThreshold) 
+          } 
+        })
+      })
+      
+      if (!res.ok) throw new Error('Error al guardar reglas')
+      
+      toast.success('Reglas de envío actualizadas')
+      
+      // Notify other components
+      window.dispatchEvent(new Event('config-updated'))
+    } catch (error) {
+      toast.error('Error al guardar reglas de envío')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
@@ -172,9 +213,45 @@ export default function ShippingManagement() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <section className="bg-white/[0.03] border border-white/10 p-6 rounded-[30px]">
-          <h3 className="text-xs font-black text-white/60 uppercase tracking-[0.2em] mb-6">Datos del Remitente (Origen)</h3>
-          <div className="space-y-4">
+        <section className="bg-white/[0.03] border border-white/10 p-6 rounded-[30px] space-y-6">
+          <div>
+            <h3 className="text-xs font-black text-white/60 uppercase tracking-[0.2em] mb-6">Reglas de Envío</h3>
+            <div className="bg-black/20 border border-white/10 p-4 rounded-2xl space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold text-white uppercase tracking-wider">Forzar Envío Gratis</label>
+                <div 
+                  className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${freeShippingEnabled ? 'bg-blue-500' : 'bg-white/10'}`}
+                  onClick={() => setFreeShippingEnabled(!freeShippingEnabled)}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${freeShippingEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-white/40 uppercase">Umbral Envío Gratis (ARS)</label>
+                <input
+                  type="number"
+                  value={freeShippingThreshold}
+                  onChange={e => setFreeShippingThreshold(Number(e.target.value))}
+                  className="w-full bg-black/20 border border-white/10 p-3 rounded-xl text-xs font-bold text-white outline-none focus:border-blue-500/50 transition-colors"
+                  placeholder="50000"
+                />
+                <p className="text-[9px] text-white/30 uppercase tracking-widest">Compras iguales o superiores obtienen envío sin costo</p>
+              </div>
+
+              <button
+                onClick={saveShippingRules}
+                disabled={saving}
+                className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+              >
+                Actualizar Reglas
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-xs font-black text-white/60 uppercase tracking-[0.2em] mb-6">Datos del Remitente (Origen)</h3>
+            <div className="space-y-4">
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-white/40 uppercase">Nombre / Empresa</label>
               <input
@@ -257,6 +334,7 @@ export default function ShippingManagement() {
                   Guardado a las {lastSavedAt.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
                 </p>
               )}
+            </div>
             </div>
           </div>
         </section>

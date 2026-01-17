@@ -195,24 +195,28 @@ export default function AdminPage() {
       let subcategoria_id = data.subcategoria_id || null
 
       try {
-        const cats = await categoriasAPI.obtenerTodas();
+        // Solo intentar resolver si no tenemos un ID explícito pero sí otros datos (como slug o nombre para imports)
+        // O si queremos validar que el ID existe (pero esto puede fallar si la API falla)
+        // Priorizamos el ID directo del formulario para evitar problemas.
+        if (!categoria_id && (data.categoria || data.categoria_slug)) {
+          const cats = await categoriasAPI.obtenerTodas();
 
-        if (cats && (data.categoria || data.categoria_slug || data.categoria_id)) {
-          const targetCat = cats.find((c: any) => 
-            (data.categoria_slug && c.slug === data.categoria_slug) ||
-            (data.categoria && (c.slug === data.categoria || c.nombre === data.categoria)) ||
-            (data.categoria_id && String(c.id) === String(data.categoria_id))
-          )
-          if (targetCat) {
-            categoria_id = targetCat.id
-            if (Array.isArray(targetCat.subcategorias) && (data.subcategoria || data.subcategoria_slug || data.subcategoria_id)) {
-              const targetSub = targetCat.subcategorias.find((s: any) => 
-                (data.subcategoria_slug && s.slug === data.subcategoria_slug) ||
-                (data.subcategoria && (s.slug === data.subcategoria || s.nombre === data.subcategoria)) ||
-                (data.subcategoria_id && String(s.id) === String(data.subcategoria_id))
-              )
-              if (targetSub) {
-                subcategoria_id = targetSub.id
+          if (cats) {
+            const targetCat = cats.find((c: any) => 
+              (data.categoria_slug && c.slug === data.categoria_slug) ||
+              (data.categoria && (c.slug === data.categoria || c.nombre === data.categoria))
+            )
+            if (targetCat) {
+              categoria_id = targetCat.id
+              if (Array.isArray(targetCat.subcategorias) && (data.subcategoria || data.subcategoria_slug || data.subcategoria_id)) {
+                const targetSub = targetCat.subcategorias.find((s: any) => 
+                  (data.subcategoria_slug && s.slug === data.subcategoria_slug) ||
+                  (data.subcategoria && (s.slug === data.subcategoria || s.nombre === data.subcategoria)) ||
+                  (data.subcategoria_id && String(s.id) === String(data.subcategoria_id))
+                )
+                if (targetSub) {
+                  subcategoria_id = targetSub.id
+                }
               }
             }
           }
@@ -243,6 +247,7 @@ export default function AdminPage() {
         proximo_lanzamiento: data.proximo_lanzamiento,
         nuevo_lanzamiento: data.nuevo_lanzamiento,
         descuento_activo: data.descuento_activo,
+        fecha_lanzamiento: data.fecha_lanzamiento || null,
         sku: data.sku,
         stock_minimo: data.stock_minimo ? Number(data.stock_minimo) : 5,
         proveedor_nombre: data.proveedor_nombre || undefined,

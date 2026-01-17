@@ -11,10 +11,24 @@ import NextImage from 'next/image'
 export default function CartPage() {
   const router = useRouter()
   const { items, removeItem, updateQuantity, total, clearCart } = useCartStore()
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState<number>(50000)
 
   useEffect(() => {
     if (items.length === 0) router.push('/')
   }, [items.length, router])
+
+  useEffect(() => {
+    fetch('/api/config')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.shipping_rules) {
+          setFreeShippingThreshold(Number(data.shipping_rules.threshold))
+        } else if (data?.envio_gratis_umbral) {
+          setFreeShippingThreshold(Number(data.envio_gratis_umbral))
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const handleQuantityChange = (id: string, newQuantity: number) => {
     if (newQuantity < 1) {
@@ -160,7 +174,7 @@ export default function CartPage() {
                     <Info className="w-4 h-4 text-accent2" />
                   </div>
                   <p className="text-[10px] font-bold text-gray-500 leading-relaxed uppercase tracking-widest">
-                    Envío gratuito en compras superiores a <span className="text-white">$50.000 ARS</span>
+                    Envío gratuito en compras superiores a <span className="text-white">${formatPrice(freeShippingThreshold)} ARS</span>
                   </p>
                </div>
             </div>
