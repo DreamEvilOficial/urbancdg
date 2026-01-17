@@ -87,7 +87,7 @@ export async function GET(request: Request) {
 
         let sql = `
             SELECT p.*, 
-                   COALESCE(AVG(r.calificacion), 0) as avg_rating, 
+                   ROUND(COALESCE(AVG(r.calificacion), 0), 1) as avg_rating, 
                    COUNT(r.id) as review_count 
             FROM productos p 
             LEFT JOIN resenas r ON p.id = r.producto_id AND r.aprobado = TRUE

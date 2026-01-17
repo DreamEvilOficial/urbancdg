@@ -35,10 +35,10 @@ export async function POST(req: NextRequest) {
              });
 
              return NextResponse.json({
-                cbu: config.cvu || '0000003100094565936544',
-                titular: config.titular_cuenta || 'Francisco Tejos',
-                bankName: config.banco || 'Mercado Pago',
-                alias: config.alias || 'Francisco.Tejos.MP',
+                cbu: config.cvu || '',
+                titular: config.titular_cuenta || '',
+                bankName: config.banco || '',
+                alias: config.alias || '',
                 amount: order.total_transferencia,
                 expiration: order.transferencia_expiracion
              });
@@ -91,10 +91,10 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({
-        cbu: config.cvu || '0000003100094565936544',
-        titular: config.titular_cuenta || 'Francisco Tejos',
-        bankName: config.banco || 'Mercado Pago',
-        alias: config.alias || 'Francisco.Tejos.MP',
+        cbu: config.cvu || '',
+        titular: config.titular_cuenta || '',
+        bankName: config.banco || '',
+        alias: config.alias || '',
         amount: uniqueAmount,
         expiration: expiration.toISOString()
     });
