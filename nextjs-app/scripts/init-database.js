@@ -29,13 +29,13 @@ async function initDatabase() {
     const configData = [
       {
         clave: 'anuncio_1',
-        valor: '🔥 EN TRANSFERENCIA - MYSTERY BOXES CON 70% OFF',
+        valor: '',
         descripcion: 'Primer mensaje del slider de anuncios',
         tipo: 'announcer'
       },
       {
         clave: 'anuncio_2', 
-        valor: 'HASTA 6 CUOTAS SIN INTERÉS',
+        valor: '',
         descripcion: 'Segundo mensaje del slider de anuncios',
         tipo: 'announcer'
       },

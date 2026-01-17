@@ -26,7 +26,7 @@ export default function Navbar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showMusic, setShowMusic] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
-  const [mensajes, setMensajes] = useState<string[]>(['🔥 EN TRANSFERENCIA - MYSTERY BOXES CON 70% OFF', 'HASTA 6 CUOTAS SIN INTERÉS', '10% EN TRANSFERENCIAS'])
+  const [mensajes, setMensajes] = useState<string[]>([])
   const [hideNavbar, setHideNavbar] = useState(false)
   const [lastScrollY, setLastScrollY] = useState(0)
   const [filtrosEspeciales, setFiltrosEspeciales] = useState<Array<{id: string, nombre: string, clave: string, icono: string, activo: boolean, imagen_url?: string}>>([])

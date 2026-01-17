@@ -53,7 +53,7 @@ export default function Header({ theme, toggleTheme }: HeaderProps) {
     logo_url: '',
     lema_tienda: ''
   })
-  const [mensajes, setMensajes] = useState<string[]>(['🔥 EN TRANSFERENCIA - MYSTERY BOXES CON 70% OFF', 'HASTA 6 CUOTAS SIN INTERÉS', '10% EN TRANSFERENCIAS'])
+  const [mensajes, setMensajes] = useState<string[]>([])
   const [categorias, setCategorias] = useState<Array<{id: string, nombre: string, slug: string, icono?: string, subcategorias?: Array<{id: string, nombre: string, slug: string}>}>>([])
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
   const [filtrosEspeciales, setFiltrosEspeciales] = useState<Array<{id: string, nombre: string, clave: string, icono?: string, imagen_url?: string, activo: boolean}>>([])

@@ -5,7 +5,7 @@ import { Toaster } from 'react-hot-toast'
 import ClientLayout from '@/components/ClientLayout'
 import DevToolsProtection from '@/components/DevToolsProtection'
 
-import { supabase } from '@/lib/supabase'
+import db from '@/lib/db'
 
 const urbanist = Urbanist({
   subsets: ['latin'],
@@ -26,25 +26,30 @@ export async function generateMetadata(): Promise<Metadata> {
   let logoUrl = '/og-image.jpg'
 
   try {
-    const { data } = await supabase
-      .from('configuracion')
-      .select('clave, valor')
-      .in('clave', ['nombre_tienda', 'lema_tienda', 'share_description', 'logo_url'])
+    const data = await db.all('SELECT clave, valor FROM configuracion WHERE clave IN (?, ?, ?, ?)', 
+      ['nombre_tienda', 'lema_tienda', 'share_description', 'logo_url']
+    )
     
-    if (data) {
-      const config = data.reduce((acc: any, item: any) => {
+    if (data && data.length > 0) {
+      const config: any = {}
+      data.forEach((item: any) => {
         try {
-          acc[item.clave] = JSON.parse(item.valor)
+          config[item.clave] = JSON.parse(item.valor)
         } catch {
-          acc[item.clave] = item.valor
+          config[item.clave] = item.valor
         }
-        return acc
-      }, {})
+      })
 
       if (config.nombre_tienda) title = config.nombre_tienda
       if (config.lema_tienda) description = config.lema_tienda
       if (config.share_description) shareDescription = config.share_description
-      if (config.logo_url) logoUrl = config.logo_url
+      if (config.logo_url) {
+        if (config.logo_url.startsWith('http')) {
+          logoUrl = config.logo_url
+        } else {
+          logoUrl = `https://urbancdg.vercel.app${config.logo_url.startsWith('/') ? '' : '/'}${config.logo_url}`
+        }
+      }
     }
   } catch (e) {
     console.error('Error fetching metadata:', e)
