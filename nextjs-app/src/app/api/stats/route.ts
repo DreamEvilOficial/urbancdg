@@ -12,7 +12,7 @@ export async function GET() {
     const { data: orders, error } = await supabaseAdmin
       .from('ordenes')
       .select('*')
-      .in('estado', ['completado', 'enviado'])
+      .in('estado', ['completado', 'enviado', 'COMPLETADO', 'ENVIADO', 'Completado', 'Enviado'])
       .order('created_at', { ascending: false })
 
     if (error) throw error
@@ -39,7 +39,8 @@ export async function GET() {
         if (!order.created_at) return
         // created_at can be a string or Date object depending on the driver
         const dateStr = typeof order.created_at === 'string' ? order.created_at : order.created_at.toISOString()
-        const date = dateStr.split('T')[0]
+        // Safely extract YYYY-MM-DD
+        const date = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr.split(' ')[0]
         
         if (revenueByDate[date] !== undefined) {
             revenueByDate[date] += (Number(order.total) || 0)

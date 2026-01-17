@@ -10,7 +10,7 @@ export default function BannerSlider() {
   const [banners, setBanners] = useState<BannerItem[]>([]);
   const [current, setCurrent] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [intervalo, setIntervalo] = useState(5000);
+  const [intervalo, setIntervalo] = useState(4000);
   const [tienda, setTienda] = useState({
     nombre: "URBAN",
     lema: "Streetwear — drops — fits",

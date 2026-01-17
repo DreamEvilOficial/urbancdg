@@ -704,7 +704,7 @@ export default function ConfigurationPanel() {
             />
           </div>
           <div>
-            <label className="block text-[10px] font-black mb-2 text-white/45 uppercase tracking-[0.28em] px-1">Velocidad del Slider de Banners (milisegundos)</label>
+            <label className="block text-[10px] font-black mb-2 text-white/45 uppercase tracking-[0.28em] px-1">Velocidad del Banner Principal (Home Slider)</label>
             <select
               value={mensajes.slider_velocidad}
               onChange={e => setMensajes({ ...mensajes, slider_velocidad: e.target.value })}
@@ -716,7 +716,7 @@ export default function ConfigurationPanel() {
               <option value="5000">Lento (5 segundos)</option>
               <option value="6000">Muy Lento (6 segundos)</option>
             </select>
-            <p className="text-xs text-white/40 mt-2 font-bold">Controla qué tan rápido cambian los anuncios en el banner superior</p>
+            <p className="text-xs text-white/40 mt-2 font-bold">Controla qué tan rápido cambian las imágenes del slider de la página de inicio</p>
           </div>
 
           <div>
