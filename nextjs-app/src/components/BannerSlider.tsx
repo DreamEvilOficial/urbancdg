@@ -177,8 +177,6 @@ export default function BannerSlider({ initialConfig }: { initialConfig?: any })
               ? raw
               : sanitizeURL(raw);
           const isVid = isVideo(b.url);
-          const normalizedUrl = b.url.split("?")[0].toLowerCase();
-          const isGif = normalizedUrl.endsWith(".gif");
 
           return (
             <div
@@ -195,20 +193,11 @@ export default function BannerSlider({ initialConfig }: { initialConfig?: any })
                   loop
                   playsInline
                 />
-              ) : isGif ? (
+              ) : (
                 <img
                   src={sanitizeURL(b.url)}
                   alt={`Banner ${i + 1}`}
                   className="w-full h-full object-cover"
-                />
-              ) : (
-                <Image
-                  src={sanitizeURL(b.url)}
-                  alt={`Banner ${i + 1}`}
-                  fill
-                  sizes="100vw"
-                  className="object-cover"
-                  priority={i === 0}
                   draggable={false}
                 />
               )}
