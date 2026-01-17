@@ -37,10 +37,15 @@ export default function ProductDetailPage() {
   
   const addItem = useCartStore((state) => state.addItem)
 
-  const isProximoLanzamiento = !!(producto && ((producto as any).proximamente || (producto as any).proximo_lanzamiento))
-  const desbloqueadoDesdeRaw = producto ? ((producto as any).desbloqueado_desde as string | undefined | null) : null
-  const desbloqueadoDesde = desbloqueadoDesdeRaw ? new Date(desbloqueadoDesdeRaw) : null
+  const marcadoProximo = !!(producto && ((producto as any).proximamente || (producto as any).proximo_lanzamiento))
+  const fechaLanzamientoRaw = producto ? ((producto as any).fecha_lanzamiento as string | undefined | null) : null
   const ahora = new Date()
+  const fechaLanzamiento = fechaLanzamientoRaw ? new Date(fechaLanzamientoRaw) : null
+  const isFutureLaunch = !!(fechaLanzamiento && fechaLanzamiento.getTime() > ahora.getTime())
+  const isProximoLanzamiento = marcadoProximo && isFutureLaunch
+  const desbloqueadoDesdeRaw = producto ? ((producto as any).desbloqueado_desde as string | undefined | null) : null
+  const fallbackDesbloqueadoDesde = !desbloqueadoDesdeRaw && fechaLanzamiento && !isFutureLaunch ? fechaLanzamiento : null
+  const desbloqueadoDesde = desbloqueadoDesdeRaw ? new Date(desbloqueadoDesdeRaw) : fallbackDesbloqueadoDesde
   const MILISEGUNDOS_DIA = 24 * 60 * 60 * 1000
   const diasDesbloqueado = 7
   const isRecienDesbloqueado =
