@@ -83,15 +83,17 @@ export async function POST(req: NextRequest) {
 
     const orderTime = new Date(order.created_at);
     const beginDate = new Date(orderTime.getTime() - 24 * 60 * 60000).toISOString();
+    const endDate = new Date().toISOString();
     const targetAmount = Number(order.total_transferencia);
 
-    console.log(`[transfer/check] Order: ${order.id}, Target: ${targetAmount}, Searching from: ${beginDate}`);
+    console.log(`[transfer/check] Order: ${order.id}, Target: ${targetAmount}, Range: ${beginDate} to ${endDate}`);
 
     const params = new URLSearchParams({
         'sort': 'date_created',
         'criteria': 'desc',
         'range': 'date_created',
         'begin_date': beginDate,
+        'end_date': endDate,
         'limit': '50'
     });
 
