@@ -60,7 +60,7 @@ CREATE POLICY "Banners escritura" ON banners FOR ALL USING (true);
 
 -- Mensajes del announcer slider
 INSERT INTO configuracion (clave, valor, descripcion) VALUES
-('anuncio_1', '"🔥 EN TRANSFERENCIA - MYSTERY BOXES CON 70% OFF"', 'Primer mensaje del slider de anuncios')
+('anuncio_1', '"🔥 EN TRANSFERENCIA - CON 70% OFF"', 'Primer mensaje del slider de anuncios')
 ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor, updated_at = NOW();
 
 INSERT INTO configuracion (clave, valor, descripcion) VALUES

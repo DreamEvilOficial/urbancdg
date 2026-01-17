@@ -82,17 +82,17 @@ async function setupDatabase() {
     const configData = [
       {
         clave: 'anuncio_1',
-        valor: JSON.stringify('🔥 EN TRANSFERENCIA - MYSTERY BOXES CON 70% OFF'),
+        valor: JSON.stringify(''),
         descripcion: 'Primer mensaje del slider de anuncios'
       },
       {
         clave: 'anuncio_2', 
-        valor: JSON.stringify('HASTA 6 CUOTAS SIN INTERÉS'),
+        valor: JSON.stringify(''),
         descripcion: 'Segundo mensaje del slider de anuncios'
       },
       {
         clave: 'anuncio_3',
-        valor: JSON.stringify('10% EN TRANSFERENCIAS'),
+        valor: JSON.stringify(''),
         descripcion: 'Tercer mensaje del slider de anuncios'
       },
       {
