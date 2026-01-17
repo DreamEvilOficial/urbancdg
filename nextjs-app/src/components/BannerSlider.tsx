@@ -197,8 +197,8 @@ export default function BannerSlider({ initialConfig }: { initialConfig?: any })
                 />
               ) : (
                 <Image
-                  src={b.url}
-                  alt="Banner"
+                  src={sanitizeURL(b.url)}
+                  alt={`Banner ${i + 1}`}
                   fill
                   sizes="100vw"
                   className="object-cover"

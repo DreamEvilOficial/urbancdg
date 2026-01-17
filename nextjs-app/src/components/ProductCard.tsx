@@ -76,6 +76,7 @@ function ProductCard({ producto }: ProductCardProps) {
   const diasDesbloqueado = 7
 
   const isRecienDesbloqueado =
+    marcadoProximo &&
     !isProximoLanzamiento &&
     !!desbloqueadoDesde &&
     ahora.getTime() - desbloqueadoDesde.getTime() <= MILISEGUNDOS_DIA * diasDesbloqueado

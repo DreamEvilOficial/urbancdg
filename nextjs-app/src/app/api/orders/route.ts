@@ -289,6 +289,15 @@ export async function PUT(req: Request) {
         }
 
         if (estado) {
+            // Si el estado es "cancelado" o "rechazado", ELIMINAR la orden (según requerimiento)
+            if (estado === 'cancelado' || estado === 'rechazado' || estado === 'anulado') {
+                 await db.transaction(async (client) => {
+                    await client.query('DELETE FROM orden_items WHERE orden_id = $1', [id]);
+                    await client.query('DELETE FROM ordenes WHERE id = $1', [id]);
+                 });
+                 return NextResponse.json({ success: true, message: 'Orden eliminada por cancelación' });
+            }
+
             if (estado === 'completado') {
                 await db.transaction(async (client) => {
                     const orderResult = await client.query(

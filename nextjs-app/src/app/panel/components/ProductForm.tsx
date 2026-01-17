@@ -68,7 +68,12 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
         proveedor_nombre: producto.proveedor_nombre || '',
         proveedor_contacto: producto.proveedor_contacto || '',
         precio_costo: formatPrice(producto.precio_costo),
-        fecha_lanzamiento: producto.fecha_lanzamiento ? new Date(producto.fecha_lanzamiento).toISOString().slice(0, 16) : ''
+        fecha_lanzamiento: producto.fecha_lanzamiento ? (() => {
+          const date = new Date(producto.fecha_lanzamiento);
+          const offset = date.getTimezoneOffset() * 60000;
+          const localDate = new Date(date.getTime() - offset);
+          return localDate.toISOString().slice(0, 16);
+        })() : ''
       })
     }
   }, [producto])
@@ -151,7 +156,8 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
         ...formData,
         precio: precioNumero,
         precio_original: toNumber(formData.precio_original),
-        precio_costo: toNumber(formData.precio_costo)
+        precio_costo: toNumber(formData.precio_costo),
+        fecha_lanzamiento: formData.fecha_lanzamiento ? new Date(formData.fecha_lanzamiento).toISOString() : null
       }
       await onSave(dataToSave)
     } catch (error: any) {

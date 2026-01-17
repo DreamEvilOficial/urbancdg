@@ -88,32 +88,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const wasUpcoming = currentProduct && (currentProduct.proximamente === 1 || currentProduct.proximamente === true || currentProduct.proximo_lanzamiento === 1 || currentProduct.proximo_lanzamiento === true);
     const isNowAvailable = (updates.proximamente === false || updates.proximo_lanzamiento === false);
     
-    if (wasUpcoming && isNowAvailable) {
-        const nowIso = new Date().toISOString();
-        (updates as any).desbloqueado_desde = nowIso;
-
-        (async () => {
-            try {
-                const notifications = await db.all('SELECT * FROM proximamente_notificaciones WHERE producto_id = ? AND notificado = FALSE', [id]);
-                
-                if (notifications && notifications.length > 0) {
-                    console.log(`[NOTIFICATIONS] Sending launch emails for product ${id} to ${notifications.length} users.`);
-
-                    for (const n of notifications) {
-                         await db.run('UPDATE proximamente_notificaciones SET notificado = TRUE WHERE id = ?', [n.id]);
-                    }
-                    
-                    await db.run('INSERT INTO admin_logs (action, details, target_id) VALUES (?, ?, ?)', 
-                        ['NOTIFICATIONS_SENT', `Sent ${notifications.length} emails for product launch`, id]);
-                }
-
-                await db.run('INSERT INTO admin_logs (action, details, target_id) VALUES (?, ?, ?)', 
-                    ['PRODUCT_LAUNCH', 'Product moved from UPCOMING to AVAILABLE state', id]);
-            } catch (err) {
-                console.error('[NOTIFICATIONS] Error processing notifications:', err);
-            }
-        })();
-    }
+    // if (wasUpcoming && isNowAvailable) {
+    //     // Logic removed as per user request: "si quito esa opcion... que tambien se quite el texto"
+    //     // We do not want to set unlocked_since, nor do we need to clear it if we handle visibility in frontend.
+    // }
 
     const keys = Object.keys(updates);
     
