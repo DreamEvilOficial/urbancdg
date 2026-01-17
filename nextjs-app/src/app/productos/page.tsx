@@ -24,6 +24,11 @@ function ProductosContent() {
   const normalizedFilter = filterParam.replace(/^\/+|\/+$/g, '').toLowerCase()
   const searchQuery = searchParams.get('q') || ''
 
+  const isImageUrl = (url: string) => {
+    if (!url) return false
+    return url.startsWith('http') || url.startsWith('https') || url.startsWith('/') || url.includes('.gif') || url.includes('.png') || url.includes('.jpg') || url.includes('.jpeg') || url.includes('.svg') || url.includes('.webp')
+  }
+
   // Filter States
   const [selectedSizes, setSelectedSizes] = useState<string[]>([])
   const [selectedColors, setSelectedColors] = useState<string[]>([])
@@ -190,23 +195,23 @@ function ProductosContent() {
     })
     
     if (dynamicFilter) {
+      const iconToUse = dynamicFilter.imagen_url || (isImageUrl(dynamicFilter.icono) ? dynamicFilter.icono : null)
+
       return {
         text: dynamicFilter.nombre.toUpperCase(),
         element: (
           <span className="flex items-center gap-3 md:gap-5">
             {dynamicFilter.nombre.toUpperCase()}
-            {dynamicFilter.imagen_url ? (
+            {iconToUse ? (
               <div className="relative w-10 h-10 md:w-16 md:h-16 -mt-2">
-                <Image 
-                  src={dynamicFilter.imagen_url} 
+                <img 
+                  src={iconToUse} 
                   alt={dynamicFilter.nombre} 
-                  fill
-                  className="object-contain"
-                  unoptimized
+                  className="w-full h-full object-contain"
                 />
               </div>
             ) : (
-              <span className="text-2xl md:text-4xl">{dynamicFilter.icono}</span>
+              <span className="text-2xl md:text-4xl">{dynamicFilter.icono || '🏷️'}</span>
             )}
           </span>
         )
