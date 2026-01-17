@@ -20,6 +20,10 @@ interface CartStore {
   updateQuantity: (cartItemId: string, cantidad: number) => void
   clearCart: () => void
   total: () => number
+  coupon: any | null
+  applyCoupon: (coupon: any) => void
+  removeCoupon: () => void
+  getDiscount: () => number
 }
 
 export const useCartStore = create<CartStore>()(
@@ -66,11 +70,32 @@ export const useCartStore = create<CartStore>()(
         }
       }),
       
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], coupon: null }),
       
       total: () => {
         const { items } = get()
         return items.reduce((sum, item) => sum + (item.precio * item.cantidad), 0)
+      },
+
+      coupon: null,
+
+      applyCoupon: (coupon) => set({ coupon }),
+
+      removeCoupon: () => set({ coupon: null }),
+
+      getDiscount: () => {
+        const { items, coupon } = get()
+        if (!coupon) return 0
+        
+        const subtotal = items.reduce((sum, item) => sum + (item.precio * item.cantidad), 0)
+        
+        if (coupon.tipo === 'porcentaje') {
+          return (subtotal * (coupon.valor / 100))
+        } else if (coupon.tipo === 'fijo') {
+          return coupon.valor
+        }
+        
+        return 0
       }
     }),
     {

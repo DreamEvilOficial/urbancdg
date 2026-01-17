@@ -7,16 +7,20 @@ import { useEffect, useState } from 'react'
 import { productosAPI } from '@/lib/supabase'
 import toast from 'react-hot-toast'
 import { formatPrice } from '@/lib/formatters'
+import { cuponesAPI } from '@/lib/supabase'
+import { Tag, Ticket } from 'lucide-react'
 
 interface CartProps {
   onClose: () => void
 }
 
 export default function Cart({ onClose }: CartProps) {
-  const { items, removeItem, updateQuantity, total, clearCart, addItem } = useCartStore()
+  const { items, removeItem, updateQuantity, total, clearCart, addItem, coupon, applyCoupon, removeCoupon, getDiscount } = useCartStore()
   const router = useRouter()
   const [suggestedProducts, setSuggestedProducts] = useState<any[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [couponCode, setCouponCode] = useState('')
+  const [validatingCoupon, setValidatingCoupon] = useState(false)
 
   const hasInvalidStock = items.some((item) => {
     if (typeof item.stock !== 'number') return false
@@ -101,6 +105,35 @@ export default function Cart({ onClose }: CartProps) {
       stock: totalStock
     })
     document.dispatchEvent(new Event('cartUpdated'))
+  }
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return
+    
+    setValidatingCoupon(true)
+    try {
+      const res = await cuponesAPI.validar({ 
+        code: couponCode, 
+        total: total() 
+      })
+      
+      if (res.valid) {
+        applyCoupon({
+          id: res.code, // assuming code is used as id here or returned correctly
+          codigo: res.code,
+          tipo: res.tipo,
+          valor: res.valor
+        })
+        toast.success('Cupón aplicado')
+        setCouponCode('')
+      } else {
+        toast.error(res.message || res.error || 'Cupón inválido')
+      }
+    } catch (error) {
+      toast.error('Error al validar cupón')
+    } finally {
+      setValidatingCoupon(false)
+    }
   }
 
   const handleOverlayClick = (e: React.MouseEvent) => {
@@ -233,14 +266,64 @@ export default function Cart({ onClose }: CartProps) {
                         Ajustá tu carrito: hay productos sin stock
                       </p>
                     )}
-                    <div className="mb-6">
-                      <span className="block text-white/55 text-sm font-medium">Subtotal</span>
-                      <span className="block text-3xl font-black text-white tracking-tighter">
-                        $<span suppressHydrationWarning>
-                          { formatPrice(total()) }
+                    <div className="mb-6 space-y-2">
+                      <div className="flex justify-between items-end">
+                        <span className="text-white/55 text-[10px] font-black uppercase tracking-widest">Subtotal</span>
+                        <span className="text-xl font-black text-white/90">
+                          ${ formatPrice(total()) }
                         </span>
-                      </span>
+                      </div>
+                      
+                      {coupon && (
+                        <div className="flex justify-between items-center bg-accent/10 border border-accent/20 p-2 rounded-xl animate-in zoom-in-95 duration-200">
+                          <div className="flex items-center gap-2">
+                             <Ticket className="w-3 h-3 text-accent" />
+                             <div>
+                               <p className="text-[9px] font-black text-white uppercase tracking-widest leading-none">CUPÓN: {coupon.codigo}</p>
+                               <p className="text-[8px] font-bold text-accent uppercase tracking-widest mt-0.5">-{coupon.tipo === 'porcentaje' ? `${coupon.valor}%` : `$${formatPrice(coupon.valor)}`}</p>
+                             </div>
+                          </div>
+                          <button onClick={removeCoupon} className="text-white/40 hover:text-white transition-colors p-1">
+                             <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="pt-2 border-t border-white/5">
+                        <span className="block text-white/55 text-[10px] font-black uppercase tracking-widest">Total</span>
+                        <span className="block text-3xl font-black text-white tracking-tighter">
+                          $<span suppressHydrationWarning>
+                            { formatPrice(total() - getDiscount()) }
+                          </span>
+                        </span>
+                      </div>
                     </div>
+
+                    {!coupon && (
+                      <div className="mb-6">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3 ml-1">
+                          ¿Poseés un cupón?
+                        </p>
+                        <div className="flex gap-2">
+                          <input 
+                            type="text" 
+                            placeholder="CÓDIGO"
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                            onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] outline-none focus:border-accent/40 transition-all text-white placeholder:text-white/20"
+                          />
+                          <button 
+                            onClick={handleApplyCoupon}
+                            disabled={validatingCoupon || !couponCode.trim()}
+                            className="bg-white/10 hover:bg-white/20 disabled:opacity-50 text-white px-5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border border-white/5"
+                          >
+                            {validatingCoupon ? '...' : 'Aplicar'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="space-y-3">
                       <button
                         onClick={handleCheckout}
@@ -250,6 +333,15 @@ export default function Cart({ onClose }: CartProps) {
                         <span>Ir al Checkout</span>
                         <ArrowRight className="w-6 h-6" />
                       </button>
+
+                      <button
+                        onClick={onClose}
+                        className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-white transition-all flex items-center justify-center gap-2"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Añadir más productos
+                      </button>
+
                       <button
                         onClick={handleClearCart}
                         className="w-full py-2 text-[11px] text-white/35 hover:text-red-500 font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2"

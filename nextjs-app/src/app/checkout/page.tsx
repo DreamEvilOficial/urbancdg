@@ -26,7 +26,7 @@ type CheckoutFormData = {
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, total } = useCartStore()
+  const { items, total, coupon, getDiscount } = useCartStore()
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('shipping')
   const [shippingCost, setShippingCost] = useState(0)
   const [calculatingShipping, setCalculatingShipping] = useState(false)
@@ -139,7 +139,7 @@ export default function CheckoutPage() {
     const toastId = toast.loading('Guardando datos de entrega...')
 
     try {
-      const finalTotal = total() + shippingCost
+      const finalTotal = total() - getDiscount() + shippingCost
       const direccionCompleta = deliveryMethod === 'shipping' 
         ? `${formData.direccion} ${formData.numero}, ${formData.ciudad}`
         : 'Retiro en Local'
@@ -324,10 +324,13 @@ export default function CheckoutPage() {
             </form>
           </div>
 
-          <div className="xl:col-span-5 w-full">
-             <div className="bg-white text-black p-5 rounded-[30px] shadow-2xl">
-                <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Resumen de Compra</h3>
-                <div className="space-y-2 mb-4">
+          <div className="lg:col-span-5 w-full sticky top-8">
+              <div className="bg-white text-black p-6 rounded-[32px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] border border-white/10">
+                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6 flex items-center justify-between">
+                  Resumen de Compra
+                  <span className="text-black/20 italic">{items.length} items</span>
+                </h3>
+                <div className="space-y-4 mb-6 max-h-[30vh] overflow-y-auto custom-scrollbar pr-2">
                    {items.map((item, i) => (
                      <div key={i} className="flex items-center gap-2">
                         <div className="w-8 h-8 bg-black/5 rounded overflow-hidden shrink-0 relative">
@@ -354,12 +357,21 @@ export default function CheckoutPage() {
                    ))}
                 </div>
                 <div className="space-y-1.5 border-t border-black/5 pt-3">
-                  <div className="flex justify-between text-[9px] font-bold uppercase opacity-40">
+                  <div className="flex justify-between text-[10px] font-bold uppercase opacity-50">
                     <span>Subtotal</span>
                     <span>
                       ${ formatPrice(total()) }
                     </span>
                   </div>
+                  
+                  {coupon && (
+                    <div className="flex justify-between items-center text-[10px] font-bold uppercase text-green-600 bg-green-50 p-2 rounded-lg">
+                      <span>Cupón ({coupon.codigo})</span>
+                      <span>
+                        -${ formatPrice(getDiscount()) }
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-[9px] font-bold uppercase opacity-40">
                     <span>Envío</span>
                     <span className="text-green-600">
@@ -376,9 +388,9 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex justify-between items-end pt-1">
                     <span className="font-black uppercase tracking-tighter text-[10px]">Total</span>
-                    <span className="text-3xl font-black tracking-tighter leading-none">
+                    <span className="text-4xl font-black tracking-tighter leading-none">
                       $<span suppressHydrationWarning>
-                        { formatPrice(total() + shippingCost) }
+                        { formatPrice(total() - getDiscount() + shippingCost) }
                       </span>
                     </span>
                   </div>
