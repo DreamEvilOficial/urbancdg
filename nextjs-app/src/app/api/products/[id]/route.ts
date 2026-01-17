@@ -88,28 +88,23 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const isNowAvailable = (updates.proximamente === false || updates.proximo_lanzamiento === false);
     
     if (wasUpcoming && isNowAvailable) {
-        // Trigger notification process asynchronously
         (async () => {
             try {
-                // Fetch pending notifications
                 const notifications = await db.all('SELECT * FROM proximamente_notificaciones WHERE producto_id = ? AND notificado = FALSE', [id]);
                 
                 if (notifications && notifications.length > 0) {
                     console.log(`[NOTIFICATIONS] Sending launch emails for product ${id} to ${notifications.length} users.`);
-                    
-                    // In a real implementation, we would send emails here.
-                    // For now, we simulate it and mark as notified.
-                    // Example: await sendEmail(n.email, "Product Available", "...");
 
                     for (const n of notifications) {
-                         // Mark as notified
                          await db.run('UPDATE proximamente_notificaciones SET notificado = TRUE WHERE id = ?', [n.id]);
                     }
                     
-                    // Log to admin_logs
                     await db.run('INSERT INTO admin_logs (action, details, target_id) VALUES (?, ?, ?)', 
                         ['NOTIFICATIONS_SENT', `Sent ${notifications.length} emails for product launch`, id]);
                 }
+
+                await db.run('INSERT INTO admin_logs (action, details, target_id) VALUES (?, ?, ?)', 
+                    ['PRODUCT_LAUNCH', 'Product moved from UPCOMING to AVAILABLE state', id]);
             } catch (err) {
                 console.error('[NOTIFICATIONS] Error processing notifications:', err);
             }

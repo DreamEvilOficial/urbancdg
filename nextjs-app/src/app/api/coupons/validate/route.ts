@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
+import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { sanitizeInput, sanitizePrice } from '@/lib/security'
 
 export const dynamic = 'force-dynamic'
@@ -28,11 +29,29 @@ export async function POST(req: NextRequest) {
     }
 
     const codigoSanitizado = sanitizeInput(String(code)).toUpperCase()
+    let coupon
 
-    const coupon = await db.get<any>(
-      'SELECT * FROM cupones WHERE UPPER(codigo) = UPPER(?)',
-      [codigoSanitizado]
-    )
+    // 1. Fetch Coupon with Fallback
+    try {
+      coupon = await db.get<any>(
+        'SELECT * FROM cupones WHERE UPPER(codigo) = UPPER(?)',
+        [codigoSanitizado]
+      )
+    } catch (err: any) {
+      console.error('[coupons/validate] DB Error fetching coupon:', err.message)
+      const client = supabaseAdmin || supabase
+      const { data, error } = await client
+        .from('cupones')
+        .select('*')
+        .ilike('codigo', codigoSanitizado)
+        .single()
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('[coupons/validate] Fallback Error fetching coupon:', error.message)
+        throw err
+      }
+      coupon = data
+    }
 
     if (!coupon) {
       return NextResponse.json({ valid: false, error: 'Cupón no encontrado' }, { status: 404 })
@@ -58,7 +77,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (coupon.max_uso_total && coupon.usos_actuales >= coupon.max_uso_total) {
+    const usosActuales = coupon.usos_actuales || 0
+    if (coupon.max_uso_total && usosActuales >= coupon.max_uso_total) {
       return NextResponse.json({ valid: false, error: 'El cupón alcanzó el límite de usos' }, { status: 400 })
     }
 
@@ -69,31 +89,48 @@ export async function POST(req: NextRequest) {
 
     if (Array.isArray(items) && items.length > 0) {
       const cartItems = items as CartItem[]
+      const itemIds = cartItems.map((i) => i.id).filter((id) => id)
 
-      if (categoriasIds.length > 0) {
-        for (const item of cartItems) {
-          const producto = await db.get<any>(
-            'SELECT id, categoria_id, precio FROM productos WHERE id = ?',
-            [item.id]
+      if (itemIds.length > 0) {
+        const productsMap = new Map<string, any>()
+
+        // 2. Fetch Products with Fallback and Batching
+        try {
+          const placeholders = itemIds.map(() => '?').join(',')
+          const products = await db.all<any>(
+            `SELECT id, categoria_id, precio FROM productos WHERE id IN (${placeholders})`,
+            itemIds
           )
+          products.forEach((p) => productsMap.set(p.id, p))
+        } catch (err: any) {
+          console.error('[coupons/validate] DB Error fetching products:', err.message)
+          const client = supabaseAdmin || supabase
+          const { data, error } = await client
+            .from('productos')
+            .select('id, categoria_id, precio')
+            .in('id', itemIds)
 
-          if (producto && producto.categoria_id && categoriasIds.includes(producto.categoria_id)) {
-            const precio = sanitizePrice(producto.precio)
-            const cantidad = Number(item.cantidad) || 1
-            baseTotal += precio * cantidad
+          if (error) {
+            console.error('[coupons/validate] Fallback Error fetching products:', error.message)
+            throw err
           }
+          data?.forEach((p: any) => productsMap.set(p.id, p))
         }
-      } else {
-        for (const item of cartItems) {
-          const producto = await db.get<any>(
-            'SELECT id, precio FROM productos WHERE id = ?',
-            [item.id]
-          )
 
+        for (const item of cartItems) {
+          const producto = productsMap.get(item.id)
           if (producto) {
-            const precio = sanitizePrice(producto.precio)
-            const cantidad = Number(item.cantidad) || 1
-            baseTotal += precio * cantidad
+            if (categoriasIds.length > 0) {
+              if (producto.categoria_id && categoriasIds.includes(producto.categoria_id)) {
+                const precio = sanitizePrice(producto.precio)
+                const cantidad = Number(item.cantidad) || 1
+                baseTotal += precio * cantidad
+              }
+            } else {
+              const precio = sanitizePrice(producto.precio)
+              const cantidad = Number(item.cantidad) || 1
+              baseTotal += precio * cantidad
+            }
           }
         }
       }
@@ -151,7 +188,7 @@ export async function POST(req: NextRequest) {
     })
   } catch (err: any) {
     console.error('[coupons/validate][POST] Error:', err.message)
-    return NextResponse.json({ error: 'Error al validar cupón' }, { status: 500 })
+    return NextResponse.json({ error: 'Error al validar cupón: ' + err.message }, { status: 500 })
   }
 }
 

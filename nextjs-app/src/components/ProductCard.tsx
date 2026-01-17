@@ -63,9 +63,18 @@ function ProductCard({ producto }: ProductCardProps) {
     window.dispatchEvent(new Event('savedProductsUpdated'))
   }
 
-  // Verificar si es próximo lanzamiento
-  const isProximoLanzamiento = (producto as any).proximo_lanzamiento || false
-  
+  const isProximoLanzamiento = !!((producto as any).proximamente || (producto as any).proximo_lanzamiento)
+  const fechaLanzamientoRaw = (producto as any).fecha_lanzamiento
+  const fechaLanzamiento = fechaLanzamientoRaw ? new Date(fechaLanzamientoRaw) : null
+  const ahora = new Date()
+  const MILISEGUNDOS_DIA = 24 * 60 * 60 * 1000
+  const diasRecientes = 3
+  const isRecienDesbloqueado =
+    !isProximoLanzamiento &&
+    !!fechaLanzamiento &&
+    fechaLanzamiento.getTime() <= ahora.getTime() &&
+    ahora.getTime() - fechaLanzamiento.getTime() <= diasRecientes * MILISEGUNDOS_DIA
+
   // Verificar si es producto TOP
   const isTopProduct = (producto as any).isTopProduct || false
 
@@ -432,7 +441,6 @@ function ProductCard({ producto }: ProductCardProps) {
         </Link>
       )}
       
-      {/* Product Info */}
       <div className="p-3 md:p-6 bg-black flex flex-col flex-grow">
         {isProximoLanzamiento ? (
           <div className="block mb-2 group/title cursor-not-allowed">
@@ -446,7 +454,13 @@ function ProductCard({ producto }: ProductCardProps) {
           </div>
         ) : (
           <div className="flex flex-col mb-1.5 min-h-[3.5rem] md:min-h-[4.5rem]">
-            {/* Reviews Stars - Moved Up & Numeric Added */}
+            {isRecienDesbloqueado && (
+              <div className="mb-2">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-[9px] md:text-[10px] font-black uppercase tracking-[0.25em] text-emerald-300">
+                  ¡DESBLOQUEADO!
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-1.5 mb-2">
               <div className="flex items-center gap-1">
                 {(Number(producto.avg_rating) || 0) > 0 ? (

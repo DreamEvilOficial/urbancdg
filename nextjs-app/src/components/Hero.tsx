@@ -31,6 +31,8 @@ export default function Hero() {
 
   if (!mounted || !heroBannerUrl) return null
 
+  const isGif = heroBannerUrl.toLowerCase().endsWith('.gif')
+
   return (
     <div className="w-full">
       <Image 
@@ -42,6 +44,7 @@ export default function Hero() {
         style={{ width: '100%', height: 'auto' }}
         className="object-cover"
         priority
+        unoptimized={isGif}
       />
     </div>
   )

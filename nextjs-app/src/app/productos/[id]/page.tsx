@@ -210,8 +210,21 @@ export default function ProductDetailPage() {
     precioTransferencia: producto ? Math.round(producto.precio * 0.9) : 0,
     precioCuotas: producto ? Math.round(producto.precio / 6) : 0
   }), [producto?.precio])
-
+  
   const discountPercent = producto ? (producto.descuento_porcentaje || (producto.precio_original && producto.precio_original > producto.precio ? Math.round(((producto.precio_original - producto.precio) / producto.precio_original) * 100) : 0)) : 0
+
+  const isProximoLanzamiento = !!(producto && ((producto as any).proximamente || (producto as any).proximo_lanzamiento))
+  const fechaLanzamientoRaw = producto && (producto as any).fecha_lanzamiento
+  const fechaLanzamiento = fechaLanzamientoRaw ? new Date(fechaLanzamientoRaw) : null
+  const ahora = new Date()
+  const MILISEGUNDOS_DIA = 24 * 60 * 60 * 1000
+  const diasRecientes = 3
+  const isRecienDesbloqueado =
+    !!producto &&
+    !isProximoLanzamiento &&
+    !!fechaLanzamiento &&
+    fechaLanzamiento.getTime() <= ahora.getTime() &&
+    ahora.getTime() - fechaLanzamiento.getTime() <= diasRecientes * MILISEGUNDOS_DIA
 
   if (loading) return <div className="min-h-screen bg-transparent flex items-center justify-center"><div className="w-8 h-8 border-2 border-white/10 border-t-white rounded-full animate-spin" /></div>
   if (!producto) return <div className="min-h-screen bg-transparent flex items-center justify-center text-xs font-black uppercase tracking-widest text-white/60">Producto no hallado</div>
@@ -264,11 +277,17 @@ export default function ProductDetailPage() {
             )}
           </div>
 
-          {/* Details Section - Compacted and Shrunken by 20% */}
           <div className="lg:col-span-5 lg:col-offset-1 space-y-6">
             <div className="space-y-2">
               <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase italic leading-none">{producto.nombre}</h1>
               <p className="text-white/45 text-[10px] font-bold uppercase tracking-widest">REF: {producto.slug?.toUpperCase()}</p>
+              {isRecienDesbloqueado && (
+                <div className="pt-1">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-[9px] md:text-[10px] font-black uppercase tracking-[0.25em] text-emerald-300">
+                    ¡DESBLOQUEADO!
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Compact Price Panel */}
@@ -320,10 +339,8 @@ export default function ProductDetailPage() {
                </div>
             </section>
 
-            {/* Compact Selection Area */}
             <div className="space-y-6 bg-white/[0.03] border border-white/10 p-6 rounded-[35px] scale-[0.9] origin-top backdrop-blur-xl relative overflow-hidden">
-              
-              {producto.proximamente ? (
+              {isProximoLanzamiento ? (
                 <div className="py-8 text-center space-y-6">
                   {producto.fecha_lanzamiento && (
                     <CountdownTimer targetDate={producto.fecha_lanzamiento} />

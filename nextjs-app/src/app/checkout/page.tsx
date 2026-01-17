@@ -387,7 +387,7 @@ export default function CheckoutPage() {
                       {calculatingShipping
                         ? '...'
                         : shippingCost === 0
-                          ? 'GRATIS'
+                          ? 'CALCULANDO COSTO'
                           : (
                             <>$<span suppressHydrationWarning>
                               { formatPrice(shippingCost) }
