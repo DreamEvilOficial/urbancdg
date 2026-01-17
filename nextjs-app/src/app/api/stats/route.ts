@@ -8,24 +8,21 @@ export async function GET() {
       return NextResponse.json({ error: 'Supabase Admin not configured' }, { status: 500 })
     }
 
-    // 1. Fetch completed orders
+    // 1. Fetch completed and shipped orders (both count as successful sales)
     const { data: orders, error } = await supabaseAdmin
       .from('ordenes')
       .select('*')
-      .eq('estado', 'completado')
+      .in('estado', ['completado', 'enviado'])
       .order('created_at', { ascending: false })
 
     if (error) throw error
 
     // 2. Process Basic Stats
     const totalOrders = orders.length
-    const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0)
+    const totalRevenue = orders.reduce((sum, order) => sum + (Number(order.total) || 0), 0)
     const averageTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0
 
     // 3. Process Revenue Over Time (Last 30 Days)
-    const last30Days = new Date()
-    last30Days.setDate(last30Days.getDate() - 30)
-
     const revenueByDate: Record<string, number> = {}
     const ordersByDate: Record<string, number> = {}
 
@@ -39,9 +36,13 @@ export async function GET() {
     }
 
     orders.forEach(order => {
-        const date = order.created_at.split('T')[0]
+        if (!order.created_at) return
+        // created_at can be a string or Date object depending on the driver
+        const dateStr = typeof order.created_at === 'string' ? order.created_at : order.created_at.toISOString()
+        const date = dateStr.split('T')[0]
+        
         if (revenueByDate[date] !== undefined) {
-            revenueByDate[date] += (order.total || 0)
+            revenueByDate[date] += (Number(order.total) || 0)
             ordersByDate[date] += 1
         }
     })
@@ -52,22 +53,31 @@ export async function GET() {
         orders: ordersByDate[date]
     }))
 
-    // 4. Process Top Products (Parsing JSON items)
+    // 4. Process Top Products (Parsing items correctly)
     const productSales: Record<string, { name: string, quantity: number, revenue: number }> = {}
 
     orders.forEach(order => {
-        if (Array.isArray(order.items)) {
-            order.items.forEach((item: any) => {
-                const id = item.id || item.nombre // Fallback to name if ID missing
+        let items: any[] = []
+        try {
+            items = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || [])
+        } catch (e) { items = [] }
+
+        if (Array.isArray(items)) {
+            items.forEach((item: any) => {
+                const id = item.id || item.producto_id || item.nombre
+                if (!id) return
+                
                 if (!productSales[id]) {
                     productSales[id] = { 
-                        name: item.nombre, 
+                        name: item.nombre || 'Producto Desconocido', 
                         quantity: 0, 
                         revenue: 0 
                     }
                 }
-                productSales[id].quantity += (item.cantidad || 1)
-                productSales[id].revenue += ((item.precio || 0) * (item.cantidad || 1))
+                const qty = Number(item.cantidad) || 1
+                const price = Number(item.precio) || 0
+                productSales[id].quantity += qty
+                productSales[id].revenue += (price * qty)
             })
         }
     })
