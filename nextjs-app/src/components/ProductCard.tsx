@@ -33,6 +33,7 @@ function ProductCard({ producto }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem)
   const [showModal, setShowModal] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
+  const [isTimeReached, setIsTimeReached] = useState(false)
 
   // Verificar si está guardado en localStorage al montar
   React.useEffect(() => {
@@ -67,7 +68,7 @@ function ProductCard({ producto }: ProductCardProps) {
   const fechaLanzamientoRaw = (producto as any).fecha_lanzamiento as string | undefined | null
   const ahora = new Date()
   const fechaLanzamiento = fechaLanzamientoRaw ? new Date(fechaLanzamientoRaw) : null
-  const isFutureLaunch = !!(fechaLanzamiento && fechaLanzamiento.getTime() > ahora.getTime())
+  const isFutureLaunch = !!(fechaLanzamiento && fechaLanzamiento.getTime() > ahora.getTime() && !isTimeReached)
   const isProximoLanzamiento = marcadoProximo && isFutureLaunch
   const desbloqueadoDesdeRaw = (producto as any).desbloqueado_desde as string | undefined | null
   const fallbackDesbloqueadoDesde = !desbloqueadoDesdeRaw && fechaLanzamiento && !isFutureLaunch ? fechaLanzamiento : null
@@ -226,7 +227,10 @@ function ProductCard({ producto }: ProductCardProps) {
     <div className="flex flex-col flex-grow items-center justify-center p-4">
        {(producto as any).fecha_lanzamiento ? (
          <div className="w-full mb-3">
-           <CountdownTimer targetDate={(producto as any).fecha_lanzamiento} />
+           <CountdownTimer 
+             targetDate={(producto as any).fecha_lanzamiento} 
+             onExpire={() => setIsTimeReached(true)}
+           />
          </div>
        ) : null}
        <button 

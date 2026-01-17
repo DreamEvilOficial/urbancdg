@@ -195,6 +195,12 @@ export default function BannerSlider({ initialConfig }: { initialConfig?: any })
                   loop
                   playsInline
                 />
+              ) : isGif ? (
+                <img
+                  src={sanitizeURL(b.url)}
+                  alt={`Banner ${i + 1}`}
+                  className="w-full h-full object-cover"
+                />
               ) : (
                 <Image
                   src={sanitizeURL(b.url)}
@@ -204,7 +210,6 @@ export default function BannerSlider({ initialConfig }: { initialConfig?: any })
                   className="object-cover"
                   priority={i === 0}
                   draggable={false}
-                  unoptimized={isGif}
                 />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/50" />

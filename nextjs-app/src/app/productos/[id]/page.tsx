@@ -34,6 +34,7 @@ export default function ProductDetailPage() {
   const [isImageLoading, setIsImageLoading] = useState(true)
   const [notified, setNotified] = useState(false)
   const [email, setEmail] = useState('')
+  const [isTimeReached, setIsTimeReached] = useState(false)
   
   const addItem = useCartStore((state) => state.addItem)
 
@@ -41,7 +42,7 @@ export default function ProductDetailPage() {
   const fechaLanzamientoRaw = producto ? ((producto as any).fecha_lanzamiento as string | undefined | null) : null
   const ahora = new Date()
   const fechaLanzamiento = fechaLanzamientoRaw ? new Date(fechaLanzamientoRaw) : null
-  const isFutureLaunch = !!(fechaLanzamiento && fechaLanzamiento.getTime() > ahora.getTime())
+  const isFutureLaunch = !!(fechaLanzamiento && fechaLanzamiento.getTime() > ahora.getTime() && !isTimeReached)
   const isProximoLanzamiento = marcadoProximo && isFutureLaunch
   const desbloqueadoDesdeRaw = producto ? ((producto as any).desbloqueado_desde as string | undefined | null) : null
   const fallbackDesbloqueadoDesde = !desbloqueadoDesdeRaw && fechaLanzamiento && !isFutureLaunch ? fechaLanzamiento : null
@@ -348,7 +349,10 @@ export default function ProductDetailPage() {
             {isProximoLanzamiento ? (
                 <div className="py-8 text-center space-y-6">
                   {producto.fecha_lanzamiento && (
-                    <CountdownTimer targetDate={producto.fecha_lanzamiento} />
+                    <CountdownTimer 
+                      targetDate={producto.fecha_lanzamiento} 
+                      onExpire={() => setIsTimeReached(true)}
+                    />
                   )}
                   <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10">
                     <Bell className="w-8 h-8 text-white/40" />
