@@ -38,12 +38,10 @@ export async function GET(request: Request) {
         if (id) {
             const product = await db.get(`
                 SELECT p.*, 
-                       COALESCE(AVG(r.calificacion), 0) as avg_rating, 
-                       COUNT(r.id) as review_count 
+                       COALESCE((SELECT ROUND(AVG(r.calificacion), 1) FROM resenas r WHERE r.producto_id = p.id AND r.aprobado = TRUE), 0) as avg_rating,
+                       (SELECT COUNT(*) FROM resenas r WHERE r.producto_id = p.id AND r.aprobado = TRUE) as review_count
                 FROM productos p 
-                LEFT JOIN resenas r ON p.id = r.producto_id AND r.aprobado = TRUE
                 WHERE p.id = ?
-                GROUP BY p.id
             `, [id]);
             if (!product) return NextResponse.json(null);
 
@@ -87,10 +85,9 @@ export async function GET(request: Request) {
 
         let sql = `
             SELECT p.*, 
-                   ROUND(COALESCE(AVG(r.calificacion), 0), 1) as avg_rating, 
-                   COUNT(r.id) as review_count 
+                   COALESCE((SELECT ROUND(AVG(r.calificacion), 1) FROM resenas r WHERE r.producto_id = p.id AND r.aprobado = TRUE), 0) as avg_rating,
+                   (SELECT COUNT(*) FROM resenas r WHERE r.producto_id = p.id AND r.aprobado = TRUE) as review_count
             FROM productos p 
-            LEFT JOIN resenas r ON p.id = r.producto_id AND r.aprobado = TRUE
             WHERE p.activo = TRUE
         `;
         const params: any[] = [];
@@ -120,15 +117,16 @@ export async function GET(request: Request) {
             sql += ' AND p.descuento_activo = TRUE';
         }
 
-        sql += ' GROUP BY p.id ORDER BY p.created_at DESC';
+        sql += ' ORDER BY p.created_at DESC';
 
         const products = await db.all(sql, params);
         
         // Normalizar campos JSON si vienen como string (por compatibilidad)
         const normalized = products.map(p => {
             const n = normalizeProduct(p);
-            // Log for debugging specific product if needed (comment out later)
-            // if (n && n.nombre.includes('ADIDAS')) console.log(`[Products API] ${n.nombre}: avg=${n.avg_rating}, count=${n.review_count}`);
+            if (n && n.nombre.toUpperCase().includes('ADIDAS')) {
+                console.log(`[DEBUG ADIDAS] ID: ${n.id}, AVG: ${n.avg_rating}, COUNT: ${n.review_count}, RawAVG: ${p.avg_rating}`);
+            }
             return n;
         });
 
