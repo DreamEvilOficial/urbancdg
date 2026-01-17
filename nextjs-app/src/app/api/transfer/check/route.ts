@@ -82,21 +82,26 @@ export async function POST(req: NextRequest) {
     const mpData = await mpRes.json();
     
     if (!mpRes.ok) {
-        console.error('[transfer/check] MP API Error:', mpData);
+        console.error('[transfer/check] MP API Error Details:', JSON.stringify(mpData));
         // If it's a 401, maybe token is invalid
-        return NextResponse.json({ status: 'error', message: 'Error en API de Mercado Pago', details: mpData });
+        return NextResponse.json({ 
+            status: 'error', 
+            message: 'Error en API de Mercado Pago', 
+            details: mpData.message || mpData 
+        });
     }
 
     const payments = mpData.results || [];
-    console.log(`[transfer/check] Found ${payments.length} potential payments for amount ${targetAmount.toFixed(2)}`);
+    console.log(`[transfer/check] Found ${payments.length} potential payments in the last 2 hours`);
 
     // Manual filter to find the BEST match
     const validPayment = payments.find((p: any) => {
         const pAmount = Number(p.transaction_amount);
-        const isMatch = Math.abs(pAmount - targetAmount) < 0.01; // Allow 1 cent difference just in case
+        const isMatch = Math.abs(pAmount - targetAmount) < 0.01;
         const isApproved = p.status === 'approved';
         
-        console.log(`   - Payment ID: ${p.id}, Status: ${p.status}, Type: ${p.operation_type}, Amount: ${pAmount}, Date: ${p.date_created}`);
+        // LOG CADA PAGO PARA DEPURAR EN VERCEL
+        console.log(`>>> CHECKING: ID=${p.id}, Status=${p.status}, Amount=${pAmount}, Date=${p.date_created}, Type=${p.operation_type}`);
         
         return isMatch && isApproved;
     });
