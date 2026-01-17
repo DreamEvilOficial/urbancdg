@@ -133,19 +133,23 @@ export default function TransferPayment({ orderId, orderNumber, onClose }: Trans
             body: JSON.stringify({ orderId })
         })
         const data = await res.json()
-        if (data.paid) {
-            toast.success('¡Pago confirmado!')
-            handleSuccess()
-        } else {
-            const msg = data.message || (data.status === 'pending' ? 'Pago no detectado aún' : 'Estado: ' + data.status)
-            toast(msg, { icon: data.status === 'error' ? '❌' : '⏳' })
-        }
-    } catch {
-        toast.error('Error al verificar')
-    } finally {
-        setChecking(false)
+    if (data.paid) {
+      toast.success('¡Pago confirmado!')
+      handleSuccess()
+    } else {
+      let msg = data.message || 'Pago no detectado aún'
+      if (data.status === 'error' && data.details?.message) {
+        msg = `${data.message}: ${data.details.message}`
+      }
+      toast(msg, { icon: data.status === 'error' ? '❌' : '⏳' })
     }
+  } catch (err: any) {
+    console.error('Check error:', err)
+    toast.error('Error al verificar: Por favor intenta de nuevo en unos momentos.')
+  } finally {
+    setChecking(false)
   }
+}
 
   const cancelTransaction = () => {
      onClose();

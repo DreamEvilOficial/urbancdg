@@ -37,41 +37,55 @@ export async function POST(req: NextRequest) {
     }
     
     if (!token) {
-        console.warn('[transfer/check] MERCADOPAGO_ACCESS_TOKEN not found in environment or database');
-        return NextResponse.json({ status: 'pending', paid: false, message: 'Falta configuración de Mercado Pago (Token)' });
+        console.warn('[transfer/check] MERCADOPAGO_ACCESS_TOKEN not found');
+        return NextResponse.json({ 
+            status: 'error', 
+            paid: false, 
+            message: 'Configuración pendiente: Falta Token de Mercado Pago en variables de entorno o base de datos.' 
+        });
     }
 
-    // Trim token to avoid accidental spaces from Vercel/DB
+    // Trim token and log masked version for debugging
     token = token.trim();
+    const maskedToken = token.length > 10 ? `${token.substring(0, 6)}...${token.substring(token.length - 4)}` : '***';
+    console.log(`[transfer/check] Using token: ${maskedToken} (Length: ${token.length})`);
 
     // 2. Check Mercado Pago for matching payment
-    // Identify which account we are looking at (Diagnostic)
     let accountInfo = 'Desconocida';
     try {
         const meRes = await fetch('https://api.mercadopago.com/users/me', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
+        
         if (meRes.ok) {
             const meData = await meRes.json();
             accountInfo = `${meData.first_name || ''} ${meData.last_name || ''} (${meData.email})`;
             console.log(`[transfer/check] Account: ${accountInfo}`);
         } else {
-            const meErr = await meRes.text();
-            console.error('[transfer/check] Token check failed:', meErr);
+            const meErrText = await meRes.text();
+            let meErrData;
+            try { meErrData = JSON.parse(meErrText); } catch { meErrData = { message: meErrText }; }
+            
+            console.error('[transfer/check] Token validation failed:', meErrText);
             return NextResponse.json({ 
                 status: 'error', 
-                message: 'Token de Mercado Pago inválido o expirado',
-                details: meErr
-            });
+                message: 'Credenciales de Mercado Pago inválidas o expiradas.',
+                details: meErrData
+            }, { status: 401 });
         }
     } catch (e: any) {
         console.error('[transfer/check] Auth request failed:', e.message);
+        return NextResponse.json({ 
+            status: 'error', 
+            message: 'Error de conexión con Mercado Pago.' 
+        }, { status: 503 });
     }
 
-    // Search window: broaden to 24 hours to avoid ANY timezone issues during debug
     const orderTime = new Date(order.created_at);
     const beginDate = new Date(orderTime.getTime() - 24 * 60 * 60000).toISOString();
     const targetAmount = Number(order.total_transferencia);
+
+    console.log(`[transfer/check] Order: ${order.id}, Target: ${targetAmount}, Searching from: ${beginDate}`);
 
     const params = new URLSearchParams({
         'sort': 'date_created',
@@ -91,9 +105,9 @@ export async function POST(req: NextRequest) {
         console.error('[transfer/check] MP Search Error:', JSON.stringify(mpData));
         return NextResponse.json({ 
             status: 'error', 
-            message: `Error MP: ${mpData.message || 'Error desconocido'}`,
+            message: `Error de búsqueda en Mercado Pago: ${mpData.message || 'Error desconocido'}`,
             details: mpData 
-        });
+        }, { status: mpRes.status });
     }
 
     const payments = mpData.results || [];
