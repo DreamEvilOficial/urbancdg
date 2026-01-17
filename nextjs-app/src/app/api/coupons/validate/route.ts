@@ -108,14 +108,14 @@ export async function POST(req: NextRequest) {
           error: 'No se alcanza el mínimo de compra para usar este cupón',
           minimo_compra: Number(coupon.minimo_compra),
         },
-        { status: 400 }
+        { status: 200 }
       )
     }
 
     if (baseTotal <= 0) {
       return NextResponse.json(
         { valid: false, error: 'El monto elegible para el cupón es cero' },
-        { status: 400 }
+        { status: 200 }
       )
     }
 

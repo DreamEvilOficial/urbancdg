@@ -129,8 +129,8 @@ export default function Cart({ onClose }: CartProps) {
       } else {
         toast.error(res.message || res.error || 'Cupón inválido')
       }
-    } catch (error) {
-      toast.error('Error al validar cupón')
+    } catch (error: any) {
+      toast.error(error.message || 'Error al validar cupón')
     } finally {
       setValidatingCoupon(false)
     }

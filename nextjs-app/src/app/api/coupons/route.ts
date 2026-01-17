@@ -64,9 +64,11 @@ export async function POST(req: Request) {
     const minimoCompraNumero = minimo_compra !== undefined && minimo_compra !== null ? Number(minimo_compra) : 0
     const maxUsoTotalNumero = max_uso_total !== undefined && max_uso_total !== null ? Number(max_uso_total) : null
     const configJson = config ? JSON.stringify(config) : '{}'
+    const newId = uuidv4()
 
     const sql = `
       INSERT INTO cupones (
+        id,
         codigo,
         descripcion,
         tipo,
@@ -78,10 +80,12 @@ export async function POST(req: Request) {
         valido_desde,
         valido_hasta,
         activo
-      ) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)
+      RETURNING id
     `
 
     const result = await db.run(sql, [
+      newId,
       codigoSanitizado,
       descripcionSanitizada,
       tipoFinal,
@@ -94,7 +98,7 @@ export async function POST(req: Request) {
       activo !== undefined && activo !== null ? !!activo : true,
     ])
 
-    return NextResponse.json({ success: true, id: result.id })
+    return NextResponse.json({ success: true, id: result.id || newId })
   } catch (err: any) {
     console.error('[coupons][POST] Error:', err.message)
     return NextResponse.json({ error: 'Error al crear cupón' }, { status: 500 })
