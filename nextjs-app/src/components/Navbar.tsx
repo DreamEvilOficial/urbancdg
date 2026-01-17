@@ -27,6 +27,7 @@ export default function Navbar() {
   const [showMusic, setShowMusic] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const [mensajes, setMensajes] = useState<string[]>([])
+  const [velocidad, setVelocidad] = useState(30)
   const [hideNavbar, setHideNavbar] = useState(false)
   const [lastScrollY, setLastScrollY] = useState(0)
   const [filtrosEspeciales, setFiltrosEspeciales] = useState<Array<{id: string, nombre: string, clave: string, icono: string, activo: boolean, imagen_url?: string}>>([])
@@ -74,6 +75,7 @@ export default function Navbar() {
           
           if (config.logo_url) setLogoUrl(config.logo_url)
           if (config.nombre_tienda) setNombreTienda(config.nombre_tienda)
+          if (config.slider_marquesina_velocidad) setVelocidad(Number(config.slider_marquesina_velocidad))
           
           // Actualizar mensajes del banner
           const nuevosMensajes = []
@@ -202,20 +204,33 @@ export default function Navbar() {
         {mensajes.length > 0 && (
           <div className="bg-black text-white py-4 overflow-hidden relative w-full border-b border-gray-800">
             <div className="announcement-scroll">
-              <div className="announcement-content">
+              <div 
+                className="announcement-content"
+                style={{ 
+                  '--speed': `${velocidad}s`,
+                  '--speed-mobile': `${velocidad / 2}s`
+                } as any}
+              >
                 {mensajes.map((mensaje, index) => (
-                  <span key={`msg-1-${index}`} className="announcement-item text-[11px] font-medium uppercase tracking-[0.2em]">
+                  <span key={`msg-1-${index}`} className="announcement-item text-[11px] font-medium uppercase tracking-[0.2em] px-6 md:px-12">
                     {mensaje}
                   </span>
                 ))}
                 {/* Duplicar para loop infinito */}
                 {mensajes.map((mensaje, index) => (
-                  <span key={`msg-2-${index}`} className="announcement-item text-[11px] font-medium uppercase tracking-[0.2em]">
+                  <span key={`msg-2-${index}`} className="announcement-item text-[11px] font-medium uppercase tracking-[0.2em] px-6 md:px-12">
                     {mensaje}
                   </span>
                 ))}
               </div>
             </div>
+            <style jsx>{`
+              @media (max-width: 768px) {
+                .announcement-content {
+                  animation-duration: var(--speed-mobile) !important;
+                }
+              }
+            `}</style>
           </div>
         )}
 

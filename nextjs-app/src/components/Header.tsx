@@ -54,6 +54,7 @@ export default function Header({ theme, toggleTheme }: HeaderProps) {
     lema_tienda: ''
   })
   const [mensajes, setMensajes] = useState<string[]>([])
+  const [velocidad, setVelocidad] = useState(30)
   const [categorias, setCategorias] = useState<Array<{id: string, nombre: string, slug: string, icono?: string, subcategorias?: Array<{id: string, nombre: string, slug: string}>}>>([])
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
   const [filtrosEspeciales, setFiltrosEspeciales] = useState<Array<{id: string, nombre: string, clave: string, icono?: string, imagen_url?: string, activo: boolean}>>([])
@@ -90,6 +91,11 @@ export default function Header({ theme, toggleTheme }: HeaderProps) {
             logo_url: newConfig.logo_url || '',
             lema_tienda: newConfig.lema_tienda || newConfig.subtitulo_lema || ''
           })
+
+          // Velocidad
+          if (newConfig.slider_marquesina_velocidad) {
+            setVelocidad(Number(newConfig.slider_marquesina_velocidad))
+          }
 
           // Mensajes
           const nuevosMensajes = []
@@ -172,14 +178,27 @@ export default function Header({ theme, toggleTheme }: HeaderProps) {
         {mensajes.length > 0 && (
           <div className="bg-black text-white py-3 overflow-hidden relative w-full border-b border-white/5">
             <div className="announcement-scroll">
-              <div className="announcement-content">
+              <div 
+                className="announcement-content"
+                style={{ 
+                  '--speed': `${velocidad}s`,
+                  '--speed-mobile': `${velocidad / 2}s`
+                } as any}
+              >
                 {[...mensajes, ...mensajes, ...mensajes, ...mensajes, ...mensajes, ...mensajes].map((mensaje, index) => (
-                  <span key={`${index}`} className="announcement-item text-[12px] md:text-[13px] font-bold uppercase tracking-[0.2em] px-12 text-white/90">
+                  <span key={`${index}`} className="announcement-item text-[12px] md:text-[13px] font-bold uppercase tracking-[0.2em] px-6 md:px-12 text-white/90">
                     {mensaje}
                   </span>
                 ))}
               </div>
             </div>
+            <style jsx>{`
+              @media (max-width: 768px) {
+                .announcement-content {
+                  animation-duration: var(--speed-mobile) !important;
+                }
+              }
+            `}</style>
           </div>
         )}
 

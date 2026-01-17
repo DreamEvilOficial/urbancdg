@@ -737,21 +737,16 @@ canvas {
 
 .announcement-content {
   display: flex;
-  animation: scroll-left 20s linear infinite;
+  animation: scroll-left var(--speed, 30s) linear infinite;
   white-space: nowrap;
 }
 
 .announcement-item {
   display: inline-block;
-  padding: 0 3rem;
   white-space: nowrap;
 }
 
-.announcement-item::after {
-  content: "•";
-  margin-left: 3rem;
-  opacity: 0.5;
-}
+/* Separator handled by item padding */
 
 /* === REVEAL ON SCROLL === */
 .reveal {
