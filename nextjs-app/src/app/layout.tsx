@@ -23,22 +23,28 @@ export async function generateMetadata(): Promise<Metadata> {
   let title = 'URBAN'
   let description = 'Tu estilo, sin límites.'
   let shareDescription = 'URBAN: Tu estilo, sin límites. Descubrí los últimos drops y armá tu fit.'
+  let logoUrl = '/og-image.jpg'
 
   try {
     const { data } = await supabase
       .from('configuracion')
       .select('clave, valor')
-      .in('clave', ['nombre_tienda', 'lema_tienda', 'share_description'])
+      .in('clave', ['nombre_tienda', 'lema_tienda', 'share_description', 'logo_url'])
     
     if (data) {
       const config = data.reduce((acc: any, item: any) => {
-        acc[item.clave] = item.valor
+        try {
+          acc[item.clave] = JSON.parse(item.valor)
+        } catch {
+          acc[item.clave] = item.valor
+        }
         return acc
       }, {})
 
       if (config.nombre_tienda) title = config.nombre_tienda
       if (config.lema_tienda) description = config.lema_tienda
       if (config.share_description) shareDescription = config.share_description
+      if (config.logo_url) logoUrl = config.logo_url
     }
   } catch (e) {
     console.error('Error fetching metadata:', e)
@@ -59,12 +65,18 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: title,
       images: [
         {
-          url: '/og-image.jpg',
+          url: logoUrl,
           width: 1200,
           height: 630,
           alt: title,
         }
       ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: title,
+      description: shareDescription,
+      images: [logoUrl],
     },
     icons: {
       icon: '/favicon.svg',
