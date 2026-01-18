@@ -37,6 +37,7 @@ export default function CheckoutPage() {
   const [formData, setFormData] = useState<CheckoutFormData>({
     nombre: '',
     apellido: '',
+    email: '',
     telefono: '',
     direccion: '',
     numero: '',
@@ -72,6 +73,10 @@ export default function CheckoutPage() {
     if (field === 'nombre' || field === 'apellido') {
       if (!value.trim()) return 'Este campo es obligatorio'
       if (value.trim().length < 2) return 'Debe tener al menos 2 caracteres'
+    }
+    if (field === 'email') {
+        if (!value.trim()) return 'Ingresá tu email para recibir el comprobante'
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return 'Formato de email inválido'
     }
     if (field === 'telefono') {
       if (!value.trim()) return 'Ingresá un número válido'
@@ -133,8 +138,8 @@ export default function CheckoutPage() {
     if (isSubmitting) return
     const fieldsToValidate: (keyof CheckoutFormData)[] =
       deliveryMethod === 'shipping'
-        ? ['nombre', 'apellido', 'telefono', 'dniCuit', 'direccion', 'numero', 'codigoPostal', 'ciudad']
-        : ['nombre', 'apellido', 'telefono', 'dniCuit']
+        ? ['nombre', 'apellido', 'email', 'telefono', 'dniCuit', 'direccion', 'numero', 'codigoPostal', 'ciudad']
+        : ['nombre', 'apellido', 'email', 'telefono', 'dniCuit']
 
     const nextErrors: Partial<Record<keyof CheckoutFormData, string>> = {}
     fieldsToValidate.forEach(field => {
@@ -240,6 +245,17 @@ export default function CheckoutPage() {
                         className={`w-full bg-white/5 border p-3 rounded-xl outline-none text-xs font-bold uppercase tracking-tight min-h-[48px] ${errors.apellido ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-white/30'}`}
                       />
                       {errors.apellido && <p className="text-[10px] text-red-500 font-semibold">{errors.apellido}</p>}
+                    </div>
+                    <div className="col-span-2 space-y-1">
+                      <input
+                        required
+                        type="email"
+                        placeholder="EMAIL (PARA ENVÍO DE COMPROBANTE)"
+                        value={formData.email}
+                        onChange={handleFieldChange('email')}
+                        className={`w-full bg-white/5 border p-3 rounded-xl outline-none text-xs font-bold uppercase tracking-tight min-h-[48px] ${errors.email ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-white/30'}`}
+                      />
+                      {errors.email && <p className="text-[10px] text-red-500 font-semibold">{errors.email}</p>}
                     </div>
                     <div className="col-span-2 space-y-1">
                       <input

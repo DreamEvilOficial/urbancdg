@@ -6,7 +6,7 @@ import { formatPrice } from './formatters';
 
 export const generateTrackingCode = () => {
   const random = Math.floor(Math.random() * 1000000000).toString().padStart(9, '0');
-  return `CP-${random}-AR`;
+  return `CP${random}AR`;
 };
 
 export const sendOrderConfirmationEmail = async (orderId: string) => {
@@ -20,9 +20,11 @@ export const sendOrderConfirmationEmail = async (orderId: string) => {
       items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
     } catch { items = []; }
 
-    // Ensure tracking code exists
+    // Ensure tracking code exists and is valid (not the order number)
     let trackingCode = order.tracking_code;
-    if (!trackingCode) {
+    const isValidTracking = trackingCode && /^[A-Z]{2}\d{9}[A-Z]{2}$/.test(trackingCode);
+    
+    if (!isValidTracking) {
         trackingCode = generateTrackingCode();
         await db.run('UPDATE ordenes SET tracking_code = ? WHERE id = ?', [trackingCode, orderId]);
     }
