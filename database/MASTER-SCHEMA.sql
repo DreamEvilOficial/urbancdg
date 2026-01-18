@@ -141,26 +141,7 @@ CREATE TABLE IF NOT EXISTS orden_items (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 6. CUPONES DE DESCUENTO
-DROP TABLE IF EXISTS cupones CASCADE;
-CREATE TABLE IF NOT EXISTS cupones (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    codigo VARCHAR(50) UNIQUE NOT NULL,
-    descripcion TEXT,
-    tipo VARCHAR(20) NOT NULL DEFAULT 'porcentaje',
-    valor DECIMAL(12, 2) NOT NULL DEFAULT 0,
-    minimo_compra DECIMAL(12, 2) DEFAULT 0,
-    max_uso_total INTEGER,
-    usos_actuales INTEGER DEFAULT 0,
-    config JSONB DEFAULT '{}',
-    valido_desde TIMESTAMPTZ,
-    valido_hasta TIMESTAMPTZ,
-    activo BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 7. DEUDAS
+-- 6. DEUDAS
 DROP TABLE IF EXISTS deudas CASCADE;
 CREATE TABLE IF NOT EXISTS deudas (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -176,7 +157,7 @@ CREATE TABLE IF NOT EXISTS deudas (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 8. RESEÑAS
+-- 7. RESEÑAS
 DROP TABLE IF EXISTS resenas CASCADE;
 CREATE TABLE IF NOT EXISTS resenas (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -190,7 +171,7 @@ CREATE TABLE IF NOT EXISTS resenas (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 9. BANNERS
+-- 8. BANNERS
 DROP TABLE IF EXISTS banners CASCADE;
 CREATE TABLE IF NOT EXISTS banners (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -207,7 +188,7 @@ CREATE TABLE IF NOT EXISTS banners (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 9.1 FILTROS ESPECIALES
+-- 8.1 FILTROS ESPECIALES
 DROP TABLE IF EXISTS filtros_especiales CASCADE;
 CREATE TABLE IF NOT EXISTS filtros_especiales (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -222,7 +203,7 @@ CREATE TABLE IF NOT EXISTS filtros_especiales (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 9.2 SECCIONES DE HOME
+-- 8.2 SECCIONES DE HOME
 DROP TABLE IF EXISTS homepage_sections CASCADE;
 CREATE TABLE IF NOT EXISTS homepage_sections (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -236,7 +217,7 @@ CREATE TABLE IF NOT EXISTS homepage_sections (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 9.3 NOTIFICACIONES PROXIMAMENTE
+-- 8.3 NOTIFICACIONES PROXIMAMENTE
 DROP TABLE IF EXISTS proximamente_notificaciones CASCADE;
 CREATE TABLE IF NOT EXISTS proximamente_notificaciones (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -247,7 +228,7 @@ CREATE TABLE IF NOT EXISTS proximamente_notificaciones (
     UNIQUE(email, producto_id)
 );
 
--- 10. ÍNDICES DE RENDIMIENTO
+-- 9. ÍNDICES DE RENDIMIENTO
 CREATE INDEX IF NOT EXISTS idx_productos_slug ON productos(slug);
 CREATE INDEX IF NOT EXISTS idx_productos_categoria ON productos(categoria_id);
 CREATE INDEX IF NOT EXISTS idx_productos_activo ON productos(activo);
@@ -258,7 +239,7 @@ CREATE INDEX IF NOT EXISTS idx_ordenes_numero ON ordenes(numero_orden);
 CREATE INDEX IF NOT EXISTS idx_usuarios_usuario ON usuarios(usuario);
 CREATE INDEX IF NOT EXISTS idx_deudas_cliente ON deudas(cliente_nombre);
 
--- 11. SEGURIDAD (RLS)
+-- 10. SEGURIDAD (RLS)
 ALTER TABLE productos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE categorias ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subcategorias ENABLE ROW LEVEL SECURITY;

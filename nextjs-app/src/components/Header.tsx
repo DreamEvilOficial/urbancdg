@@ -89,17 +89,13 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
         if (data) {
           const newConfig: any = {}
           if (Array.isArray(data)) {
-            data.forEach((item: any) => {
-              try {
-                newConfig[item.clave] = JSON.parse(item.valor)
-              } catch {
-                newConfig[item.clave] = item.valor
-              }
-            })
+             data.forEach((item: any) => {
+                try { newConfig[item.clave] = JSON.parse(item.valor) } catch { newConfig[item.clave] = item.valor }
+             })
           } else {
-            Object.assign(newConfig, data)
+             Object.assign(newConfig, data)
           }
-
+          
           setConfig((prev: any) => {
             const next = {
               nombre_tienda: newConfig.nombre_tienda || 'URBAN',
@@ -110,16 +106,18 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
             return next
           })
 
+          // Velocidad
           if (newConfig.slider_marquesina_velocidad) {
             const nextVel = Number(newConfig.slider_marquesina_velocidad)
             setVelocidad((prev: number) => (prev === nextVel ? prev : nextVel))
           }
 
+          // Mensajes
           const nuevosMensajes: string[] = []
           if (newConfig.anuncio_1) nuevosMensajes.push(newConfig.anuncio_1)
           if (newConfig.anuncio_2) nuevosMensajes.push(newConfig.anuncio_2)
           if (newConfig.anuncio_3) nuevosMensajes.push(newConfig.anuncio_3)
-
+          
           if (nuevosMensajes.length > 0) {
             setMensajes((prev: string[]) => {
               if (JSON.stringify(prev) === JSON.stringify(nuevosMensajes)) return prev
@@ -420,7 +418,7 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
                 className="relative h-10 w-10 flex items-center justify-center rounded-full text-white/70 hover:bg-white/5 hover:text-white transition-colors"
               >
                 <ShoppingCart className="w-4 h-4" />
-                {mounted && totalItems > 0 && (
+                {totalItems > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-accent text-ink text-[10px] font-black border border-black shadow-md">
                     {totalItems}
                   </span>

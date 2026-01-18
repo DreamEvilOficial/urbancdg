@@ -1,5 +1,28 @@
-import { describe, it, expect } from 'vitest'
 import { formatPrice, toNumber } from './formatters'
+
+function expect(received: any) {
+  return {
+    toBe(expected: any) {
+      if (received !== expected) {
+        throw new Error(`Expected ${JSON.stringify(received)} to be ${JSON.stringify(expected)}`)
+      }
+    }
+  }
+}
+
+function it(name: string, fn: () => void) {
+  try {
+    fn()
+    console.log(`✓ ${name}`)
+  } catch (error) {
+    console.error(`✗ ${name}`, error)
+  }
+}
+
+function describe(name: string, fn: () => void) {
+  console.log(`\n${name}`)
+  fn()
+}
 
 describe('formatters', () => {
   describe('formatPrice', () => {

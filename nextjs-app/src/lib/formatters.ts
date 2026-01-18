@@ -2,7 +2,7 @@ export const formatPrice = (value: number | string | null | undefined): string =
   if (value === null || value === undefined) return '0'
   
   const numberValue = typeof value === 'string' 
-    ? toNumber(value)
+    ? Number(value.replace(/\./g, '').replace(/,/g, '.')) 
     : value
 
   if (isNaN(numberValue)) return '0'
@@ -16,39 +16,44 @@ export const formatPrice = (value: number | string | null | undefined): string =
 export const toNumber = (value: number | string | null | undefined): number => {
   if (value === null || value === undefined) return 0
   if (typeof value === 'number') return value
-
-  let str = String(value).trim()
+  
+  const str = String(value).trim()
   if (!str) return 0
 
-  // Eliminar símbolos de moneda y espacios
-  str = str.replace(/[$\s]/g, '')
-
-  // Heurística para corregir error común: usuario usa punto para decimales (.00 o .5)
-  // Si encontramos un punto seguido de 1 o 2 dígitos al final (y fin de cadena),
-  // asumimos que es un intento de decimal y lo cambiamos por coma.
-  // Ej: "60.000.00" -> "60.000,00"
-  // Ej: "100.50" -> "100,50"
-  // Pero "1.000" (3 dígitos) se mantiene como mil.
-  if (/\.\d{1,2}$/.test(str)) {
-    str = str.replace(/\.(\d{1,2})$/, ',$1')
-  }
-
-  // Lógica estricta para formato Argentina (1.234,56)
-  // 1. Si hay coma, es el separador decimal.
-  // 2. Si hay puntos, son separadores de miles.
-  
-  // Si encontramos (1.234,56) o (1,50)
+  // Si contiene comas, asumimos formato es-AR con decimales (1.234,56)
   if (str.includes(',')) {
-    // Eliminar puntos (miles) y reemplazar coma por punto (decimal JS)
-    str = str.replace(/\./g, '').replace(',', '.')
-  } else {
-    // Si NO hay coma, asumimos que los puntos son miles (1.234 -> 1234)
-    // Excepción: Si el usuario escribe formato americano puro (1.5) sin coma...
-    // Pero en AR "1.500" es mil quinientos. "1.5" es raro, pero asumiremos miles si hay punto.
-    // Si el usuario quiere decimales, DEBE usar coma.
-    str = str.replace(/\./g, '')
+    const n = Number(str.replace(/\./g, '').replace(/,/g, '.'))
+    return isNaN(n) ? 0 : n
+  }
+  
+  // Cuenta los puntos
+  const dotCount = (str.match(/\./g) || []).length
+
+  if (dotCount > 0) {
+    // Caso especial: Si tiene puntos pero termina en .XX (dos dígitos), 
+    // podría ser un intento de decimales incorrecto (ej: 50.000.00)
+    // En es-AR los decimales van con coma. Si el usuario mezcla, intentamos ser inteligentes.
+    if (/\.\d{2}$/.test(str)) {
+      // Asumimos que el último punto es decimal
+      const lastDotIndex = str.lastIndexOf('.')
+      const integerPart = str.substring(0, lastDotIndex).replace(/\./g, '')
+      const decimalPart = str.substring(lastDotIndex + 1)
+      const n = Number(`${integerPart}.${decimalPart}`)
+      return isNaN(n) ? 0 : n
+    }
+
+    // Regla general: Si tiene puntos y NO son 2 decimales al final:
+    // Si termina en 3 dígitos (.000, .500) asumimos SIEMPRE miles.
+    // "50.000" -> 50000
+    // "1.000.000" -> 1000000
+    if (/\.\d{3}$/.test(str) || dotCount > 1) {
+      const n = Number(str.replace(/\./g, ''))
+      return isNaN(n) ? 0 : n
+    }
   }
 
-  const num = Number(str)
-  return isNaN(num) ? 0 : num
+  // Si no tiene puntos ni comas, o tiene un punto que no parece miles (ej: 50.5)
+  // Lo tratamos como número estándar JS
+  const n = Number(str)
+  return isNaN(n) ? 0 : n
 }

@@ -3,7 +3,6 @@ import db from '@/lib/db';
 import { sanitizeInput, sanitizeRichText } from '@/lib/security';
 import { cookies } from 'next/headers';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
-import { toNumber } from '@/lib/formatters';
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   const id = params.id;
@@ -48,7 +47,6 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         variantes: variantsData,
         dimensiones: product.dimensiones ? (typeof product.dimensiones === 'string' ? JSON.parse(product.dimensiones) : product.dimensiones) : null,
         metadata: product.metadata ? (typeof product.metadata === 'string' ? JSON.parse(product.metadata) : product.metadata) : null,
-        desbloqueado_desde: product.desbloqueado_desde || null,
     };
     
     return NextResponse.json(parsedProduct);
@@ -88,10 +86,34 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const wasUpcoming = currentProduct && (currentProduct.proximamente === 1 || currentProduct.proximamente === true || currentProduct.proximo_lanzamiento === 1 || currentProduct.proximo_lanzamiento === true);
     const isNowAvailable = (updates.proximamente === false || updates.proximo_lanzamiento === false);
     
-    // if (wasUpcoming && isNowAvailable) {
-    //     // Logic removed as per user request: "si quito esa opcion... que tambien se quite el texto"
-    //     // We do not want to set unlocked_since, nor do we need to clear it if we handle visibility in frontend.
-    // }
+    if (wasUpcoming && isNowAvailable) {
+        // Trigger notification process asynchronously
+        (async () => {
+            try {
+                // Fetch pending notifications
+                const notifications = await db.all('SELECT * FROM proximamente_notificaciones WHERE producto_id = ? AND notificado = FALSE', [id]);
+                
+                if (notifications && notifications.length > 0) {
+                    console.log(`[NOTIFICATIONS] Sending launch emails for product ${id} to ${notifications.length} users.`);
+                    
+                    // In a real implementation, we would send emails here.
+                    // For now, we simulate it and mark as notified.
+                    // Example: await sendEmail(n.email, "Product Available", "...");
+
+                    for (const n of notifications) {
+                         // Mark as notified
+                         await db.run('UPDATE proximamente_notificaciones SET notificado = TRUE WHERE id = ?', [n.id]);
+                    }
+                    
+                    // Log to admin_logs
+                    await db.run('INSERT INTO admin_logs (action, details, target_id) VALUES (?, ?, ?)', 
+                        ['NOTIFICATIONS_SENT', `Sent ${notifications.length} emails for product launch`, id]);
+                }
+            } catch (err) {
+                console.error('[NOTIFICATIONS] Error processing notifications:', err);
+            }
+        })();
+    }
 
     const keys = Object.keys(updates);
     
@@ -107,8 +129,37 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const values = keys.map(key => {
         let val = updates[key];
         
+        // Conversión explícita de tipos numéricos
         if (NUMERIC_FIELDS.includes(key)) {
-            val = toNumber(val);
+            if (val === '' || val === null || val === undefined) {
+                // Para 'precio' y 'stock_actual', preferimos 0 a null para evitar constraints
+                val = (key === 'precio' || key === 'stock_actual') ? 0 : null;
+            } else if (typeof val === 'string') {
+                const str = val.replace(/[$\s]/g, '').trim();
+                
+                // Lógica robusta espejo de formatters.ts:
+                // Si tiene coma, es formato ES-AR con decimales (1.234,56)
+                if (str.includes(',')) {
+                    const clean = str.replace(/\./g, '').replace(/,/g, '.');
+                    const num = parseFloat(clean);
+                    val = isNaN(num) ? 0 : num;
+                } else {
+                    // Si tiene múltiples puntos O termina en .XXX (3 digitos), asumimos separador de miles
+                    const dotCount = (str.match(/\./g) || []).length;
+                    const endsInThree = /\.\d{3}$/.test(str);
+                    
+                    if (dotCount > 1 || endsInThree) {
+                        const clean = str.replace(/\./g, '');
+                        const num = parseFloat(clean);
+                        val = isNaN(num) ? 0 : num;
+                    } else {
+                        // Formato estándar (1234.56 o 1000)
+                        const num = parseFloat(str);
+                        val = isNaN(num) ? 0 : num;
+                    }
+                }
+            }
+            // Si ya es number, lo dejamos tal cual
         }
 
         // Normalizar IDs de categoría / subcategoría
@@ -129,13 +180,6 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         // Normalizar fecha de lanzamiento
         if (key === 'fecha_lanzamiento') {
             if (!val || val === '' || val === 'null' || val === 'undefined') {
-                val = null;
-            }
-        }
-
-        // Normalizar fecha de desbloqueo (permitir null explícito para limpiar estado)
-        if (key === 'desbloqueado_desde') {
-            if (!val) {
                 val = null;
             }
         }

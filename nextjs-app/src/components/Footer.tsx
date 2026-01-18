@@ -144,9 +144,15 @@ export default function Footer() {
             © {new Date().getFullYear()} {config.nombre_tienda}. Todos los derechos reservados.
           </p>
           <div className="flex items-center gap-6">
-            <p className="text-[8px] font-black text-white/40 uppercase tracking-wider">
-              Desarrollado por Marcos Peiti
-            </p>
+             <Image 
+               src="https://static.wattpad.com/img/badges/v2/certified-fanatic.png" 
+               width={100} 
+               height={20} 
+               className="h-4 w-auto grayscale opacity-40" 
+               alt="" 
+               unoptimized 
+             />
+             <p className="text-[8px] font-black text-white/40 uppercase tracking-wider">Desarrollado por Marcos Peiti</p>
           </div>
         </div>
 

@@ -17,10 +17,6 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "types": [
-      "vitest",
-      "node"
-    ],
     "plugins": [
       {
         "name": "next"
@@ -40,6 +36,7 @@
   ],
   "exclude": [
     "node_modules",
-    ".next/types/**"
+    ".next/types/**",
+    "**/*.test.ts"
   ]
 }

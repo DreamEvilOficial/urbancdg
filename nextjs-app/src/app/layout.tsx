@@ -5,7 +5,7 @@ import { Toaster } from 'react-hot-toast'
 import ClientLayout from '@/components/ClientLayout'
 import DevToolsProtection from '@/components/DevToolsProtection'
 
-import db from '@/lib/db'
+import { supabase } from '@/lib/supabase'
 
 const urbanist = Urbanist({
   subsets: ['latin'],
@@ -21,67 +21,38 @@ const bebasNeue = Bebas_Neue({
 
 export async function generateMetadata(): Promise<Metadata> {
   let title = 'URBAN'
-  let description = 'Tu estilo, sin límites.'
-  let shareDescription = 'URBAN: Tu estilo, sin límites. Descubrí los últimos drops y armá tu fit.'
-  let logoUrl = '/og-image.jpg'
+  let description = 'Redefiniendo el Streetwear. Tu estilo, sin límites.'
+  let shareDescription = 'Redefiniendo el Streetwear. Tu estilo, sin límites. Descubrí los últimos drops y armá tu fit.'
 
   try {
-    const data = await db.all('SELECT clave, valor FROM configuracion WHERE clave IN (?, ?, ?, ?)', 
-      ['nombre_tienda', 'lema_tienda', 'share_description', 'logo_url']
-    )
+    const { data } = await supabase
+      .from('configuracion')
+      .select('clave, valor')
+      .in('clave', ['nombre_tienda', 'lema_tienda', 'share_description'])
     
-    if (data && data.length > 0) {
-      const config: any = {}
-      data.forEach((item: any) => {
-        try {
-          config[item.clave] = JSON.parse(item.valor)
-        } catch {
-          config[item.clave] = item.valor
-        }
-      })
+    if (data) {
+      const config = data.reduce((acc: any, item: any) => {
+        acc[item.clave] = item.valor
+        return acc
+      }, {})
 
       if (config.nombre_tienda) title = config.nombre_tienda
       if (config.lema_tienda) description = config.lema_tienda
       if (config.share_description) shareDescription = config.share_description
-      if (config.logo_url) {
-        if (config.logo_url.startsWith('http')) {
-          logoUrl = config.logo_url
-        } else {
-          logoUrl = `https://urbancdg.vercel.app${config.logo_url.startsWith('/') ? '' : '/'}${config.logo_url}`
-        }
-      }
     }
   } catch (e) {
     console.error('Error fetching metadata:', e)
   }
 
   return {
-    metadataBase: new URL('https://urbancdg.vercel.app'),
-    title: {
-      default: title,
-      template: `%s | ${title}`
-    },
+    title,
     description,
     openGraph: {
-      title: title,
+      title: `${title} | Streetwear & Drops`,
       description: shareDescription,
       type: 'website',
       locale: 'es_AR',
       siteName: title,
-      images: [
-        {
-          url: logoUrl,
-          width: 1200,
-          height: 630,
-          alt: title,
-        }
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: title,
-      description: shareDescription,
-      images: [logoUrl],
     },
     icons: {
       icon: '/favicon.svg',
@@ -95,26 +66,22 @@ export const viewport: Viewport = {
   maximumScale: 1,
 }
 
-import { getConfig } from '@/lib/data'
-
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const config = await getConfig()
-
   return (
     <html lang="es" suppressHydrationWarning className="h-full">
       <body className={`${urbanist.variable} ${bebasNeue.variable} h-full font-sans antialiased`}>
-        <ClientLayout initialConfig={config}>
+        <ClientLayout>
           {children}
         </ClientLayout>
         <DevToolsProtection />
         <Toaster 
           position="top-right"
           containerStyle={{
-            top: 160,
+            top: 80,
             right: 20,
             zIndex: 9999999,
           }}

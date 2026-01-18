@@ -81,16 +81,7 @@ export default function FeaturedProductsManagement() {
   function openProximoModal(product: Producto) {
     setSelectedProduct(product)
     setTempProximoActive(!!(product.proximo_lanzamiento || product.proximamente))
-    
-    if (product.fecha_lanzamiento) {
-        const date = new Date(product.fecha_lanzamiento)
-        const offset = date.getTimezoneOffset() * 60000
-        const localISOTime = new Date(date.getTime() - offset).toISOString().slice(0, 16)
-        setTempDate(localISOTime)
-    } else {
-        setTempDate('')
-    }
-    
+    setTempDate(product.fecha_lanzamiento ? new Date(product.fecha_lanzamiento).toISOString().slice(0, 16) : '')
     setProximoModalOpen(true)
   }
 
@@ -111,7 +102,7 @@ export default function FeaturedProductsManagement() {
     const updates = {
         proximo_lanzamiento: tempProximoActive,
         proximamente: tempProximoActive,
-        fecha_lanzamiento: tempDate ? new Date(tempDate).toISOString() : null
+        fecha_lanzamiento: tempDate || null
     }
 
     try {

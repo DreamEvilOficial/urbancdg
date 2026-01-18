@@ -40,72 +40,44 @@ export default function PaymentPage() {
     if (savedDeliveryData) setDeliveryData(JSON.parse(savedDeliveryData))
     else router.push('/checkout')
 
-    const savedOrder = localStorage.getItem('paymentOrder')
-    if (savedOrder) {
-      try {
-        const parsed = JSON.parse(savedOrder)
-        setCreatedOrder(parsed)
-      } catch {}
-    }
-
     if (items.length === 0) router.push('/cart')
   }, [items.length, router])
 
   const handlePayment = async () => {
-    if (!deliveryData || items.length === 0) {
-      toast.error('Error: Faltan datos del pedido')
-      return
-    }
-    
+    if (!deliveryData) return
     setLoading(true)
-    const toastId = toast.loading('Creando pedido...')
-
     try {
-      const dummyEmail = config.email || 'cliente@tienda.com'
+      const clienteEmail = deliveryData.formData?.email || config.email || 'cliente@tienda.com'
+      const direccionCompleta = deliveryData.deliveryMethod === 'shipping' 
+        ? `${deliveryData.formData.direccion} ${deliveryData.formData.numero}, ${deliveryData.formData.ciudad}`
+        : 'Retiro en Local'
       
-      // 1. Crear el pedido con todos los datos finales
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cliente_nombre: `${deliveryData.formData.nombre} ${deliveryData.formData.apellido}`,
-          cliente_email: dummyEmail,
-          cliente_telefono: deliveryData.formData.telefono,
-          cliente_dni: deliveryData.formData.dniCuit,
-          direccion_envio: deliveryData.direccion_envio,
-          subtotal: total(),
-          envio: deliveryData.shippingCost,
-          descuento: discountAmount,
-          total: payableTotal,
-          metodo_pago: paymentMethod,
-          notas: orderNote ? `Nota: ${orderNote}` : '',
-          items: items.map(i => ({
-            producto_id: i.id,
-            cantidad: i.cantidad,
-            precio_unitario: i.precio,
-            talle: i.talle,
-            color: i.color
-          }))
-        })
+      const orden = await ordenesAPI.crear({
+        cliente_nombre: `${deliveryData.formData.nombre} ${deliveryData.formData.apellido}`,
+        cliente_email: clienteEmail,
+        cliente_telefono: deliveryData.formData.telefono,
+        direccion_envio: direccionCompleta,
+        envio: deliveryData.shippingCost,
+        subtotal: total(),
+        descuento: discountAmount,
+        total: payableTotal,
+        estado: 'pendiente',
+        metodo_pago: paymentMethod,
+        notas: `DNI: ${deliveryData.formData.dniCuit}\nNota: ${orderNote}`,
+        items: items // Fix: Send items to API
       })
+      
+      setCreatedOrder(orden)
 
-      const orderData = await res.json()
-      if (!res.ok) throw new Error(orderData.error || 'Error al crear el pedido')
-
-      toast.success('Pedido creado!', { id: toastId })
-      setCreatedOrder(orderData)
-      localStorage.setItem('paymentOrder', JSON.stringify(orderData))
-
-      // 2. Procesar según método elegido
       if (paymentMethod === 'transferencia') {
         setShowTransferModal(true)
       } else {
-        const mpResponse = await fetch('/api/mercadopago/create-preference', {
+        const response = await fetch('/api/mercadopago/create-preference', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             items: items.map(i => ({ 
-              id: i.id,
+              id: i.id, // Incluir ID para validación en el servidor
               title: i.nombre, 
               unit_price: i.precio, 
               quantity: i.cantidad,
@@ -113,17 +85,16 @@ export default function PaymentPage() {
               color: i.color
             })),
             shippingCost: deliveryData.shippingCost || 0,
-            ordenId: orderData.id,
-            payer: { email: dummyEmail, name: deliveryData.formData.nombre }
+            ordenId: orden.id,
+            payer: { email: clienteEmail, name: deliveryData.formData.nombre }
           })
         })
-        const mpData = await mpResponse.json()
-        if (!mpResponse.ok) throw new Error(mpData.error)
-        window.location.href = mpData.init_point
+        const data = await response.json()
+        if (!response.ok) throw new Error(data.error)
+        window.location.href = data.init_point
       }
     } catch (error: any) {
-      console.error(error)
-      toast.error(error.message || 'Error procesando el pedido', { id: toastId })
+      toast.error(error.message || 'Error procesando el pago')
     } finally {
       setLoading(false)
     }
@@ -133,7 +104,7 @@ export default function PaymentPage() {
 
   return (
     <div className="min-h-screen bg-[#000000FA] text-white flex justify-center">
-      <div className="max-w-5xl w-full px-4 md:px-6 relative z-10 py-8 md:py-10 scale-100 md:scale-[1.03] origin-top transition-transform">
+      <div className="max-w-5xl w-full px-4 md:px-6 relative z-10 py-10 scale-[1.25] origin-top transition-transform">
         <div className="pb-6 flex items-end justify-between">
           <div>
             <button onClick={() => router.back()} className="group flex items-center gap-2 text-gray-600 hover:text-white transition-all text-[10px] font-black uppercase tracking-[0.2em] mb-2">

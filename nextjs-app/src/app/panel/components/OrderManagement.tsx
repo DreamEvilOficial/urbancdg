@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 import { 
   Search, Package, XCircle, Truck, 
   CreditCard, Landmark, User, Mail, Phone, MapPin,
-  Info, ChevronRight, Check, Trash2
+  Info, ChevronRight, Check
 } from 'lucide-react'
 import { formatPrice, toNumber } from '@/lib/formatters'
 import ShippingLabelGenerator from './ShippingLabelGenerator'
@@ -46,7 +46,6 @@ export default function OrderManagement() {
   const [showModal, setShowModal] = useState(false)
   const [trackingData, setTrackingData] = useState({ code: '', url: '' })
   const [selectedOrderLoading, setSelectedOrderLoading] = useState(false)
-  const [dateFilter, setDateFilter] = useState('todas')
 
   useEffect(() => {
     cargarOrdenes()
@@ -136,30 +135,6 @@ export default function OrderManagement() {
     }
   }
 
-  async function eliminarOrden(id: string) {
-    try {
-      const ok = window.confirm('¿Seguro que querés borrar esta venta? Esta acción no se puede deshacer.')
-      if (!ok) return
-
-      await toast.promise(
-        fetch(`/api/orders?id=${id}`, { method: 'DELETE' }).then(async (res) => {
-           if (!res.ok) throw new Error('Error al borrar orden')
-        }),
-        {
-           loading: 'Eliminando venta...',
-           success: 'Venta eliminada correctamente',
-           error: 'Error al eliminar venta'
-        }
-      )
-
-      setShowModal(false)
-      setSelectedOrder(null)
-      cargarOrdenes()
-    } catch (error: any) {
-      console.error(error)
-    }
-  }
-
   const resolveMethod = (o: Orden) => {
     const m = (o.metodo_pago || '').toLowerCase()
     if (m.includes('mercado') || m.includes('mp') || o.mercadopago_payment_id) return 'Mercado Pago'
@@ -189,41 +164,7 @@ export default function OrderManagement() {
       (methodFilter === 'mercadopago' && metodo.includes('mercado')) ||
       (methodFilter === 'transferencia' && metodo.includes('transferencia'))
 
-    const orderDate = new Date(orden.created_at)
-    const now = new Date()
-    const matchesDate = (() => {
-      if (dateFilter === 'todas') return true
-      if (dateFilter === 'hoy') {
-        return orderDate.toDateString() === now.toDateString()
-      }
-      if (dateFilter === 'ayer') {
-        const ayer = new Date(now)
-        ayer.setDate(now.getDate() - 1)
-        return orderDate.toDateString() === ayer.toDateString()
-      }
-      if (dateFilter === 'semana') {
-        const inicioSemana = new Date(now)
-        inicioSemana.setDate(now.getDate() - 7)
-        return orderDate >= inicioSemana && orderDate <= now
-      }
-      if (dateFilter === 'mes_actual') {
-        return (
-          orderDate.getFullYear() === now.getFullYear() &&
-          orderDate.getMonth() === now.getMonth()
-        )
-      }
-      if (dateFilter === 'mes_pasado') {
-        const mesPasado = new Date(now)
-        mesPasado.setMonth(now.getMonth() - 1)
-        return (
-          orderDate.getFullYear() === mesPasado.getFullYear() &&
-          orderDate.getMonth() === mesPasado.getMonth()
-        )
-      }
-      return true
-    })()
-
-    return matchesSearch && matchesStatus && matchesMethod && matchesDate
+    return matchesSearch && matchesStatus && matchesMethod
   })
 
   const parseItems = (items: any): any[] => {
@@ -292,7 +233,7 @@ export default function OrderManagement() {
             className="w-full pl-12 pr-4 py-3 md:py-4 bg-white/[0.03] border border-white/10 rounded-2xl focus:border-accent/40 outline-none transition-all shadow-[0_20px_70px_-60px_rgba(0,0,0,0.9)] hover:border-white/20 text-sm md:text-base"
           />
         </div>
-        <div className="md:col-span-4 space-y-2">
+        <div className="md:col-span-4">
           <div className="relative">
             <select
               value={methodFilter}
@@ -302,21 +243,6 @@ export default function OrderManagement() {
               <option value="todos">Todos los pagos</option>
               <option value="mercadopago">Mercado Pago</option>
               <option value="transferencia">Transferencia</option>
-            </select>
-            <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 w-5 h-5 text-white/30 pointer-events-none" />
-          </div>
-          <div className="relative">
-            <select
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full px-4 py-3 md:py-4 bg-white/[0.03] border border-white/10 rounded-2xl focus:border-accent/40 outline-none appearance-none cursor-pointer font-bold text-sm md:text-base transition hover:border-white/20 text-white/70"
-            >
-              <option value="todas">Todas las fechas</option>
-              <option value="hoy">Hoy</option>
-              <option value="ayer">Ayer</option>
-              <option value="semana">Últimos 7 días</option>
-              <option value="mes_actual">Mes actual</option>
-              <option value="mes_pasado">Mes pasado</option>
             </select>
             <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 w-5 h-5 text-white/30 pointer-events-none" />
           </div>
@@ -332,9 +258,6 @@ export default function OrderManagement() {
               onClick={() => { handleOpenOrder(orden) }}
               className="group bg-[#06070c]/70 backdrop-blur-2xl border border-white/10 p-5 rounded-[28px] hover:border-white/20 transition-all cursor-pointer shadow-[0_30px_120px_-90px_rgba(0,0,0,0.9)] hover:bg-white/[0.02] relative overflow-hidden active:scale-[0.98]"
             >
-              {resolveMethod(orden) === 'Transferencia' && (
-                <span className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full" />
-              )}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
                 <div className="flex items-start md:items-center gap-5">
                   <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-colors flex-shrink-0 ${orden.estado === 'completado' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-white/[0.03] text-white/35 group-hover:bg-accent/15 group-hover:text-accent'}`}>
@@ -550,13 +473,6 @@ export default function OrderManagement() {
                             <span className="text-[8px] font-black uppercase tracking-widest text-emerald-400">Completar</span>
                          </button>
                       </div>
-                      <button
-                        onClick={() => eliminarOrden(selectedOrder.id)}
-                        className="mt-4 w-full py-3 bg-red-600/90 hover:bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Borrar venta
-                      </button>
                    </section>
 
                    {/* Generador de Etiquetas Andreani */}

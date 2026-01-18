@@ -183,7 +183,7 @@ export default function SavedProducts({ onClose }: SavedProductsProps) {
           ) : (
             <div className="p-4 space-y-4">
               {items.map((item) => {
-                const isProximoLanzamiento = !!((item as any).proximamente || (item as any).proximo_lanzamiento)
+                const isProximoLanzamiento = (item as any).proximo_lanzamiento
 
                 return (
                   <div

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Clock } from 'lucide-react'
 
-export default function CountdownTimer({ targetDate, onExpire }: { targetDate: string, onExpire?: () => void }) {
+export default function CountdownTimer({ targetDate }: { targetDate: string }) {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
   const [isExpired, setIsExpired] = useState(false)
 
@@ -20,7 +20,6 @@ export default function CountdownTimer({ targetDate, onExpire }: { targetDate: s
         })
       } else {
         setIsExpired(true)
-        if (onExpire) onExpire()
       }
     }
 
@@ -28,10 +27,14 @@ export default function CountdownTimer({ targetDate, onExpire }: { targetDate: s
     const timer = setInterval(calculateTimeLeft, 1000)
 
     return () => clearInterval(timer)
-  }, [targetDate, onExpire])
+  }, [targetDate])
 
   if (isExpired) {
-    return null
+    return (
+      <div className="text-center">
+        <span className="text-green-500 font-black text-lg tracking-widest">¡DISPONIBLE!</span>
+      </div>
+    )
   }
 
   return (

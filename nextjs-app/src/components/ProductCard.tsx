@@ -4,15 +4,70 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { type Producto } from '@/lib/supabase'
 import { useCartStore } from '@/store/cartStore'
 import { formatPrice } from '@/lib/formatters'
-import { ShoppingBag, ShoppingCart, Bookmark, Clock, Star } from 'lucide-react'
+import { ShoppingBag, ShoppingCart, Bookmark, Clock } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import VariantModal from './VariantModal'
-import CountdownTimer from './CountdownTimer'
 // import { motion } from 'framer-motion'
 
+function CountdownTimer({ targetDate }: { targetDate: string }) {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+  const [isExpired, setIsExpired] = useState(false)
 
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const difference = +new Date(targetDate) - +new Date()
+      
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60)
+        })
+      } else {
+        setIsExpired(true)
+      }
+    }
+
+    calculateTimeLeft()
+    const timer = setInterval(calculateTimeLeft, 1000)
+
+    return () => clearInterval(timer)
+  }, [targetDate])
+
+  if (isExpired) {
+    return (
+      <div className="text-center">
+        <span className="text-green-500 font-black text-lg tracking-widest">¡DISPONIBLE!</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="w-full text-center">
+      <div className="flex items-center justify-center gap-2 mb-2 text-white/60 text-[10px] font-bold uppercase tracking-[0.2em]">
+        <Clock className="w-3 h-3" /> Lanzamiento en
+      </div>
+      <div className="grid grid-cols-4 gap-1">
+        {[
+          { label: 'DÍAS', value: timeLeft.days },
+          { label: 'HRS', value: timeLeft.hours },
+          { label: 'MIN', value: timeLeft.minutes },
+          { label: 'SEG', value: timeLeft.seconds }
+        ].map((item, i) => (
+          <div key={i} className="flex flex-col items-center bg-white/5 rounded-lg p-1.5 border border-white/5">
+            <span className="text-lg md:text-xl font-black text-white leading-none">
+              {String(item.value).padStart(2, '0')}
+            </span>
+            <span className="text-[8px] font-bold text-white/40 mt-1">{item.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 interface Etiqueta {
   id: string
@@ -33,7 +88,6 @@ function ProductCard({ producto }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem)
   const [showModal, setShowModal] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
-  const [isTimeReached, setIsTimeReached] = useState(false)
 
   // Verificar si está guardado en localStorage al montar
   React.useEffect(() => {
@@ -64,24 +118,9 @@ function ProductCard({ producto }: ProductCardProps) {
     window.dispatchEvent(new Event('savedProductsUpdated'))
   }
 
-  const marcadoProximo = !!((producto as any).proximamente || (producto as any).proximo_lanzamiento)
-  const fechaLanzamientoRaw = (producto as any).fecha_lanzamiento as string | undefined | null
-  const ahora = new Date()
-  const fechaLanzamiento = fechaLanzamientoRaw ? new Date(fechaLanzamientoRaw) : null
-  const isFutureLaunch = !!(fechaLanzamiento && fechaLanzamiento.getTime() > ahora.getTime() && !isTimeReached)
-  const isProximoLanzamiento = marcadoProximo && isFutureLaunch
-  const desbloqueadoDesdeRaw = (producto as any).desbloqueado_desde as string | undefined | null
-  const fallbackDesbloqueadoDesde = !desbloqueadoDesdeRaw && fechaLanzamiento && !isFutureLaunch ? fechaLanzamiento : null
-  const desbloqueadoDesde = desbloqueadoDesdeRaw ? new Date(desbloqueadoDesdeRaw) : fallbackDesbloqueadoDesde
-  const MILISEGUNDOS_DIA = 24 * 60 * 60 * 1000
-  const diasDesbloqueado = 7
-
-  const isRecienDesbloqueado =
-    marcadoProximo &&
-    !isProximoLanzamiento &&
-    !!desbloqueadoDesde &&
-    ahora.getTime() - desbloqueadoDesde.getTime() <= MILISEGUNDOS_DIA * diasDesbloqueado
-
+  // Verificar si es próximo lanzamiento
+  const isProximoLanzamiento = (producto as any).proximo_lanzamiento || (producto as any).proximamente || false
+  
   // Verificar si es producto TOP
   const isTopProduct = (producto as any).isTopProduct || false
 
@@ -92,13 +131,13 @@ function ProductCard({ producto }: ProductCardProps) {
   // Obtener talles únicos disponibles
   const availableSizes = useMemo(() => {
     if (!hasVariants) return []
-    return Array.from(new Set(variantes.filter((v: any) => (v?.stock || 0) > 0).map((v: any) => v.talle))).filter(Boolean)
+    return Array.from(new Set(variantes.map(v => v.talle))).filter(Boolean)
   }, [variantes, hasVariants])
 
   // Obtener todos los colores únicos
   const allColors = useMemo(() => {
     if (!hasVariants) return []
-    return Array.from(new Set(variantes.filter((v: any) => (v?.stock || 0) > 0).map((v: any) => v.color))).filter(Boolean)
+    return Array.from(new Set(variantes.map(v => v.color))).filter(Boolean)
   }, [variantes, hasVariants])
 
 
@@ -227,10 +266,7 @@ function ProductCard({ producto }: ProductCardProps) {
     <div className="flex flex-col flex-grow items-center justify-center p-4">
        {(producto as any).fecha_lanzamiento ? (
          <div className="w-full mb-3">
-           <CountdownTimer 
-             targetDate={(producto as any).fecha_lanzamiento} 
-             onExpire={() => setIsTimeReached(true)}
-           />
+           <CountdownTimer targetDate={(producto as any).fecha_lanzamiento} />
          </div>
        ) : null}
        <button 
@@ -451,6 +487,7 @@ function ProductCard({ producto }: ProductCardProps) {
         </Link>
       )}
       
+      {/* Product Info */}
       <div className="p-3 md:p-6 bg-black flex flex-col flex-grow">
         {isProximoLanzamiento ? (
           <div className="block mb-2 group/title cursor-not-allowed">
@@ -463,45 +500,15 @@ function ProductCard({ producto }: ProductCardProps) {
             </h3>
           </div>
         ) : (
-          <div className="flex flex-col mb-1.5 min-h-[3.5rem] md:min-h-[4.5rem]">
-            {isRecienDesbloqueado && (
-              <div className="mb-2">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-[9px] md:text-[10px] font-black uppercase tracking-[0.25em] text-emerald-300">
-                  ¡DESBLOQUEADO!
-                </span>
-              </div>
-            )}
-            <div className="flex items-center gap-1.5 mb-2">
-              <div className="flex items-center gap-1">
-                {(Number(producto.avg_rating) || 0) > 0 ? (
-                  <span className="text-[10px] font-black text-white/60">{(Number(producto.avg_rating) || 0).toFixed(1)}</span>
-                ) : (
-                  <span className="text-[10px] font-black text-white/20">0.0</span>
-                )}
-                <div className="flex text-yellow-500">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star 
-                      key={star} 
-                      className={`w-2.5 h-2.5 ${star <= Math.round(producto.avg_rating || 0) ? 'fill-current' : 'text-white/10'}`} 
-                    />
-                  ))}
-                </div>
-              </div>
-              {producto.review_count && producto.review_count > 0 ? (
-                <span className="text-[9px] font-bold text-white/40 uppercase tracking-tighter">({producto.review_count})</span>
-              ) : null}
-            </div>
-
-            <Link href={productHref} className="block group/title">
-              <h3 className={`font-bold text-white transition-colors group-hover/title:text-accent leading-tight break-words line-clamp-2 ${
-                producto.nombre.length > 25 
-                  ? 'text-[13px] md:text-base' 
-                  : 'text-[14px] md:text-lg'
-              }`}>
-                {producto.nombre}
-              </h3>
-            </Link>
-          </div>
+          <Link href={productHref} className="block mb-2 group/title">
+            <h3 className={`font-bold text-white transition-colors group-hover/title:text-accent leading-tight break-words line-clamp-2 min-h-[2.5rem] md:min-h-[3.5rem] ${
+              producto.nombre.length > 25 
+                ? 'text-[13px] md:text-base' 
+                : 'text-[14px] md:text-lg'
+            }`}>
+              {producto.nombre}
+            </h3>
+          </Link>
         )}
         
         <div className="mt-auto">

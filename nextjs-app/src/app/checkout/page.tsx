@@ -28,7 +28,7 @@ export default function CheckoutPage() {
   const router = useRouter()
   const { items, total, coupon, getDiscount } = useCartStore()
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('shipping')
-  const [shippingCost, setShippingCost] = useState(-1)
+  const [shippingCost, setShippingCost] = useState(0)
   const [calculatingShipping, setCalculatingShipping] = useState(false)
   const [config, setConfig] = useState<any>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -152,8 +152,7 @@ export default function CheckoutPage() {
     const toastId = toast.loading('Guardando datos de entrega...')
 
     try {
-      const finalShippingCost = shippingCost === -1 ? 0 : shippingCost
-      const finalTotal = total() - getDiscount() + finalShippingCost
+      const finalTotal = total() - getDiscount() + shippingCost
       const direccionCompleta = deliveryMethod === 'shipping' 
         ? `${formData.direccion} ${formData.numero}, ${formData.ciudad}`
         : 'Retiro en Local'
@@ -161,7 +160,7 @@ export default function CheckoutPage() {
       localStorage.setItem('deliveryData', JSON.stringify({
         formData, 
         deliveryMethod, 
-        shippingCost: finalShippingCost, 
+        shippingCost, 
         shippingOption, 
         finalTotal,
         direccion_envio: direccionCompleta
@@ -393,15 +392,13 @@ export default function CheckoutPage() {
                     <span className="text-green-600">
                       {calculatingShipping
                         ? '...'
-                        : shippingCost === -1
+                        : shippingCost === 0
                           ? 'CALCULANDO COSTO'
-                          : shippingCost === 0
-                            ? 'GRATIS'
-                            : (
-                              <>$<span suppressHydrationWarning>
-                                { formatPrice(shippingCost) }
-                              </span></>
-                            )}
+                          : (
+                            <>$<span suppressHydrationWarning>
+                              { formatPrice(shippingCost) }
+                            </span></>
+                          )}
                     </span>
                   </div>
                   <div className="flex justify-between items-end pt-1">

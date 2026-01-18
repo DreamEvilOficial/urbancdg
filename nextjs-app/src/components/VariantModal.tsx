@@ -20,15 +20,15 @@ export default function VariantModal({ isOpen, onClose, onConfirm, variantes, pr
   const [selectedSize, setSelectedSize] = useState<string>('')
   const [selectedColor, setSelectedColor] = useState<string>('')
 
-  // Get unique sizes with stock disponible
+  // Get unique sizes
   const availableSizes = useMemo(() => 
-    Array.from(new Set(variantes.filter(v => v.stock > 0).map(v => v.talle))).filter(Boolean)
+    Array.from(new Set(variantes.map(v => v.talle))).filter(Boolean)
   , [variantes])
 
-  // Get colors available for the selected size OR all colors con stock si no hay talle seleccionado
+  // Get colors available for the selected size OR all colors if no size selected (to show them disabled or just for reference)
   const colorsForSize = useMemo(() => {
     if (!selectedSize) {
-      return Array.from(new Set(variantes.filter(v => v.stock > 0).map(v => v.color))).filter(Boolean)
+      return Array.from(new Set(variantes.map(v => v.color))).filter(Boolean)
     }
     return variantes
       .filter(v => v.talle === selectedSize && v.stock > 0)
@@ -36,7 +36,7 @@ export default function VariantModal({ isOpen, onClose, onConfirm, variantes, pr
   }, [selectedSize, variantes])
 
   const allAvailableColors = useMemo(() => 
-    Array.from(new Set(variantes.filter(v => v.stock > 0).map(v => v.color))).filter(Boolean)
+    Array.from(new Set(variantes.map(v => v.color))).filter(Boolean)
   , [variantes])
 
   // Bloquear scroll quando el modal está abierto

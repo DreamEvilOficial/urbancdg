@@ -68,12 +68,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
         proveedor_nombre: producto.proveedor_nombre || '',
         proveedor_contacto: producto.proveedor_contacto || '',
         precio_costo: formatPrice(producto.precio_costo),
-        fecha_lanzamiento: producto.fecha_lanzamiento ? (() => {
-          const date = new Date(producto.fecha_lanzamiento);
-          const offset = date.getTimezoneOffset() * 60000;
-          const localDate = new Date(date.getTime() - offset);
-          return localDate.toISOString().slice(0, 16);
-        })() : ''
+        fecha_lanzamiento: producto.fecha_lanzamiento ? new Date(producto.fecha_lanzamiento).toISOString().slice(0, 16) : ''
       })
     }
   }, [producto])
@@ -133,17 +128,11 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
     setLoading(true)
 
     // Validaciones de descuento
-    const precioNumero = toNumber(formData.precio)
-    if (!formData.precio || !precioNumero || precioNumero <= 0) {
-      toast.error('Ingresa un precio válido utilizando solo números y puntos para miles')
-      setLoading(false)
-      return
-    }
-
     if (formData.descuento_activo) {
+      const precio = toNumber(formData.precio)
       const precioOriginal = toNumber(formData.precio_original)
       
-      if (!precioOriginal || precioOriginal <= precioNumero) {
+      if (!precioOriginal || precioOriginal <= precio) {
         toast.error('El precio original debe ser mayor al precio final cuando hay un descuento activo')
         setLoading(false)
         return
@@ -154,10 +143,9 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
       // Convertir precios a formato numérico limpio antes de guardar
       const dataToSave = {
         ...formData,
-        precio: precioNumero,
+        precio: toNumber(formData.precio),
         precio_original: toNumber(formData.precio_original),
-        precio_costo: toNumber(formData.precio_costo),
-        fecha_lanzamiento: formData.fecha_lanzamiento ? new Date(formData.fecha_lanzamiento).toISOString() : null
+        precio_costo: toNumber(formData.precio_costo)
       }
       await onSave(dataToSave)
     } catch (error: any) {
@@ -285,18 +273,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                       <input 
                         type="text"
                         value={formData.precio}
-                        onChange={e => {
-                          const raw = e.target.value
-                          // Permitir solo números, puntos y comas
-                          const sanitized = raw.replace(/[^0-9.,]/g, '')
-                          setFormData({...formData, precio: sanitized})
-                        }}
-                        onBlur={() => {
-                          setFormData(prev => ({
-                            ...prev,
-                            precio: formatPrice(prev.precio)
-                          }))
-                        }}
+                        onChange={e => setFormData({...formData, precio: e.target.value})}
                         className="w-full bg-[#111] border border-white/5 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold placeholder:text-white/20 focus:bg-black focus:border-white text-white transition-all outline-none"
                         placeholder="0"
                         required={!formData.descuento_activo}
@@ -339,17 +316,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                     <input 
                       type="text"
                       value={formData.precio_costo}
-                      onChange={e => {
-                        const raw = e.target.value
-                        const sanitized = raw.replace(/[^0-9.,]/g, '')
-                        setFormData({...formData, precio_costo: sanitized})
-                      }}
-                      onBlur={() => {
-                        setFormData(prev => ({
-                          ...prev,
-                          precio_costo: formatPrice(prev.precio_costo)
-                        }))
-                      }}
+                      onChange={e => setFormData({...formData, precio_costo: e.target.value})}
                       className="w-full bg-[#111] border border-white/5 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold placeholder:text-white/20 focus:bg-black focus:border-white text-white transition-all outline-none"
                       placeholder="0"
                     />
@@ -444,7 +411,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                  )}
 
                  {formData.descuento_activo && (
-                 <div className="pt-4 mt-4 border-t border-white/5 animate-in fade-in slide-in-from-top-2">
+                   <div className="pt-4 mt-4 border-t border-white/5 animate-in fade-in slide-in-from-top-2">
                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                           <label className="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 px-1">Precio Original</label>
@@ -453,17 +420,7 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                             <input 
                               type="text"
                               value={formData.precio_original}
-                              onChange={e => {
-                                const raw = e.target.value
-                                const sanitized = raw.replace(/[^0-9.,]/g, '')
-                                setFormData({...formData, precio_original: sanitized})
-                              }}
-                              onBlur={() => {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  precio_original: formatPrice(prev.precio_original)
-                                }))
-                              }}
+                              onChange={e => setFormData({...formData, precio_original: e.target.value})}
                               className="w-full bg-black border border-white/10 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold text-white/70 focus:border-white transition-all outline-none"
                               placeholder="0"
                               required={formData.descuento_activo}

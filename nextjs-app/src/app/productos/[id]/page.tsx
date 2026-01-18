@@ -8,7 +8,6 @@ import { ShoppingBag, ChevronLeft, ChevronRight, Minus, Plus, ShieldCheck, Credi
 import Image from 'next/image'
 import toast from 'react-hot-toast'
 import ProductCard from '@/components/ProductCard'
-import CountdownTimer from '@/components/CountdownTimer'
 import dynamic from 'next/dynamic'
 import { formatPrice } from '@/lib/formatters'
 
@@ -34,27 +33,8 @@ export default function ProductDetailPage() {
   const [isImageLoading, setIsImageLoading] = useState(true)
   const [notified, setNotified] = useState(false)
   const [email, setEmail] = useState('')
-  const [isTimeReached, setIsTimeReached] = useState(false)
   
   const addItem = useCartStore((state) => state.addItem)
-
-  const marcadoProximo = !!(producto && ((producto as any).proximamente || (producto as any).proximo_lanzamiento))
-  const fechaLanzamientoRaw = producto ? ((producto as any).fecha_lanzamiento as string | undefined | null) : null
-  const ahora = new Date()
-  const fechaLanzamiento = fechaLanzamientoRaw ? new Date(fechaLanzamientoRaw) : null
-  const isFutureLaunch = !!(fechaLanzamiento && fechaLanzamiento.getTime() > ahora.getTime() && !isTimeReached)
-  const isProximoLanzamiento = marcadoProximo && isFutureLaunch
-  const desbloqueadoDesdeRaw = producto ? ((producto as any).desbloqueado_desde as string | undefined | null) : null
-  const fallbackDesbloqueadoDesde = !desbloqueadoDesdeRaw && fechaLanzamiento && !isFutureLaunch ? fechaLanzamiento : null
-  const desbloqueadoDesde = desbloqueadoDesdeRaw ? new Date(desbloqueadoDesdeRaw) : fallbackDesbloqueadoDesde
-  const MILISEGUNDOS_DIA = 24 * 60 * 60 * 1000
-  const diasDesbloqueado = 7
-  const isRecienDesbloqueado =
-    !!producto &&
-    !isProximoLanzamiento &&
-    !!desbloqueadoDesde &&
-    ahora.getTime() - desbloqueadoDesde.getTime() <= MILISEGUNDOS_DIA * diasDesbloqueado
-  const isRecienDesbloqueadoDetalle = isRecienDesbloqueado
 
   const cargarProducto = useCallback(async () => {
     try {
@@ -162,10 +142,10 @@ export default function ProductDetailPage() {
     
     const uniqueColors = new Map()
     filtered.forEach(v => {
-      if (v.color && v.stock > 0 && !uniqueColors.has(v.color)) {
+      if (v.color && !uniqueColors.has(v.color)) {
         uniqueColors.set(v.color, {
           hex: v.color,
-          name: v.color_nombre || v.color,
+          name: v.color_nombre || v.color, // Fallback a hex si no hay nombre
           stock: v.stock
         })
       }
@@ -229,11 +209,13 @@ export default function ProductDetailPage() {
     precioTransferencia: producto ? Math.round(producto.precio * 0.9) : 0,
     precioCuotas: producto ? Math.round(producto.precio / 6) : 0
   }), [producto?.precio])
-  
-  const discountPercent = producto ? (producto.descuento_porcentaje || (producto.precio_original && producto.precio_original > producto.precio ? Math.round(((producto.precio_original - producto.precio) / producto.precio_original) * 100) : 0)) : 0
 
+  const discountPercent = producto ? (producto.descuento_porcentaje || (producto.precio_original && producto.precio_original > producto.precio ? Math.round(((producto.precio_original - producto.precio) / producto.precio_original) * 100) : 0)) : 0
+  
   if (loading) return <div className="min-h-screen bg-transparent flex items-center justify-center"><div className="w-8 h-8 border-2 border-white/10 border-t-white rounded-full animate-spin" /></div>
   if (!producto) return <div className="min-h-screen bg-transparent flex items-center justify-center text-xs font-black uppercase tracking-widest text-white/60">Producto no hallado</div>
+
+  const isProximoLanzamiento = (producto as any).proximo_lanzamiento || (producto as any).proximamente
 
   return (
     <div className="min-h-screen bg-transparent text-white selection:bg-white selection:text-black pb-20 overflow-x-hidden relative z-10">
@@ -283,17 +265,11 @@ export default function ProductDetailPage() {
             )}
           </div>
 
+          {/* Details Section - Compacted and Shrunken by 20% */}
           <div className="lg:col-span-5 lg:col-offset-1 space-y-6">
             <div className="space-y-2">
               <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase italic leading-none">{producto.nombre}</h1>
               <p className="text-white/45 text-[10px] font-bold uppercase tracking-widest">REF: {producto.slug?.toUpperCase()}</p>
-              {isRecienDesbloqueado && (
-                <div className="pt-1">
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-[9px] md:text-[10px] font-black uppercase tracking-[0.25em] text-emerald-300">
-                    ¡DESBLOQUEADO!
-                  </span>
-                </div>
-              )}
             </div>
 
             {/* Compact Price Panel */}
@@ -345,15 +321,11 @@ export default function ProductDetailPage() {
                </div>
             </section>
 
+            {/* Compact Selection Area */}
             <div className="space-y-6 bg-white/[0.03] border border-white/10 p-6 rounded-[35px] scale-[0.9] origin-top backdrop-blur-xl relative overflow-hidden">
+              
             {isProximoLanzamiento ? (
                 <div className="py-8 text-center space-y-6">
-                  {producto.fecha_lanzamiento && (
-                    <CountdownTimer 
-                      targetDate={producto.fecha_lanzamiento} 
-                      onExpire={() => setIsTimeReached(true)}
-                    />
-                  )}
                   <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10">
                     <Bell className="w-8 h-8 text-white/40" />
                   </div>
@@ -388,13 +360,6 @@ export default function ProductDetailPage() {
                 </div>
               ) : (
                 <>
-              {isRecienDesbloqueadoDetalle && (
-                <div className="mb-3">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/40 text-[10px] font-black uppercase tracking-[0.25em] text-emerald-300">
-                    Producto recién desbloqueado
-                  </span>
-                </div>
-              )}
               {availableSizes.length > 0 && (
                 <div className="space-y-3">
                   <label className="text-[9px] font-black text-white/55 uppercase tracking-[0.2em]">Talle Disponible</label>

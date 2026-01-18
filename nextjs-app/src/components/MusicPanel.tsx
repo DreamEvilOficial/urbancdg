@@ -37,15 +37,6 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
   const [shouldLoad, setShouldLoad] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    try {
-      if (typeof window === 'undefined') return
-      const saved = localStorage.getItem('music_autoplay_enabled')
-      if (saved === 'true') setIsPlaying(true)
-      else if (saved === 'false') setIsPlaying(false)
-    } catch {}
-  }, [])
-
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       containerRef.current?.requestFullscreen().catch(err => {
@@ -93,13 +84,12 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
   }, [tracks, currentIndex, initialized])
 
   useEffect(() => {
-    if (!initialized || !iframeRef.current) return
-    const func = isPlaying ? 'playVideo' : 'pauseVideo'
-    iframeRef.current.contentWindow?.postMessage(
-      JSON.stringify({ event: 'command', func, args: [] }),
+    if (!initialized) return
+    iframeRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
       '*',
     )
-  }, [initialized, isPlaying, currentIndex])
+  }, [initialized])
 
   useEffect(() => {
     if (!iframeRef.current) return
@@ -131,9 +121,6 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
 
   function play() {
     setIsPlaying(true)
-    try {
-      if (typeof window !== 'undefined') localStorage.setItem('music_autoplay_enabled', 'true')
-    } catch {}
     iframeRef.current?.contentWindow?.postMessage(
       JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
       '*',
@@ -141,9 +128,6 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
   }
   function pause() {
     setIsPlaying(false)
-    try {
-      if (typeof window !== 'undefined') localStorage.setItem('music_autoplay_enabled', 'false')
-    } catch {}
     iframeRef.current?.contentWindow?.postMessage(
       JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }),
       '*',
@@ -171,7 +155,7 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
 
   const currentId = getYouTubeId(tracks[currentIndex]?.url || '')
   const src = shouldLoad && currentId
-    ? `https://www.youtube.com/embed/${currentId}?autoplay=${isPlaying ? 1 : 0}&enablejsapi=1&playsinline=1&origin=${encodeURIComponent(
+    ? `https://www.youtube.com/embed/${currentId}?autoplay=1&enablejsapi=1&playsinline=1&origin=${encodeURIComponent(
         typeof window !== 'undefined' ? window.location.origin : '',
       )}`
     : ''

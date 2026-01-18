@@ -331,21 +331,23 @@ CREATE TRIGGER update_variantes_updated_at BEFORE UPDATE ON variantes
 CREATE TRIGGER update_ordenes_updated_at BEFORE UPDATE ON ordenes
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Función para generar número de orden
 CREATE OR REPLACE FUNCTION generate_numero_orden()
 RETURNS TRIGGER AS $$
+DECLARE
+    v_seq BIGINT;
+    v_num INTEGER;
 BEGIN
     IF NEW.numero_orden IS NULL THEN
-        NEW.numero_orden := 'ORD-' || TO_CHAR(NOW(), 'YYYYMMDD') || '-' || LPAD(nextval('orden_seq')::TEXT, 5, '0');
+        v_seq := nextval('orden_seq');
+        v_num := ((v_seq - 1) % 100000) + 1;
+        NEW.numero_orden := 'orden-' || LPAD(v_num::TEXT, 5, '0');
     END IF;
     RETURN NEW;
 END;
 $$ language 'plpgsql';
 
--- Secuencia para números de orden
-CREATE SEQUENCE orden_seq START 1;
+CREATE SEQUENCE IF NOT EXISTS orden_seq START 1;
 
--- Trigger para generar número de orden
 CREATE TRIGGER generate_orden_numero BEFORE INSERT ON ordenes
     FOR EACH ROW EXECUTE FUNCTION generate_numero_orden();
 

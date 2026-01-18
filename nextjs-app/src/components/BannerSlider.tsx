@@ -2,44 +2,29 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import Image from "next/image";
 import { sanitizeURL } from "@/lib/security";
 
 type BannerItem = { url: string; link?: string };
 
-export default function BannerSlider({ initialConfig }: { initialConfig?: any }) {
-  const getInitialBanners = () => {
-    let parsed: BannerItem[] = [];
-    const raw = initialConfig?.banner_urls;
-    if (Array.isArray(raw)) parsed = raw;
-    else if (typeof raw === "string") {
-      try {
-        const arr = JSON.parse(raw);
-        if (Array.isArray(arr)) parsed = arr;
-      } catch {}
-    }
+interface BannerSliderProps {
+  initialConfig?: Record<string, any>;
+}
 
-    if (parsed.length === 0) {
-      const hero = typeof initialConfig?.hero_banner_url === "string" ? initialConfig.hero_banner_url : "";
-      return hero
-        ? [{ url: hero, link: "/productos" }]
-        : [
-            {
-              url: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&h=900&fit=crop",
-              link: "/productos",
-            },
-          ];
-    }
-    return parsed.filter((b) => b && typeof b.url === "string" && b.url.trim().length);
-  };
+export default function BannerSlider({ initialConfig }: BannerSliderProps) {
 
-  const [banners, setBanners] = useState<BannerItem[]>(getInitialBanners());
+  const [banners, setBanners] = useState<BannerItem[]>([]);
   const [current, setCurrent] = useState(0);
-  const [loading, setLoading] = useState(!initialConfig);
-  const [intervalo, setIntervalo] = useState(Number(initialConfig?.slider_velocidad) || 4000);
+  const [loading, setLoading] = useState(true);
+  const [intervalo, setIntervalo] = useState(5000);
   const [tienda, setTienda] = useState({
-    nombre: initialConfig?.nombre_tienda || "URBAN",
-    lema: initialConfig?.lema_tienda || initialConfig?.subtitulo_lema || "Streetwear — drops — fits",
+    nombre:
+      (initialConfig as any)?.nombre_tienda ||
+      (initialConfig as any)?.tienda_nombre ||
+      "URBAN",
+    lema:
+      (initialConfig as any)?.lema_tienda ||
+      (initialConfig as any)?.tienda_lema ||
+      "Streetwear — drops — fits",
   });
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
   const hoverRef = useRef(false);
@@ -56,18 +41,12 @@ export default function BannerSlider({ initialConfig }: { initialConfig?: any })
       const res = await fetch("/api/config");
       const data = await res.json();
 
-      setTienda((prev) => {
-        const next = {
-          nombre: data.nombre_tienda || "URBAN",
-          lema: data.lema_tienda || data.subtitulo_lema || "Streetwear — drops — fits",
-        };
-        return JSON.stringify(prev) === JSON.stringify(next) ? prev : next;
+      setTienda({
+        nombre: data.nombre_tienda || "URBAN",
+        lema: data.lema_tienda || "Streetwear — drops — fits",
       });
 
-      if (data.slider_velocidad) {
-        const nextInt = Number(data.slider_velocidad);
-        setIntervalo((prev) => (prev === nextInt ? prev : nextInt));
-      }
+      if (data.slider_velocidad) setIntervalo(Number(data.slider_velocidad));
 
       let parsed: BannerItem[] = [];
       const raw = data.banner_urls;
@@ -79,30 +58,33 @@ export default function BannerSlider({ initialConfig }: { initialConfig?: any })
         } catch {}
       }
 
-      let nextBanners: BannerItem[] = [];
       if (parsed.length === 0) {
         const hero =
           typeof data.hero_banner_url === "string" ? data.hero_banner_url : "";
-        nextBanners = hero
-          ? [{ url: hero, link: "/productos" }]
-          : [
-              {
-                url: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&h=900&fit=crop",
-                link: "/productos",
-              },
-            ];
+        setBanners(
+          hero
+            ? [{ url: hero, link: "/productos" }]
+            : [
+                {
+                  url: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&h=900&fit=crop",
+                  link: "/productos",
+                },
+              ]
+        );
       } else {
-        nextBanners = parsed.filter(
-          (b) => b && typeof b.url === "string" && b.url.trim().length
+        setBanners(
+          parsed.filter(
+            (b) => b && typeof b.url === "string" && b.url.trim().length
+          )
         );
       }
-
-      setBanners((prev) => {
-        return JSON.stringify(prev) === JSON.stringify(nextBanners) ? prev : nextBanners;
-      });
-
-    } catch (e) {
-      console.error('Error loading banner config:', e);
+    } catch {
+      setBanners([
+        {
+          url: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&h=900&fit=crop",
+          link: "/productos",
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -131,10 +113,6 @@ export default function BannerSlider({ initialConfig }: { initialConfig?: any })
   useEffect(() => {
     if (current >= banners.length && banners.length > 0) setCurrent(0);
   }, [banners.length]);
-
-  const isVideo = (url: string) => {
-    return url?.toLowerCase().match(/\.(mp4|webm|mov)$/);
-  };
 
   if (loading)
     return (
@@ -176,31 +154,21 @@ export default function BannerSlider({ initialConfig }: { initialConfig?: any })
             typeof raw === "string" && raw.startsWith("/")
               ? raw
               : sanitizeURL(raw);
-          const isVid = isVideo(b.url);
-
           return (
             <div
               key={i}
               className={`absolute inset-0 transition-opacity duration-700`}
               style={{ opacity: current === i ? 1 : 0 }}
             >
-              {isVid ? (
-                <video
-                  src={b.url}
-                  className="w-full h-full object-cover"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                />
-              ) : (
-                <img
-                  src={sanitizeURL(b.url)}
-                  alt={`Banner ${i + 1}`}
-                  className="w-full h-full object-cover"
-                  draggable={false}
-                />
-              )}
+              <img
+                src={b.url}
+                alt=""
+                className="w-full h-full object-cover"
+                loading={i === 0 ? "eager" : "lazy"}
+                decoding="async"
+                fetchPriority={i === 0 ? "high" : "auto"}
+                draggable={false}
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/50" />
               {safeLink && (
                 <a href={safeLink} className="absolute inset-0 z-10" />
@@ -212,8 +180,8 @@ export default function BannerSlider({ initialConfig }: { initialConfig?: any })
 
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#05060a] via-[#05060a]/80 to-transparent z-10 pointer-events-none" />
 
-      <div className="relative z-20 h-full max-w-[1400px] mx-auto pl-20 md:pl-32 pr-6 md:pr-10 flex items-center">
-        <div className="w-full md:w-[60%] space-y-4 relative z-[40]">
+      <div className="relative z-20 h-full max-w-[1400px] mx-auto px-6 md:px-10 flex items-center">
+        <div className="w-full md:w-[60%] space-y-4">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2">
             <span className="h-2 w-2 rounded-full bg-accent2 shadow-[0_0_18px_rgba(0,229,255,0.45)]" />
             <span className="text-[10px] font-black uppercase tracking-[0.35em] text-white/70">
@@ -221,7 +189,7 @@ export default function BannerSlider({ initialConfig }: { initialConfig?: any })
             </span>
           </div>
 
-          <div className="space-y-2 relative z-[40]">
+          <div className="space-y-2">
             <div className="font-display text-white text-5xl md:text-7xl tracking-[0.06em] uppercase leading-none">
               {tienda.nombre}
             </div>
@@ -236,17 +204,17 @@ export default function BannerSlider({ initialConfig }: { initialConfig?: any })
         <>
           <button
             onClick={prev}
-            className="absolute left-4 top-1/2 -translate-y-1/2 p-4 bg-black/25 hover:bg-black/50 text-white rounded-full backdrop-blur-md z-20"
+            className="absolute left-4 top-1/2 -translate-y-1/2 p-4 bg-black/25 hover:bg-black/50 text-white rounded-full backdrop-blur-md z-30"
           >
             <ChevronLeft />
           </button>
           <button
             onClick={next}
-            className="absolute right-4 top-1/2 -translate-y-1/2 p-4 bg-black/25 hover:bg-black/50 text-white rounded-full backdrop-blur-md z-20"
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-4 bg-black/25 hover:bg-black/50 text-white rounded-full backdrop-blur-md z-30"
           >
             <ChevronRight />
           </button>
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-30">
             {banners.map((_, i) => (
               <button
                 key={i}
