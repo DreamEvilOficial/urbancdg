@@ -11,18 +11,48 @@ export async function GET(request: Request) {
     const id = searchParams.get('id');
 
     if (id) {
-        const debt = await db.get('SELECT * FROM deudas WHERE id = ?', [id]);
-        if (debt && typeof debt.historial === 'string') {
-            debt.historial = JSON.parse(debt.historial);
+        const debt: any = await db.get('SELECT * FROM deudas WHERE id = ?', [id]);
+        if (debt) {
+            const history = typeof debt.historial === 'string'
+              ? JSON.parse(debt.historial)
+              : (debt.historial || []);
+
+            const recalculatedTotal = Array.isArray(history)
+              ? history.reduce((acc: number, h: any) => {
+                  const amount = toNumber(h.monto);
+                  if (h.tipo === 'deuda') return acc + amount;
+                  if (h.tipo === 'pago') return acc - amount;
+                  return acc;
+                }, 0)
+              : toNumber(debt.total_deuda);
+
+            debt.historial = history;
+            debt.total_deuda = recalculatedTotal;
         }
         return NextResponse.json(debt);
     }
 
     const debts = await db.all('SELECT * FROM deudas ORDER BY created_at DESC');
-    const parsed = debts.map(d => ({
-        ...d,
-        historial: typeof d.historial === 'string' ? JSON.parse(d.historial) : d.historial
-    }));
+    const parsed = debts.map((d: any) => {
+        const history = typeof d.historial === 'string'
+          ? JSON.parse(d.historial)
+          : (d.historial || []);
+
+        const recalculatedTotal = Array.isArray(history)
+          ? history.reduce((acc: number, h: any) => {
+              const amount = toNumber(h.monto);
+              if (h.tipo === 'deuda') return acc + amount;
+              if (h.tipo === 'pago') return acc - amount;
+              return acc;
+            }, 0)
+          : toNumber(d.total_deuda);
+
+        return {
+          ...d,
+          historial: history,
+          total_deuda: recalculatedTotal,
+        };
+    });
 
     return NextResponse.json(parsed);
   } catch (error: any) {
