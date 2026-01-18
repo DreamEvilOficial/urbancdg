@@ -98,6 +98,8 @@ export interface Orden {
   mercadopago_payment_id?: number
   notas?: string
   items?: any[]
+  tracking_code?: string
+  total_transferencia?: number
   coupon_code?: string
   created_at: string
 }

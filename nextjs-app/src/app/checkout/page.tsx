@@ -49,6 +49,7 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState<Partial<Record<keyof CheckoutFormData, string>>>({})
   
   const [shippingOption, setShippingOption] = useState<'correo' | 'andreani'>('correo')
+  const [receiveEmails, setReceiveEmails] = useState(false)
 
   useEffect(() => {
     if (items.length === 0) router.push('/')
@@ -137,7 +138,7 @@ export default function CheckoutPage() {
 
     const nextErrors: Partial<Record<keyof CheckoutFormData, string>> = {}
     fieldsToValidate.forEach(field => {
-      const value = formData[field]
+      const value = formData[field] || ''
       const error = validateField(field, value)
       if (error) nextErrors[field] = error
     })
