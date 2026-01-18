@@ -4,6 +4,7 @@ import { sanitizeInput, sanitizeRichText } from '@/lib/security';
 import { cookies } from 'next/headers';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { toNumber } from '@/lib/formatters';
+import { sendEmail } from '@/lib/email';
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   const id = params.id;
@@ -97,18 +98,40 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
                 if (notifications && notifications.length > 0) {
                     console.log(`[NOTIFICATIONS] Sending launch emails for product ${id} to ${notifications.length} users.`);
                     
-                    // In a real implementation, we would send emails here.
-                    // For now, we simulate it and mark as notified.
-                    // Example: await sendEmail(n.email, "Product Available", "...");
+                    const productName = currentProduct.nombre;
+                    const subject = `¡Ya está disponible! ${productName} llegó a Urban`;
+                    
+                    // Basic HTML Template
+                    const html = `
+                        <div style="font-family: sans-serif; color: #111; max-width: 600px; margin: 0 auto; padding: 20px;">
+                            <h1 style="text-transform: uppercase; font-weight: 900; font-style: italic; color: #000;">¡LLEGÓ LO QUE ESPERABAS!</h1>
+                            <p>Hola,</p>
+                            <p>Te avisamos que <strong>${productName}</strong> ya está disponible para comprar en nuestra tienda online.</p>
+                            
+                            <div style="margin: 30px 0; text-align: center;">
+                                <a href="${process.env.NEXT_PUBLIC_SITE_URL}/productos/${id}" style="background: #000; color: #fff; padding: 15px 30px; text-decoration: none; font-weight: bold; text-transform: uppercase; border-radius: 8px;">
+                                    COMPRAR AHORA
+                                </a>
+                            </div>
+                            
+                            <p style="font-size: 12px; color: #666; margin-top: 30px;">
+                                Corré antes que se agote. El stock es limitado.
+                            </p>
+                        </div>
+                    `;
 
+                    let sentCount = 0;
                     for (const n of notifications) {
-                         // Mark as notified
-                         await db.run('UPDATE proximamente_notificaciones SET notificado = TRUE WHERE id = ?', [n.id]);
+                         const sent = await sendEmail(n.email, subject, html);
+                         if (sent) {
+                             await db.run('UPDATE proximamente_notificaciones SET notificado = TRUE WHERE id = ?', [n.id]);
+                             sentCount++;
+                         }
                     }
                     
                     // Log to admin_logs
                     await db.run('INSERT INTO admin_logs (action, details, target_id) VALUES (?, ?, ?)', 
-                        ['NOTIFICATIONS_SENT', `Sent ${notifications.length} emails for product launch`, id]);
+                        ['NOTIFICATIONS_SENT', `Sent ${sentCount}/${notifications.length} emails for product launch`, id]);
                 }
             } catch (err) {
                 console.error('[NOTIFICATIONS] Error processing notifications:', err);
