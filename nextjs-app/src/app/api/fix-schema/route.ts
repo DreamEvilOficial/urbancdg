@@ -222,6 +222,27 @@ export async function GET() {
         -- 10. ACTUALIZACIÓN DE STOCK PARA PRUEBAS (SOLO SI ES BAJO)
         UPDATE productos SET stock_actual = 100 WHERE stock_actual < 10;
 
+        -- 11. Asegurar tabla CUPONES
+        CREATE TABLE IF NOT EXISTS cupones (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            codigo VARCHAR(50) NOT NULL UNIQUE,
+            tipo VARCHAR(20) NOT NULL, -- 'porcentaje' | 'fijo'
+            valor NUMERIC(10,2) NOT NULL,
+            descripcion TEXT,
+            activo BOOLEAN DEFAULT TRUE,
+            minimo_compra NUMERIC(10,2),
+            max_uso_total INTEGER,
+            usos_actuales INTEGER DEFAULT 0,
+            valido_hasta TIMESTAMPTZ,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ
+        );
+
+        -- Asegurar columnas en CUPONES
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'cupones' AND column_name = 'usos_actuales') THEN
+            ALTER TABLE cupones ADD COLUMN usos_actuales INTEGER DEFAULT 0;
+        END IF;
+
       END $$;
     `;
 

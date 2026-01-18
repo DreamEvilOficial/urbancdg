@@ -61,8 +61,19 @@ function ProductosContent() {
     async function load() {
       try {
         setLoading(true)
-        // Load products
-        const resProd = await fetch('/api/products')
+        // Load products with server-side filtering optimization
+        let productsUrl = '/api/products?active=true'
+        
+        // Apply server-side filters for better performance
+        if (normalizedFilter === 'nuevos' || normalizedFilter === 'nuevos-ingresos') {
+            productsUrl += '&new=true'
+        } else if (normalizedFilter === 'proximamente') {
+            productsUrl += '&upcoming=true'
+        } else if (normalizedFilter === 'descuentos' || normalizedFilter === 'ofertas') {
+            productsUrl += '&discount=true'
+        }
+
+        const resProd = await fetch(productsUrl)
         const dataProd = await resProd.json()
         setAllProductos(dataProd || [])
 
