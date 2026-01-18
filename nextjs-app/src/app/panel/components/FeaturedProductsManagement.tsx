@@ -316,9 +316,17 @@ export default function FeaturedProductsManagement() {
                                 <Clock className="w-5 h-5" />
                             </button>
                             {(product.proximo_lanzamiento || product.proximamente) && product.fecha_lanzamiento && (
-                                <span className="text-[9px] font-mono text-blue-300 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20 whitespace-nowrap">
-                                    {new Date(product.fecha_lanzamiento).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                </span>
+                                <>
+                                    {new Date(product.fecha_lanzamiento) <= new Date() ? (
+                                        <span className="text-[9px] font-black uppercase text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded border border-green-500/20 whitespace-nowrap animate-pulse">
+                                            ¡DESBLOQUEADO!
+                                        </span>
+                                    ) : (
+                                        <span className="text-[9px] font-mono text-blue-300 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20 whitespace-nowrap">
+                                            {new Date(product.fecha_lanzamiento).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                        </span>
+                                    )}
+                                </>
                             )}
                         </div>
                         </td>

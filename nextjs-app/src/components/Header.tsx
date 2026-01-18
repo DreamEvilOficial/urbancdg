@@ -328,7 +328,7 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
                 </div>
 
                 {/* Special Filters */}
-                {filtrosEspeciales.slice(0, 3).map((filtro) => {
+                {filtrosEspeciales.filter(f => f.activo).slice(0, 6).map((filtro) => {
                   let iconElement = null
                   if (filtro.imagen_url) {
                     iconElement = (
@@ -342,14 +342,18 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
                     )
                   } else if (filtro.icono) {
                     iconElement = <span className="text-sm">{filtro.icono}</span>
-                  } else if (['descuentos', 'nuevos', 'proximamente'].includes(filtro.clave)) {
+                  } else if (['descuentos', 'nuevos', 'proximamente'].includes(filtro.clave.toLowerCase().replace('/', ''))) {
                     iconElement = <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                   }
+                  
+                  // Ensure clean URL
+                  const filterSlug = filtro.clave.startsWith('/') ? filtro.clave.substring(1) : filtro.clave
+                  
                   return (
                     <Link 
                       key={filtro.id}
-                      href={`/productos?filter=${filtro.clave}`} 
-                      className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.15em] text-white/70 hover:text-accent transition-colors"
+                      href={`/productos?filter=${filterSlug}`} 
+                      className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.15em] text-white/70 hover:text-accent transition-colors whitespace-nowrap"
                     >
                       {iconElement}
                       {filtro.nombre}

@@ -64,6 +64,18 @@ function ProductCard({ producto }: ProductCardProps) {
 
   // Verificar si es próximo lanzamiento
   const isOriginallyProximo = (producto as any).proximo_lanzamiento || (producto as any).proximamente || false
+  
+  // Calculate unlocked state initially if date has passed
+  const isTimeExpired = useMemo(() => {
+      if (!isOriginallyProximo) return false
+      const dateStr = (producto as any).fecha_lanzamiento
+      if (!dateStr) return false
+      const target = new Date(dateStr).getTime()
+      if (isNaN(target)) return false
+      return target <= Date.now()
+  }, [isOriginallyProximo, (producto as any).fecha_lanzamiento])
+
+  const [isUnlocked, setIsUnlocked] = useState(isTimeExpired)
   const isProximoLanzamiento = !isUnlocked && isOriginallyProximo
   
   // Verificar si es producto TOP

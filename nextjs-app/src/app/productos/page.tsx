@@ -141,11 +141,37 @@ function ProductosContent() {
     } else if (normalizedFilter) {
       // Check dynamic filters
       const dynamicFilter = filtrosEspeciales.find(f => f.clave.replace(/^\/+|\/+$/g, '').toLowerCase() === normalizedFilter)
+      
       if (dynamicFilter) {
-          // If it's a dynamic filter, we need to know what it filters. 
-          // For now, if the clave is not one of the hardcoded ones, we might need a way to filter.
-          // BUT, usually the user just uses the hardcoded claves.
-          // Let's assume they use 'descuentos', 'nuevos', 'proximamente' but with different display names.
+          // Parse config if needed (it should be object from API but verify)
+          let config = dynamicFilter.config
+          if (typeof config === 'string') {
+              try { config = JSON.parse(config) } catch (e) { config = null }
+          }
+
+          let filterApplied = false
+
+          if (config) {
+             if (config.contenidoTipo === 'productos' && Array.isArray(config.contenidoProductoIds) && config.contenidoProductoIds.length > 0) {
+                // Filter by specific product IDs
+                result = result.filter(p => config.contenidoProductoIds.includes(String(p.id)))
+                filterApplied = true
+             } else if (config.contenidoTipo === 'categorias' && Array.isArray(config.contenidoCategoriaIds) && config.contenidoCategoriaIds.length > 0) {
+                // Filter by categories
+                result = result.filter(p => config.contenidoCategoriaIds.includes(String(p.categoria_id)))
+                filterApplied = true
+             }
+          }
+          
+          // Si no se aplicó filtro por configuración explícita (vacío o no configurado)
+          // Intentamos inferir por palabras clave comunes
+          if (!filterApplied) {
+             if (normalizedFilter.includes('liquidacion') || normalizedFilter.includes('sale') || normalizedFilter.includes('outlet') || normalizedFilter.includes('off')) {
+                 result = result.filter(p => (p.precio_original && p.precio_original > p.precio) || p.descuento_activo)
+             } else if (normalizedFilter.includes('nuevo')) {
+                 result = result.filter(p => p.nuevo_lanzamiento)
+             }
+          }
       }
     }
 

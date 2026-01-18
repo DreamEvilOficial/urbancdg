@@ -51,15 +51,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         metadata: product.metadata ? (typeof product.metadata === 'string' ? JSON.parse(product.metadata) : product.metadata) : null,
     };
     
-    // Backend Auto-Unlock Logic
-    if (parsedProduct.proximo_lanzamiento && parsedProduct.fecha_lanzamiento) {
-        const launchTime = new Date(parsedProduct.fecha_lanzamiento).getTime();
-        const now = Date.now();
-        if (launchTime <= now) {
-            parsedProduct.proximo_lanzamiento = false;
-            parsedProduct.proximamente = false;
-        }
-    }
+    // Backend Auto-Unlock Logic REMOVED
+    // We maintain the flag in DB.
 
     return NextResponse.json(parsedProduct);
   } catch (err) {
