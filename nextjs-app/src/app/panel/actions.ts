@@ -3,13 +3,7 @@
 import { revalidatePath, revalidateTag } from 'next/cache';
 import db from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
-
-/**
- * Server Actions optimizadas para el panel de administración
- * Estas acciones se ejecutan en el servidor y automáticamente revalidan el caché
- */
-
-// ===== PRODUCTOS =====
+import { toNumber } from '@/lib/formatters';
 
 export async function createProduct(formData: FormData) {
   try {
@@ -18,26 +12,26 @@ export async function createProduct(formData: FormData) {
       nombre: formData.get('nombre') as string,
       slug: formData.get('slug') as string,
       descripcion: formData.get('descripcion') as string,
-      precio: parseFloat(formData.get('precio') as string),
-      precio_original: parseFloat(formData.get('precio_original') as string),
-      descuento_porcentaje: parseFloat(formData.get('descuento_porcentaje') as string || '0'),
+      precio: toNumber(formData.get('precio') as string),
+      precio_original: toNumber(formData.get('precio_original') as string),
+      descuento_porcentaje: parseFloat((formData.get('descuento_porcentaje') as string) || '0'),
       stock_actual: parseInt(formData.get('stock_actual') as string),
-      stock_minimo: parseInt(formData.get('stock_minimo') as string || '0'),
+      stock_minimo: parseInt((formData.get('stock_minimo') as string) || '0'),
       categoria_id: formData.get('categoria_id') as string,
-      subcategoria_id: formData.get('subcategoria_id') as string || null,
+      subcategoria_id: (formData.get('subcategoria_id') as string) || null,
       imagen_url: formData.get('imagen_url') as string,
-      imagenes: JSON.parse(formData.get('imagenes') as string || '[]'),
-      variantes: JSON.parse(formData.get('variantes') as string || '[]'),
+      imagenes: JSON.parse((formData.get('imagenes') as string) || '[]'),
+      variantes: JSON.parse((formData.get('variantes') as string) || '[]'),
       activo: formData.get('activo') === 'true',
       destacado: formData.get('destacado') === 'true',
       top: formData.get('top') === 'true',
-      sku: formData.get('sku') as string || '',
-      peso: parseFloat(formData.get('peso') as string || '0'),
-      dimensiones: JSON.parse(formData.get('dimensiones') as string || '{}'),
-      proveedor_nombre: formData.get('proveedor_nombre') as string || '',
-      proveedor_contacto: formData.get('proveedor_contacto') as string || '',
-      precio_costo: parseFloat(formData.get('precio_costo') as string || '0'),
-      metadata: JSON.parse(formData.get('metadata') as string || '{}'),
+      sku: (formData.get('sku') as string) || '',
+      peso: parseFloat((formData.get('peso') as string) || '0'),
+      dimensiones: JSON.parse((formData.get('dimensiones') as string) || '{}'),
+      proveedor_nombre: (formData.get('proveedor_nombre') as string) || '',
+      proveedor_contacto: (formData.get('proveedor_contacto') as string) || '',
+      precio_costo: toNumber((formData.get('precio_costo') as string) || '0'),
+      metadata: JSON.parse((formData.get('metadata') as string) || '{}'),
     };
 
     await db.run(
@@ -75,7 +69,6 @@ export async function createProduct(formData: FormData) {
       ]
     );
 
-    // Revalidar automáticamente
     revalidatePath('/productos');
     revalidatePath('/');
     revalidateTag('products');
@@ -93,26 +86,26 @@ export async function updateProduct(id: string, formData: FormData) {
       nombre: formData.get('nombre') as string,
       slug: formData.get('slug') as string,
       descripcion: formData.get('descripcion') as string,
-      precio: parseFloat(formData.get('precio') as string),
-      precio_original: parseFloat(formData.get('precio_original') as string),
-      descuento_porcentaje: parseFloat(formData.get('descuento_porcentaje') as string || '0'),
+      precio: toNumber(formData.get('precio') as string),
+      precio_original: toNumber(formData.get('precio_original') as string),
+      descuento_porcentaje: parseFloat((formData.get('descuento_porcentaje') as string) || '0'),
       stock_actual: parseInt(formData.get('stock_actual') as string),
-      stock_minimo: parseInt(formData.get('stock_minimo') as string || '0'),
+      stock_minimo: parseInt((formData.get('stock_minimo') as string) || '0'),
       categoria_id: formData.get('categoria_id') as string,
-      subcategoria_id: formData.get('subcategoria_id') as string || null,
+      subcategoria_id: (formData.get('subcategoria_id') as string) || null,
       imagen_url: formData.get('imagen_url') as string,
-      imagenes: JSON.parse(formData.get('imagenes') as string || '[]'),
-      variantes: JSON.parse(formData.get('variantes') as string || '[]'),
+      imagenes: JSON.parse((formData.get('imagenes') as string) || '[]'),
+      variantes: JSON.parse((formData.get('variantes') as string) || '[]'),
       activo: formData.get('activo') === 'true',
       destacado: formData.get('destacado') === 'true',
       top: formData.get('top') === 'true',
-      sku: formData.get('sku') as string || '',
-      peso: parseFloat(formData.get('peso') as string || '0'),
-      dimensiones: JSON.parse(formData.get('dimensiones') as string || '{}'),
-      proveedor_nombre: formData.get('proveedor_nombre') as string || '',
-      proveedor_contacto: formData.get('proveedor_contacto') as string || '',
-      precio_costo: parseFloat(formData.get('precio_costo') as string || '0'),
-      metadata: JSON.parse(formData.get('metadata') as string || '{}'),
+      sku: (formData.get('sku') as string) || '',
+      peso: parseFloat((formData.get('peso') as string) || '0'),
+      dimensiones: JSON.parse((formData.get('dimensiones') as string) || '{}'),
+      proveedor_nombre: (formData.get('proveedor_nombre') as string) || '',
+      proveedor_contacto: (formData.get('proveedor_contacto') as string) || '',
+      precio_costo: toNumber((formData.get('precio_costo') as string) || '0'),
+      metadata: JSON.parse((formData.get('metadata') as string) || '{}'),
     };
 
     await db.run(
@@ -152,7 +145,6 @@ export async function updateProduct(id: string, formData: FormData) {
       ]
     );
 
-    // Revalidar automáticamente
     revalidatePath('/productos');
     revalidatePath(`/productos/${data.slug}`);
     revalidatePath('/');
