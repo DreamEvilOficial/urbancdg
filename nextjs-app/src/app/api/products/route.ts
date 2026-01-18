@@ -124,6 +124,18 @@ export async function GET(request: Request) {
         // Normalizar campos JSON si vienen como string (por compatibilidad)
         const normalized = products.map(p => {
             const n = normalizeProduct(p);
+            
+            // Backend Auto-Unlock Logic
+            // If the launch date has passed, we treat it as released in the API response
+            if (n.proximo_lanzamiento && n.fecha_lanzamiento) {
+                const launchTime = new Date(n.fecha_lanzamiento).getTime();
+                const now = Date.now();
+                if (launchTime <= now) {
+                    n.proximo_lanzamiento = false;
+                    n.proximamente = false;
+                }
+            }
+
             if (n && n.nombre.toUpperCase().includes('ADIDAS')) {
                 console.log(`[DEBUG ADIDAS] ID: ${n.id}, AVG: ${n.avg_rating}, COUNT: ${n.review_count}, RawAVG: ${p.avg_rating}`);
             }

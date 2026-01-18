@@ -81,7 +81,16 @@ export default function FeaturedProductsManagement() {
   function openProximoModal(product: Producto) {
     setSelectedProduct(product)
     setTempProximoActive(!!(product.proximo_lanzamiento || product.proximamente))
-    setTempDate(product.fecha_lanzamiento ? new Date(product.fecha_lanzamiento).toISOString().slice(0, 16) : '')
+    
+    if (product.fecha_lanzamiento) {
+        // Convertir UTC almacenado a hora local para el input datetime-local
+        const d = new Date(product.fecha_lanzamiento)
+        // Ajustar el offset para obtener la representación local en formato ISO
+        const localIso = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16)
+        setTempDate(localIso)
+    } else {
+        setTempDate('')
+    }
     setProximoModalOpen(true)
   }
 
@@ -99,10 +108,22 @@ export default function FeaturedProductsManagement() {
   async function handleSaveProximo() {
     if (!selectedProduct) return
     
+    // Validar fecha si está activo
+    if (tempProximoActive && !tempDate) {
+        toast.error('Debes establecer una fecha y hora')
+        return
+    }
+
+    let isoDate = null
+    if (tempDate) {
+        // Convertir la hora local del input a UTC ISO string para guardar
+        isoDate = new Date(tempDate).toISOString()
+    }
+
     const updates = {
         proximo_lanzamiento: tempProximoActive,
         proximamente: tempProximoActive,
-        fecha_lanzamiento: tempDate || null
+        fecha_lanzamiento: isoDate
     }
 
     try {
@@ -286,13 +307,20 @@ export default function FeaturedProductsManagement() {
                         </button>
                         </td>
                         <td className="p-4 text-center">
-                        <button 
-                            onClick={() => openProximoModal(product)} 
-                            className={`p-3 rounded-lg transition-all active:scale-95 ${product.proximo_lanzamiento || product.proximamente ? 'bg-blue-500/20 text-blue-400 shadow-[0_0_15px_-5px_rgba(96,165,250,0.5)]' : 'text-white/20 hover:text-white/50 hover:bg-white/5'}`}
-                            title="Gestionar Próximamente"
-                        >
-                            <Clock className="w-5 h-5" />
-                        </button>
+                        <div className="flex flex-col items-center gap-1">
+                            <button 
+                                onClick={() => openProximoModal(product)} 
+                                className={`p-3 rounded-lg transition-all active:scale-95 ${product.proximo_lanzamiento || product.proximamente ? 'bg-blue-500/20 text-blue-400 shadow-[0_0_15px_-5px_rgba(96,165,250,0.5)]' : 'text-white/20 hover:text-white/50 hover:bg-white/5'}`}
+                                title="Gestionar Próximamente"
+                            >
+                                <Clock className="w-5 h-5" />
+                            </button>
+                            {(product.proximo_lanzamiento || product.proximamente) && product.fecha_lanzamiento && (
+                                <span className="text-[9px] font-mono text-blue-300 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20 whitespace-nowrap">
+                                    {new Date(product.fecha_lanzamiento).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                </span>
+                            )}
+                        </div>
                         </td>
                     </tr>
                 )})}
