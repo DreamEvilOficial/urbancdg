@@ -31,7 +31,6 @@ function ProductCard({ producto }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem)
   const [showModal, setShowModal] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
-  const [isUnlocked, setIsUnlocked] = useState(false)
 
   // Verificar si está guardado en localStorage al montar
   React.useEffect(() => {
