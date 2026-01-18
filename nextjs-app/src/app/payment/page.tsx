@@ -13,7 +13,7 @@ type PaymentMethod = 'mercadopago' | 'transferencia'
 
 export default function PaymentPage() {
   const router = useRouter()
-  const { items, total } = useCartStore()
+  const { items, total, coupon } = useCartStore()
   const [deliveryData, setDeliveryData] = useState<any>(null)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mercadopago')
   const [loading, setLoading] = useState(false)

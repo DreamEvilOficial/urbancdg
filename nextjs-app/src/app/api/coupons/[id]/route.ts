@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { sanitizeInput } from '@/lib/security';
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
