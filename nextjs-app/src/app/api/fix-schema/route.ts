@@ -1,10 +1,20 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    // 1. Verificar autenticación (Refuerzo de seguridad)
+    const cookieStore = cookies();
+    const adminSession = cookieStore.get('admin-session')?.value;
+    
+    // Only allow in development OR if admin session exists
+    if (process.env.NODE_ENV === 'production' && !adminSession) {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
     // SQL consolidado del MASTER-SCHEMA para asegurar columnas críticas
     const sql = `
       DO $$

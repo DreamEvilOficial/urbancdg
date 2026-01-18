@@ -64,7 +64,8 @@ export default function PaymentPage() {
         estado: 'pendiente',
         metodo_pago: paymentMethod,
         notas: `DNI: ${deliveryData.formData.dniCuit}\nNota: ${orderNote}`,
-        items: items // Fix: Send items to API
+        items: items, // Fix: Send items to API
+        coupon_code: coupon?.codigo
       })
       
       setCreatedOrder(orden)

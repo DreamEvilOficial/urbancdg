@@ -99,12 +99,100 @@ export async function POST(req: Request) {
         const body = await req.json();
         console.log('[orders:POST] Received body:', JSON.stringify(body, null, 2));
 
-        const { items, total, subtotal, envio, descuento, notas, metodo_pago, cliente_nombre, cliente_email, cliente_telefono, direccion_envio } = body;
+        const { items, total, subtotal, envio, descuento, notas, metodo_pago, cliente_nombre, cliente_email, cliente_telefono, direccion_envio, coupon_code } = body;
 
         // 1. Validaciones básicas
         if (!items || !Array.isArray(items) || items.length === 0) {
             return NextResponse.json({ error: 'La orden debe tener al menos un producto.' }, { status: 400 });
         }
+
+        // 🔒 SEGURIDAD: Validación estricta de precios y totales en servidor
+        let calculatedSubtotal = 0;
+        const validatedItems = [];
+
+        // Fetch de todos los productos para validar precios
+        for (const item of items) {
+             const pid = item.producto_id || item.id;
+             if (!pid) continue;
+             
+             // Obtener precio real DB
+             const dbProd = await db.get('SELECT precio, activo, nombre FROM productos WHERE id = ?', [pid]);
+             if (!dbProd) throw new Error(`Producto no encontrado: ${pid}`);
+             if (!dbProd.activo) throw new Error(`Producto inactivo: ${dbProd.nombre}`);
+             
+             const qty = Number(item.cantidad) || 1;
+             const realPrice = Number(dbProd.precio);
+             
+             calculatedSubtotal += realPrice * qty;
+             validatedItems.push({ ...item, precio_unitario: realPrice });
+        }
+
+        // Validar Subtotal (permitir pequeña diferencia por redondeo)
+        if (Math.abs(calculatedSubtotal - Number(subtotal)) > 10) {
+             console.warn(`[Security] Subtotal mismatch. Client: ${subtotal}, Server: ${calculatedSubtotal}`);
+             // Rechazar si la diferencia es significativa
+             // throw new Error('Error de validación de precios: El subtotal no coincide.');
+             // Por ahora, forzar el uso del subtotal calculado por el servidor para la orden
+        }
+        
+        // Recalcular descuentos
+        let serverDiscount = 0;
+        
+        // 1. Cupón
+        if (coupon_code) {
+             const coupon = await db.get('SELECT * FROM cupones WHERE codigo = ? AND activo = true', [coupon_code]);
+             if (coupon) {
+                 // Validar expiración y usos
+                 const now = new Date();
+                 if (coupon.valido_hasta && new Date(coupon.valido_hasta) < now) {
+                     throw new Error(`El cupón ${coupon_code} ha expirado`);
+                 }
+                 if (coupon.max_uso_total && (coupon.usos_actuales || 0) >= coupon.max_uso_total) {
+                     throw new Error(`El cupón ${coupon_code} se ha agotado`);
+                 }
+
+                 if (coupon.tipo === 'porcentaje') {
+                     serverDiscount += calculatedSubtotal * (Number(coupon.valor) / 100);
+                 } else {
+                     serverDiscount += Number(coupon.valor);
+                 }
+                 
+                 // Increment usage count (should be done in transaction later)
+             }
+        }
+        
+        // 2. Descuento Transferencia (10% sobre el total con envío incluido, según lógica frontend)
+        // Frontend logic: (total - coupon + shipping) * 0.1
+        // Wait, frontend applies transfer discount on final total?
+        // PaymentPage.tsx: discountAmount = isBank ? Math.round(deliveryData?.finalTotal * 0.1) : 0
+        // deliveryData.finalTotal includes shipping.
+        // Let's replicate this policy or trust the client ONLY if it's within 10% range.
+        
+        if (metodo_pago === 'transferencia') {
+             // Calculate base for transfer discount
+             const baseForTransfer = (calculatedSubtotal - serverDiscount) + Number(envio || 0);
+             const transferDisc = baseForTransfer * 0.10;
+             serverDiscount += transferDisc;
+        }
+        
+        // Validar Total Final
+        const calculatedTotal = (calculatedSubtotal + Number(envio || 0)) - serverDiscount;
+        
+        // Verificar discrepancia grave (> $50 pesos)
+        if (Math.abs(Number(total) - calculatedTotal) > 50) {
+             console.error(`[Security] Total mismatch! Client: ${total}, Server: ${calculatedTotal}`);
+             // Si el cliente envía un total mucho menor, es un intento de hackeo.
+             // Si es mayor, podría ser error de cálculo, pero igual sospechoso.
+             if (Number(total) < calculatedTotal - 50) {
+                 return NextResponse.json({ error: 'Error de seguridad: El total no coincide con los precios vigentes.' }, { status: 400 });
+             }
+        }
+
+        // Usar valores calculados por servidor para la orden (Sanitización definitiva)
+        const finalSubtotal = calculatedSubtotal;
+        const finalTotal = Math.max(0, calculatedTotal); // No permitir negativos
+        const finalDiscount = serverDiscount;
+
 
         // Normalizar y sanitizar datos del cliente
         const nombre = sanitizeInput(cliente_nombre || '');
@@ -143,10 +231,10 @@ export async function POST(req: Request) {
                 email || null, 
                 telefono || null,
                 direccion || null,
-                subtotal || total || 0, 
-                total || 0, 
-                envio || 0, 
-                descuento || 0,
+                finalSubtotal,
+                finalTotal,
+                envio || 0,
+                finalDiscount,
                 'pendiente', 
                 metodoPagoSeguro, 
                 notasSeguras

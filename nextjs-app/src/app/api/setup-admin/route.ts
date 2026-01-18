@@ -4,8 +4,21 @@ import bcrypt from 'bcryptjs'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // Prevent running in production if admin already exists
+    // Require a special header secret or check if it's the first run
+    const { searchParams } = new URL(request.url);
+    const secret = searchParams.get('secret');
+    const expectedSecret = process.env.SETUP_SECRET || 'urban-setup-secret'; // Fallback only for dev
+
+    // If production, enforce secret
+    if (process.env.NODE_ENV === 'production') {
+        if (secret !== expectedSecret) {
+             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        }
+    }
+
     const username = 'admin'
     const password = 'Omega10'
     const hashedPassword = bcrypt.hashSync(password, 10)

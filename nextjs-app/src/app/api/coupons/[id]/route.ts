@@ -67,6 +67,14 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   try {
+    // 1. Verificar autenticación (Refuerzo de seguridad)
+    const cookieStore = cookies();
+    const adminSession = cookieStore.get('admin-session')?.value;
+    
+    if (!adminSession) {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
     const { id } = params;
     await db.run('DELETE FROM cupones WHERE id = ?', [id]);
     return NextResponse.json({ success: true });

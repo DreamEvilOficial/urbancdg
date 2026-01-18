@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { sanitizeInput } from '@/lib/security';
 import { v4 as uuidv4 } from 'uuid';
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
