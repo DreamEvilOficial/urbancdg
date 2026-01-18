@@ -30,6 +30,7 @@ export default function TransferPayment({ orderTotal, orderItems, orderId, order
   const [copied, setCopied] = useState<{ [key: string]: boolean }>({})
   const [timeLeft, setTimeLeft] = useState<string>('')
   const [expired, setExpired] = useState(false)
+  const [verifying, setVerifying] = useState(false)
 
   useEffect(() => {
     if (orderId) {
@@ -41,18 +42,56 @@ export default function TransferPayment({ orderTotal, orderItems, orderId, order
     }
   }, [orderId])
 
+  // Polling para verificar pago
+  useEffect(() => {
+    if (!orderId || expired || !transferData) return
+
+    const checkInterval = setInterval(async () => {
+      try {
+        setVerifying(true)
+        const res = await fetch('/api/transfer/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId })
+        })
+        const data = await res.json()
+
+        if (data.paid) {
+          clearInterval(checkInterval)
+          toast.success('¡Pago confirmado! Procesando tu pedido...')
+          handleFinish()
+        }
+      } catch (error) {
+        console.error('Error verificando pago:', error)
+      } finally {
+        setVerifying(false)
+      }
+    }, 3000)
+
+    return () => clearInterval(checkInterval)
+  }, [orderId, expired, transferData])
+
   useEffect(() => {
     if (!transferData?.expiration) return
 
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       const now = new Date().getTime()
       const exp = new Date(transferData.expiration).getTime()
       const diff = exp - now
 
       if (diff <= 0) {
         clearInterval(interval)
-        setExpired(true)
-        setTimeLeft('00:00')
+        if (!expired) {
+          setExpired(true)
+          setTimeLeft('00:00')
+          try {
+             await fetch('/api/transfer/cancel', {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({ orderId })
+             })
+          } catch (e) { console.error(e) }
+        }
       } else {
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
         const seconds = Math.floor((diff % (1000 * 60)) / 1000)
@@ -61,7 +100,7 @@ export default function TransferPayment({ orderTotal, orderItems, orderId, order
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [transferData])
+  }, [transferData, expired, orderId])
 
   async function initTransfer() {
     try {
@@ -200,20 +239,12 @@ export default function TransferPayment({ orderTotal, orderItems, orderId, order
               {copied['Monto'] ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-green-600/50" />}
             </div>
           </div>
-
-          <div className="space-y-3 pt-2">
-            <button
-              onClick={handleFinish}
-              className="w-full bg-white text-black py-4 rounded-xl font-black text-xs uppercase tracking-[0.2em] hover:bg-gray-200 transition-all shadow-[0_0_30px_-10px_rgba(255,255,255,0.3)]"
-            >
-              Ya realicé el pago
-            </button>
-            <button
-                onClick={onClose}
-                className="w-full text-white/30 hover:text-white py-2 font-bold text-[10px] uppercase tracking-widest transition-colors"
-            >
-                Pagar más tarde
-            </button>
+          
+          <div className="flex items-center justify-center gap-2 pt-2 opacity-50">
+             <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+               {verifying ? 'Verificando pago...' : 'Esperando transferencia...'}
+             </p>
           </div>
 
         </div>

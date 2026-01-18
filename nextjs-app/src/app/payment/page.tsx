@@ -104,26 +104,31 @@ export default function PaymentPage() {
   if (!deliveryData || items.length === 0) return null
 
   return (
-    <div className="min-h-screen bg-[#000000FA] text-white flex justify-center">
-      <div className="max-w-5xl w-full px-4 md:px-6 relative z-10 py-10 scale-[1.25] origin-top transition-transform">
-        <div className="pb-6 flex items-end justify-between">
+    <div className="min-h-screen bg-[#000000FA] text-white flex flex-col items-center">
+      <div className="fixed inset-0 pointer-events-none opacity-20">
+        <div className="absolute top-[10%] left-[5%] w-[30%] h-[30%] bg-pink-500/5 rounded-full blur-[100px]" />
+      </div>
+
+      <div className="max-w-4xl w-full px-4 md:px-6 relative z-10 flex-1 pb-10 scale-100 md:scale-[1.03] origin-top transition-transform">
+        <div className="pt-8 pb-4 flex items-end justify-between">
           <div>
-            <button onClick={() => router.back()} className="group flex items-center gap-2 text-gray-600 hover:text-white transition-all text-[10px] font-black uppercase tracking-[0.2em] mb-2">
-              <ArrowLeft className="w-3.5 h-3.5" /> Volver
+            <button onClick={() => router.back()} className="group flex items-center gap-2 text-gray-600 hover:text-white transition-colors text-[9px] font-black uppercase tracking-[0.2em] mb-2">
+              <ArrowLeft className="w-3 h-3 group-hover:-translate-x-1 transition-transform" />
+              <span>Volver</span>
             </button>
             <h1 className="text-3xl font-black tracking-tighter uppercase italic">
               Metodo <span className="text-pink-500">Pago</span>
             </h1>
           </div>
-          <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-1.5 rounded-xl">
-             <ShieldCheck className="w-4 h-4 text-green-500" />
-             <span className="text-[10px] font-black uppercase text-gray-500">Seguro</span>
+          <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl">
+             <ShieldCheck className="w-3.5 h-3.5 text-green-500" />
+             <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">Seguro</span>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <div className="lg:col-span-7 space-y-4">
-            <section className="bg-white/[0.03] border border-white/5 p-6 rounded-[30px]">
+            <section className="bg-white/[0.03] border border-white/5 p-5 rounded-[30px]">
               <div className="space-y-3">
                 {[
                   { id: 'mercadopago', title: 'MERCADO PAGO', desc: 'Tarjetas y Débito', icon: <CreditCard className="w-5 h-5" /> },
@@ -156,36 +161,36 @@ export default function PaymentPage() {
             </section>
 
             <button onClick={handlePayment} disabled={loading} className="w-full bg-white text-black py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-gray-200 transition-all flex items-center justify-center gap-3 group">
-              {loading ? '...' : ( <>FINALIZAR COMPRA <ChevronRight className="w-4 h-4 group-hover:translate-x-1" /></> )}
+              {loading ? '...' : ( <>FINALIZAR COMPRA <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" /></> )}
             </button>
           </div>
 
-          <div className="lg:col-span-5">
-            <div className="bg-white text-black p-6 rounded-[30px] shadow-2xl">
-               <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Total Final</h3>
-               <div className="space-y-2 border-t border-black/5 pt-4">
-                  <div className="flex justify-between text-[9px] font-bold opacity-40 uppercase">
+          <div className="lg:col-span-5 w-full sticky top-8">
+            <div className="bg-white text-black p-6 rounded-[32px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] border border-white/10">
+               <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6">Total Final</h3>
+               <div className="space-y-1.5 border-t border-black/5 pt-3">
+                  <div className="flex justify-between text-[10px] font-bold uppercase opacity-50">
                     <span>Subtotal</span>
                     <span>
                       ${ formatPrice(total()) }
                     </span>
                   </div>
-                  <div className="flex justify-between text-[9px] font-bold opacity-40 uppercase">
+                  <div className="flex justify-between text-[10px] font-bold uppercase opacity-40">
                     <span>Envío</span>
                     <span>
                       ${ formatPrice(deliveryData.shippingCost) }
                     </span>
                   </div>
                   {isBank && (
-                    <div className="flex justify-between text-[9px] font-black text-green-600 uppercase">
+                    <div className="flex justify-between text-[10px] font-black text-green-600 uppercase">
                       <span>10% OFF</span>
                       <span>
                         - ${ formatPrice(discountAmount) }
                       </span>
                     </div>
                   )}
-                  <div className="flex justify-between items-end pt-2 border-t border-black/5 mt-2">
-                    <span className="font-black text-sm uppercase">Total</span>
+                  <div className="flex justify-between items-end pt-1 mt-1 border-t border-black/5">
+                    <span className="font-black uppercase tracking-tighter text-[10px]">Total</span>
                     <span className="text-4xl font-black tracking-tighter leading-none">
                       ${ formatPrice(payableTotal) }
                     </span>
