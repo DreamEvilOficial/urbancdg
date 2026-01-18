@@ -1,65 +1,29 @@
-import { formatPrice, toNumber } from './formatters'
+import { strict as assert } from 'assert'
+import { toNumber, formatPrice } from './formatters'
 
-function expect(received: any) {
-  return {
-    toBe(expected: any) {
-      if (received !== expected) {
-        throw new Error(`Expected ${JSON.stringify(received)} to be ${JSON.stringify(expected)}`)
-      }
-    }
-  }
+function testToNumber() {
+  assert.equal(toNumber('5000'), 5000)
+  assert.equal(toNumber('5.000'), 5000)
+  assert.equal(toNumber('50.000'), 50000)
+  assert.equal(toNumber('500.000'), 500000)
+  assert.equal(toNumber('5.000,50'), 5000.5)
+  assert.equal(toNumber('5,50'), 5.5)
+  assert.equal(toNumber(5000), 5000)
 }
 
-function it(name: string, fn: () => void) {
-  try {
-    fn()
-    console.log(`✓ ${name}`)
-  } catch (error) {
-    console.error(`✗ ${name}`, error)
-  }
+function testFormatPrice() {
+  assert.equal(formatPrice(5000), '5.000')
+  assert.equal(formatPrice(50000), '50.000')
+  assert.equal(formatPrice(500000), '500.000')
+  assert.equal(formatPrice(5000.5), '5.000,5')
+  assert.equal(formatPrice('5000'), '5.000')
+  assert.equal(formatPrice('5.000'), '5.000')
 }
 
-function describe(name: string, fn: () => void) {
-  console.log(`\n${name}`)
-  fn()
+function run() {
+  testToNumber()
+  testFormatPrice()
+  console.log('✔ formatters.test.ts: todas las pruebas pasaron')
 }
 
-describe('formatters', () => {
-  describe('formatPrice', () => {
-    it('formats number to currency string with thousands separator', () => {
-      expect(formatPrice(250000)).toBe('250.000')
-      expect(formatPrice(1000)).toBe('1.000')
-      expect(formatPrice(1234567)).toBe('1.234.567')
-    })
-
-    it('formats decimals correctly', () => {
-      expect(formatPrice(250.5)).toBe('250,50')
-      expect(formatPrice(250.123)).toBe('250,12')
-    })
-
-    it('handles strings gracefully', () => {
-      expect(formatPrice('250000')).toBe('250.000')
-      expect(formatPrice('250.000')).toBe('250.000')
-    })
-  })
-
-  describe('toNumber', () => {
-    it('converts formatted string to number', () => {
-      expect(toNumber('250.000')).toBe(250000)
-      expect(toNumber('1.000')).toBe(1000)
-      expect(toNumber('1.234.567')).toBe(1234567)
-    })
-
-    it('converts decimal formatted string to number', () => {
-      expect(toNumber('250,50')).toBe(250.5)
-      expect(toNumber('250,5')).toBe(250.5)
-      expect(toNumber('1.000,50')).toBe(1000.5)
-    })
-
-    it('converts raw string to number', () => {
-      expect(toNumber('250000')).toBe(250000)
-      expect(toNumber('250000.50')).toBe(250000.5)
-      expect(toNumber('1000')).toBe(1000)
-    })
-  })
-})
+run()

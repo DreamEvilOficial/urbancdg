@@ -20,6 +20,7 @@
     "security-check": "npm audit",
     "security-fix": "npm audit fix",
     "type-check": "tsc --noEmit",
+    "test:formatters": "ts-node scripts/test-formatters.ts",
     "clean": "rm -rf .next node_modules",
     "reinstall": "npm run clean && npm install",
     "generate-secrets": "node scripts/generate-secrets.js",
@@ -66,6 +67,7 @@
     "tailwindcss": "3.4.0",
     "terser-webpack-plugin": "^5.3.16",
     "typescript": "5.3.3",
+    "ts-node": "^10.9.2",
     "webpack-bundle-analyzer": "^5.1.1",
     "webpack-obfuscator": "^3.6.0"
   },

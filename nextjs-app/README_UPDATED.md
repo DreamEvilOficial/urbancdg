@@ -320,6 +320,13 @@ pm2 start npm --name "tienda" -- start
 - https://observatory.mozilla.org
 - https://www.ssllabs.com/ssltest/
 
+### Manejo de precios y formato
+
+- Los precios se guardan siempre como números puros usando `toNumber`
+- La visualización usa `formatPrice` con locale `es-AR` para miles y decimales
+- El formulario de productos normaliza inputs como `5000`, `5.000` o `5.000,00` al mismo valor numérico
+- Ejecutar `npm run test:formatters` para validar conversión y formateo de precios
+
 ### Checklist Pre-Lanzamiento
 - [ ] SQL de seguridad ejecutado
 - [ ] Variables de entorno configuradas

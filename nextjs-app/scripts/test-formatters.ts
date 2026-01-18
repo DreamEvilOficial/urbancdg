@@ -1,4 +1,6 @@
-import { formatPrice, toNumber } from '../src/lib/formatters';
+// Simple Node-style test runner for formatPrice/toNumber without ESM loaders
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { formatPrice, toNumber } = require('../src/lib/formatters');
 
 const assert = (condition: boolean, message: string) => {
     if (!condition) {
