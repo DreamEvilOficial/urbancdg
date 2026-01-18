@@ -15,7 +15,20 @@ export default function CountdownTimer({ targetDate, onExpire }: { targetDate: s
   useEffect(() => {
     const calculateTimeLeft = () => {
       // Handle potential different date formats
-      const target = new Date(targetDate).getTime()
+      let dateStr = targetDate
+      // Ensure ISO format compatibility (replace space with T if needed for Safari/others)
+      if (dateStr && typeof dateStr === 'string' && dateStr.includes(' ') && !dateStr.includes('T')) {
+          dateStr = dateStr.replace(' ', 'T')
+      }
+
+      const target = new Date(dateStr).getTime()
+      
+      // Safety check for invalid dates
+      if (isNaN(target)) {
+          console.error('[CountdownTimer] Invalid date:', targetDate)
+          return // Keep locked if date is invalid
+      }
+
       const now = new Date().getTime()
       const difference = target - now
       
