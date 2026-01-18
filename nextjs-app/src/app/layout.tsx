@@ -79,9 +79,9 @@ export default function RootLayout({
         </ClientLayout>
         <DevToolsProtection />
         <Toaster 
-          position="top-right"
+          position="bottom-right"
           containerStyle={{
-            top: 80,
+            bottom: 80,
             right: 20,
             zIndex: 9999999,
           }}

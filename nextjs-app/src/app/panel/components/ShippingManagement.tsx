@@ -39,12 +39,22 @@ export default function ShippingManagement() {
         const ordersData = await ordersRes.json()
         const sendersData = await sendersRes.json()
 
-        // Filter for orders that are paid/pending but NOT shipped
-        // Assuming 'pendiente' means paid and ready to process, or 'procesando'
-        // Adjust filter based on business logic. Here: 'pendiente' and 'procesando'
-        const pendingOrders = (ordersData || []).filter((o: any) => 
-            ['pendiente', 'procesando'].includes(o.estado?.toLowerCase())
-        )
+        // Filter for orders that need shipping
+        // Must have shipping address (not pickup) or shipping cost > 0
+        // We include 'enviado' orders so users can reprint labels or manage them, but exclude cancelled/delivered
+        const pendingOrders = (ordersData || []).filter((o: any) => {
+            const isShipping = (o.direccion_envio && !o.direccion_envio.toLowerCase().includes('retiro')) || (Number(o.envio) > 0)
+            const isActive = !['cancelado', 'entregado'].includes(o.estado?.toLowerCase())
+            return isShipping && isActive
+        })
+        
+        // Sort: Non-shipped first, then by date
+        pendingOrders.sort((a: any, b: any) => {
+            const aShipped = a.estado === 'enviado' ? 1 : 0
+            const bShipped = b.estado === 'enviado' ? 1 : 0
+            if (aShipped !== bShipped) return aShipped - bShipped
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        })
 
         setOrders(pendingOrders)
         setSenders(sendersData || [])

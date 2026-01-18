@@ -21,6 +21,7 @@ type CheckoutFormData = {
   departamento: string
   barrio: string
   ciudad: string
+  provincia: string
   codigoPostal: string
   dniCuit: string
 }
@@ -44,6 +45,7 @@ export default function CheckoutPage() {
     departamento: '',
     barrio: '',
     ciudad: '',
+    provincia: '',
     codigoPostal: '',
     dniCuit: ''
   })
@@ -51,6 +53,13 @@ export default function CheckoutPage() {
   
   const [shippingOption, setShippingOption] = useState<'correo' | 'andreani'>('correo')
   const [receiveEmails, setReceiveEmails] = useState(false)
+
+  const PROVINCIAS = [
+    'Buenos Aires', 'CABA', 'Catamarca', 'Chaco', 'Chubut', 'Córdoba', 'Corrientes', 
+    'Entre Ríos', 'Formosa', 'Jujuy', 'La Pampa', 'La Rioja', 'Mendoza', 'Misiones', 
+    'Neuquén', 'Río Negro', 'Salta', 'San Juan', 'San Luis', 'Santa Cruz', 'Santa Fe', 
+    'Santiago del Estero', 'Tierra del Fuego', 'Tucumán'
+  ]
 
   useEffect(() => {
     if (items.length === 0) router.push('/')
@@ -88,7 +97,7 @@ export default function CheckoutPage() {
       if (!/^[0-9]{6,11}$/.test(trimmed)) return 'Ingresá solo números (6 a 11 dígitos)'
     }
     if (deliveryMethod === 'shipping') {
-      if (field === 'direccion' || field === 'numero' || field === 'codigoPostal' || field === 'ciudad') {
+      if (field === 'direccion' || field === 'numero' || field === 'codigoPostal' || field === 'ciudad' || field === 'provincia') {
         if (!value.trim()) return 'Este campo es obligatorio'
       }
     }
@@ -138,7 +147,7 @@ export default function CheckoutPage() {
     if (isSubmitting) return
     const fieldsToValidate: (keyof CheckoutFormData)[] =
       deliveryMethod === 'shipping'
-        ? ['nombre', 'apellido', 'email', 'telefono', 'dniCuit', 'direccion', 'numero', 'codigoPostal', 'ciudad']
+        ? ['nombre', 'apellido', 'email', 'telefono', 'dniCuit', 'direccion', 'numero', 'codigoPostal', 'ciudad', 'provincia']
         : ['nombre', 'apellido', 'email', 'telefono', 'dniCuit']
 
     const nextErrors: Partial<Record<keyof CheckoutFormData, string>> = {}
@@ -161,7 +170,7 @@ export default function CheckoutPage() {
     try {
       const finalTotal = total() - getDiscount() + shippingCost
       const direccionCompleta = deliveryMethod === 'shipping' 
-        ? `${formData.direccion} ${formData.numero}, ${formData.ciudad}`
+        ? `${formData.direccion} ${formData.numero}, ${formData.ciudad}, ${formData.provincia}`
         : 'Retiro en Local'
 
       localStorage.setItem('deliveryData', JSON.stringify({
@@ -318,6 +327,23 @@ export default function CheckoutPage() {
                           onChange={handleFieldChange('ciudad')}
                         />
                         {errors.ciudad && <p className="text-[10px] text-red-500 font-semibold">{errors.ciudad}</p>}
+                      </div>
+                      <div className="col-span-12 space-y-1">
+                        <select
+                          required
+                          className={`w-full bg-white/5 border p-3 rounded-xl outline-none text-xs font-bold uppercase min-h-[48px] ${errors.provincia ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-white/30'}`}
+                          value={formData.provincia}
+                          onChange={(e) => {
+                            setFormData(prev => ({ ...prev, provincia: e.target.value }))
+                            if (errors.provincia) setErrors(prev => ({ ...prev, provincia: '' }))
+                          }}
+                        >
+                          <option value="" className="bg-black">SELECCIONAR PROVINCIA</option>
+                          {PROVINCIAS.map(prov => (
+                            <option key={prov} value={prov} className="bg-black text-white">{prov}</option>
+                          ))}
+                        </select>
+                        {errors.provincia && <p className="text-[10px] text-red-500 font-semibold">{errors.provincia}</p>}
                       </div>
                     </div>
                   </section>

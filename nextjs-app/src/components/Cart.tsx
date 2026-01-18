@@ -13,7 +13,29 @@ interface CartProps {
 }
 
 export default function Cart({ onClose }: CartProps) {
-  const { items, removeItem, updateQuantity, total, clearCart, addItem } = useCartStore()
+  const [couponCode, setCouponCode] = useState('')
+  const { items, removeItem, updateQuantity, total, clearCart, addItem, applyCoupon, coupon, removeCoupon, getDiscount } = useCartStore()
+
+  useEffect(() => {
+    if (coupon) setCouponCode(coupon.codigo)
+  }, [coupon])
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return
+    
+    try {
+      const res = await fetch(`/api/coupons?code=${couponCode}`)
+      const data = await res.json()
+      
+      if (!res.ok) throw new Error(data.error || 'Cupón inválido')
+      
+      applyCoupon(data)
+      toast.success('Cupón aplicado con éxito')
+    } catch (error: any) {
+      toast.error(error.message)
+      setCouponCode('')
+    }
+  }
   const router = useRouter()
   const [suggestedProducts, setSuggestedProducts] = useState<any[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -229,12 +251,53 @@ export default function Cart({ onClose }: CartProps) {
                       </p>
                     )}
                     <div className="mb-6">
-                      <span className="block text-white/55 text-sm font-medium">Subtotal</span>
-                      <span className="block text-3xl font-black text-white tracking-tighter">
-                        $<span suppressHydrationWarning>
-                          { formatPrice(total()) }
-                        </span>
-                      </span>
+                      <div className="flex gap-2 mb-4">
+                        <input
+                          type="text"
+                          placeholder="CÓDIGO DE CUPÓN"
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                          disabled={!!coupon}
+                          className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs font-bold text-white outline-none focus:border-white/30 disabled:opacity-50"
+                        />
+                        {coupon ? (
+                          <button
+                            onClick={() => { removeCoupon(); setCouponCode('') }}
+                            className="bg-red-500/10 text-red-500 border border-red-500/20 px-4 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-red-500/20 transition-colors"
+                          >
+                            Quitar
+                          </button>
+                        ) : (
+                          <button
+                            onClick={handleApplyCoupon}
+                            disabled={!couponCode.trim()}
+                            className="bg-white text-black px-4 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Aplicar
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-between text-white/55 text-sm font-medium">
+                           <span>Subtotal</span>
+                           <span>${ formatPrice(total()) }</span>
+                        </div>
+                        {coupon && (
+                          <div className="flex justify-between text-green-400 text-sm font-bold">
+                            <span>Descuento ({coupon.codigo})</span>
+                            <span>-${ formatPrice(getDiscount()) }</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between items-end pt-2 border-t border-white/10">
+                          <span className="text-white text-sm font-bold">Total</span>
+                          <span className="text-3xl font-black text-white tracking-tighter">
+                            $<span suppressHydrationWarning>
+                              { formatPrice(total() - getDiscount()) }
+                            </span>
+                          </span>
+                        </div>
+                      </div>
                     </div>
                     <div className="space-y-3">
                       <button

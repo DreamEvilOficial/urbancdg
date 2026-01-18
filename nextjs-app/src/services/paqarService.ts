@@ -10,9 +10,12 @@ export interface PaqarLabelData {
     localidad: string
     provincia: string
     cp: string
+    telefono?: string
+    email?: string
   }
   receiver: {
     nombre: string
+    dni?: string
     email: string
     telefono?: string
     calle: string
@@ -27,6 +30,7 @@ export interface PaqarLabelData {
     ancho: number // cm
     alto: number // cm
     valorDeclarado: number
+    contenido?: string
   }
   trackingNumber: string
   labelUrl?: string // URL to PDF if available
@@ -86,7 +90,9 @@ export const paqarService = {
       numero: '1234',
       localidad: 'CABA',
       provincia: 'CABA',
-      cp: '1000'
+      cp: '1000',
+      email: 'contacto@urbancdg.com',
+      telefono: '11-1234-5678'
     }
 
     // Parse address
@@ -94,10 +100,18 @@ export const paqarService = {
     const number = addressParts.length > 1 ? addressParts.pop() : 'S/N'
     const street = addressParts.join(' ') || order.direccion_envio || 'Calle Principal'
 
-    const shipmentData = {
+    // Extract DNI from notes if available
+    let dni = 'N/A'
+    if (order.notas) {
+        const dniMatch = order.notas.match(/DNI:\s*(\d+)/i)
+        if (dniMatch) dni = dniMatch[1]
+    }
+
+    const shipmentData: PaqarLabelData = {
       sender,
       receiver: {
         nombre: order.cliente_nombre || 'Cliente',
+        dni: dni,
         email: order.cliente_email,
         telefono: order.cliente_telefono,
         calle: street,
@@ -111,9 +125,11 @@ export const paqarService = {
         largo: 40,
         ancho: 30,
         alto: 10,
-        valorDeclarado: order.total || 0
+        valorDeclarado: order.total || 0,
+        contenido: 'Indumentaria'
       },
-      productType: 'CP' as const
+      trackingNumber: '', // Filled later
+      productType: 'CP'
     }
 
     if (token === 'mock-token') {
@@ -159,13 +175,14 @@ export const paqarService = {
         <head>
           <title>Etiqueta Paq.ar - ${data.trackingNumber}</title>
           <style>
-            body { font-family: 'Arial', sans-serif; padding: 0; margin: 0; }
+            @page { size: A4; margin: 0; }
+            body { font-family: 'Arial', sans-serif; padding: 20px; margin: 0; background: #fff; color: #000; }
             .label-page { 
-              width: 100mm; 
-              height: 150mm; 
-              border: 1px dashed #000; 
-              margin: 20px auto; 
-              padding: 15px;
+              width: 100%; 
+              max-width: 800px;
+              border: 4px solid #000; 
+              margin: 0 auto; 
+              padding: 20px;
               box-sizing: border-box;
               position: relative;
             }
@@ -173,41 +190,39 @@ export const paqarService = {
               display: flex; 
               justify-content: space-between; 
               align-items: center; 
-              border-bottom: 2px solid #000;
-              padding-bottom: 10px;
-              margin-bottom: 10px;
+              border-bottom: 3px solid #000;
+              padding-bottom: 15px;
+              margin-bottom: 20px;
             }
-            .logo { font-weight: 900; font-size: 24px; font-style: italic; color: #004b8d; }
-            .service-type { font-size: 32px; font-weight: bold; border: 2px solid #000; padding: 2px 10px; }
+            .logo { font-weight: 900; font-size: 32px; font-style: italic; color: #004b8d; text-transform: uppercase; }
+            .service-type { font-size: 48px; font-weight: 900; border: 3px solid #000; padding: 5px 20px; border-radius: 8px; }
             
-            .row { display: flex; margin-bottom: 10px; }
-            .col { flex: 1; }
-            
-            .box { 
-              border: 1px solid #000; 
-              padding: 5px; 
-              min-height: 80px;
-              margin-bottom: 5px;
+            .section { margin-bottom: 20px; border: 2px solid #000; border-radius: 8px; overflow: hidden; }
+            .section-header { 
+                background: #000; 
+                color: #fff; 
+                padding: 8px 15px; 
+                font-weight: bold; 
+                text-transform: uppercase; 
+                font-size: 16px;
+                display: flex;
+                justify-content: space-between;
             }
-            .box-title { font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
-            .box-content { font-size: 12px; line-height: 1.4; }
-            .bold { font-weight: bold; }
+            .section-content { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+            .field { margin-bottom: 5px; }
+            .label { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #555; margin-bottom: 2px; }
+            .value { font-size: 14px; font-weight: bold; word-break: break-word; }
+            .full-width { grid-column: span 2; }
             
             .barcode-area { 
               text-align: center; 
-              margin-top: 20px; 
-              border-top: 2px solid #000;
-              padding-top: 10px;
+              margin-top: 40px; 
+              padding-top: 20px; 
+              border-top: 2px dashed #000; 
             }
-            .barcode-lines { 
-              height: 60px; 
-              background: repeating-linear-gradient(to right, #000, #000 2px, #fff 2px, #fff 5px);
-              width: 90%;
-              margin: 0 auto 5px auto;
-            }
-            .tracking-code { font-size: 14px; font-weight: bold; letter-spacing: 2px; }
+            .tracking-number { font-family: 'Courier New', monospace; font-size: 24px; font-weight: bold; letter-spacing: 2px; margin-top: 10px; }
             
-            .footer { font-size: 9px; text-align: center; margin-top: 10px; }
+            .footer { margin-top: 20px; text-align: center; font-size: 10px; color: #666; }
           </style>
         </head>
         <body>
@@ -216,52 +231,110 @@ export const paqarService = {
               <div class="logo">Correo Argentino</div>
               <div class="service-type">${data.productType}</div>
             </div>
-            
-            <div class="box">
-              <div class="box-title">DESTINATARIO</div>
-              <div class="box-content">
-                <span class="bold">${data.receiver.nombre}</span><br>
-                ${data.receiver.calle} ${data.receiver.numero}<br>
-                ${data.receiver.localidad} (${data.receiver.cp})<br>
-                ${data.receiver.provincia}
+
+            <!-- DESTINATARIO -->
+            <div class="section">
+              <div class="section-header">
+                <span>Destinatario</span>
+                <span>DEST</span>
+              </div>
+              <div class="section-content">
+                <div class="field full-width">
+                  <div class="label">Nombre Completo</div>
+                  <div class="value" style="font-size: 18px;">${data.receiver.nombre}</div>
+                </div>
+                <div class="field">
+                  <div class="label">DNI</div>
+                  <div class="value">${data.receiver.dni || 'N/A'}</div>
+                </div>
+                 <div class="field">
+                  <div class="label">Teléfono</div>
+                  <div class="value">${data.receiver.telefono || 'N/A'}</div>
+                </div>
+                <div class="field full-width">
+                  <div class="label">Dirección de Entrega</div>
+                  <div class="value">${data.receiver.calle} ${data.receiver.numero}</div>
+                </div>
+                <div class="field">
+                  <div class="label">Localidad / Provincia</div>
+                  <div class="value">${data.receiver.localidad}, ${data.receiver.provincia}</div>
+                </div>
+                <div class="field">
+                  <div class="label">Código Postal</div>
+                  <div class="value" style="font-size: 20px; border: 2px solid #000; display: inline-block; padding: 2px 8px;">${data.receiver.cp}</div>
+                </div>
+                <div class="field full-width">
+                  <div class="label">Email</div>
+                  <div class="value">${data.receiver.email}</div>
+                </div>
               </div>
             </div>
 
-            <div class="box" style="min-height: 60px;">
-              <div class="box-title">REMITENTE</div>
-              <div class="box-content">
-                <span class="bold">${data.sender.nombre}</span><br>
-                ${data.sender.calle} ${data.sender.numero}<br>
-                ${data.sender.localidad} (${data.sender.cp})
+            <!-- REMITENTE -->
+            <div class="section">
+              <div class="section-header">
+                <span>Remitente</span>
+                <span>REM</span>
+              </div>
+              <div class="section-content">
+                <div class="field">
+                  <div class="label">Nombre</div>
+                  <div class="value">${data.sender.nombre}</div>
+                </div>
+                <div class="field">
+                  <div class="label">Teléfono</div>
+                  <div class="value">${data.sender.telefono || 'N/A'}</div>
+                </div>
+                <div class="field full-width">
+                  <div class="label">Dirección</div>
+                  <div class="value">${data.sender.calle} ${data.sender.numero}, ${data.sender.localidad}, ${data.sender.provincia} (CP: ${data.sender.cp})</div>
+                </div>
+                 <div class="field full-width">
+                  <div class="label">Email</div>
+                  <div class="value">${data.sender.email || 'N/A'}</div>
+                </div>
               </div>
             </div>
 
-            <div class="row">
-              <div class="col" style="margin-right: 5px;">
-                 <div class="box" style="min-height: 40px;">
-                    <div class="box-title">PESO (KG)</div>
-                    <div class="box-content bold" style="font-size: 16px;">${data.package.peso}</div>
-                 </div>
+            <!-- DETALLES DEL PAQUETE -->
+            <div class="section">
+               <div class="section-header">
+                <span>Detalles del Paquete</span>
+                <span>PKT</span>
               </div>
-              <div class="col">
-                 <div class="box" style="min-height: 40px;">
-                    <div class="box-title">PEDIDO</div>
-                    <div class="box-content bold">${data.trackingNumber.substring(0,8)}</div>
-                 </div>
+              <div class="section-content" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+                <div class="field">
+                  <div class="label">Peso (kg)</div>
+                  <div class="value">${data.package.peso}</div>
+                </div>
+                <div class="field">
+                  <div class="label">Dimensiones (cm)</div>
+                  <div class="value">${data.package.largo}x${data.package.ancho}x${data.package.alto}</div>
+                </div>
+                <div class="field">
+                  <div class="label">Valor Decl.</div>
+                  <div class="value">$${data.package.valorDeclarado}</div>
+                </div>
+                 <div class="field">
+                  <div class="label">Contenido</div>
+                  <div class="value">${data.package.contenido || 'Varios'}</div>
+                </div>
               </div>
             </div>
 
             <div class="barcode-area">
-              <div class="barcode-lines"></div>
-              <div class="tracking-code">${data.trackingNumber}</div>
+              <!-- Placeholder for barcode -->
+              <div style="height: 80px; background: repeating-linear-gradient(90deg, #000 0px, #000 2px, #fff 2px, #fff 4px);"></div>
+              <div class="tracking-number">${data.trackingNumber}</div>
             </div>
 
             <div class="footer">
-              PAQ.AR - Powered by Urban CDG<br>
-              ${new Date().toLocaleString()}
+              Generado por Urban CDG System - ${new Date().toLocaleDateString()}
             </div>
           </div>
-          <script>window.onload = function() { window.print(); }</script>
+          <script>
+            window.print();
+          </script>
         </body>
       </html>
     `

@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { productosAPI, type Producto } from '@/lib/supabase'
 import { useCartStore } from '@/store/cartStore'
-import { ShoppingBag, ChevronLeft, ChevronRight, Minus, Plus, ShieldCheck, CreditCard, Banknote, ArrowLeft, Ticket, Bell } from 'lucide-react'
+import { ShoppingBag, ChevronLeft, ChevronRight, Minus, Plus, ShieldCheck, CreditCard, Banknote, ArrowLeft, Ticket, Bell, CheckCircle } from 'lucide-react'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
 import ProductCard from '@/components/ProductCard'
@@ -415,33 +415,66 @@ export default function ProductDetailPage() {
               )}
 
               <div className="pt-2 flex items-center justify-between">
-                <div className="flex items-center gap-3 bg-white/5 p-1.5 rounded-xl border border-white/10">
-                   <button type="button" onClick={() => setCantidad(Math.max(1, cantidad - 1))} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 text-white/55 hover:text-white transition-all"><Minus className="w-3 h-3" /></button>
-                   <span className="text-sm font-black w-6 text-center">{cantidad}</span>
-                   <button type="button" onClick={() => setCantidad(Math.min(stockDisponible, cantidad + 1))} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 text-white/55 hover:text-white transition-all"><Plus className="w-3 h-3" /></button>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (hasVariants && (!selectedTalle || !selectedColor)) return toast.error('Elige opciones')
-                    if (stockDisponible <= 0 || cantidad > stockDisponible) return toast.error('SIN STOCK')
-                    addItem({
-                      id: String(producto.id),
-                      nombre: producto.nombre,
-                      precio: producto.precio,
-                      cantidad,
-                      imagen_url: imagenes[selectedImage],
-                      stock: stockDisponible,
-                      ...(hasVariants && { talle: selectedTalle, color: selectedColor })
-                    })
-                    toast.success('Agregado')
-                  }}
-                  disabled={!!(hasVariants && selectedTalle && selectedColor && stockDisponible <= 0)}
-                  className="flex-1 ml-4 bg-accent text-ink py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:brightness-95 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group disabled:opacity-30"
-                >
-                  <ShoppingBag className="w-4 h-4 group-hover:-rotate-12 transition-transform" />
-                  {hasVariants && (!selectedTalle || !selectedColor) ? 'ELEGIR OPCIONES' : (stockDisponible <= 0 ? 'SIN STOCK' : 'Sumar a la bolsa')}
-                </button>
+                {(!hasVariants || (selectedTalle && selectedColor)) && stockDisponible <= 0 ? (
+                  <div className="w-full">
+                    {!notified ? (
+                      <div className="space-y-3">
+                        <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest text-center">
+                          ¡Sin Stock! Avísame cuando ingrese
+                        </p>
+                        <form onSubmit={handleNotify} className="flex gap-2">
+                          <input 
+                            type="email" 
+                            placeholder="tu@email.com" 
+                            value={email}
+                            onChange={e => setEmail(e.target.value)}
+                            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder:text-white/20 outline-none focus:border-red-500/50 transition-colors"
+                          />
+                          <button type="submit" className="bg-red-500 text-white px-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-colors">
+                            <Bell className="w-4 h-4" />
+                          </button>
+                        </form>
+                      </div>
+                    ) : (
+                      <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 text-center">
+                        <p className="text-green-400 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+                          <CheckCircle className="w-4 h-4" />
+                          ¡Listo! Te avisaremos
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3 bg-white/5 p-1.5 rounded-xl border border-white/10">
+                       <button type="button" onClick={() => setCantidad(Math.max(1, cantidad - 1))} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 text-white/55 hover:text-white transition-all"><Minus className="w-3 h-3" /></button>
+                       <span className="text-sm font-black w-6 text-center">{cantidad}</span>
+                       <button type="button" onClick={() => setCantidad(Math.min(stockDisponible, cantidad + 1))} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 text-white/55 hover:text-white transition-all"><Plus className="w-3 h-3" /></button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (hasVariants && (!selectedTalle || !selectedColor)) return toast.error('Elige opciones')
+                        if (stockDisponible <= 0 || cantidad > stockDisponible) return toast.error('SIN STOCK')
+                        addItem({
+                          id: String(producto.id),
+                          nombre: producto.nombre,
+                          precio: producto.precio,
+                          cantidad,
+                          imagen_url: imagenes[selectedImage],
+                          stock: stockDisponible,
+                          ...(hasVariants && { talle: selectedTalle, color: selectedColor })
+                        })
+                        toast.success('Agregado')
+                      }}
+                      disabled={!!(hasVariants && (!selectedTalle || !selectedColor))}
+                      className="flex-1 ml-4 bg-accent text-ink py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:brightness-95 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group disabled:opacity-30"
+                    >
+                      <ShoppingBag className="w-4 h-4 group-hover:-rotate-12 transition-transform" />
+                      {hasVariants && (!selectedTalle || !selectedColor) ? 'ELEGIR OPCIONES' : 'Sumar a la bolsa'}
+                    </button>
+                  </>
+                )}
               </div>
               
               {hasVariants && selectedTalle && selectedColor && stockDisponible > 0 && (
