@@ -245,6 +245,8 @@ export default function ConfigurationPanel() {
 
   async function guardarConfiguracion() {
     setLoading(true)
+    const toastId = toast.loading('Guardando configuración...')
+    
     try {
       // Preparar datos consolidados
       const configData = {
@@ -252,24 +254,26 @@ export default function ConfigurationPanel() {
         ...mensajes
       }
 
-      // Guardar cada configuración a través de la API
-      // La API /api/config acepta { clave, valor } en POST
-      const promises = Object.entries(configData).map(([clave, valor]) => {
-          return fetch('/api/config', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ clave, valor })
-          });
+      // Enviar todo en una sola petición
+      const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ updates: configData })
       });
 
-      await Promise.all(promises);
+      if (!res.ok) throw new Error('Error en la respuesta del servidor');
 
-      toast.success('Configuración guardada correctamente')
+      toast.success('Configuración guardada correctamente', { id: toastId })
+      
+      // Notificar cambios a la UI inmediatamente
       window.dispatchEvent(new Event('config-updated'))
       localStorage.setItem('config-updated', Date.now().toString())
+      
+      // Feedback visual adicional (opcional, por ejemplo scroll top o highlight)
+      
     } catch (error: any) {
       console.error('Error al guardar:', error)
-      toast.error('Error al guardar configuración')
+      toast.error('Error al guardar configuración: ' + (error.message || 'Desconocido'), { id: toastId })
     } finally {
       setLoading(false)
     }

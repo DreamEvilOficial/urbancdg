@@ -97,39 +97,37 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
           }
           
           setConfig((prev: any) => {
-            const next = {
-              nombre_tienda: newConfig.nombre_tienda || 'URBAN',
-              logo_url: newConfig.logo_url || '',
-              lema_tienda: newConfig.lema_tienda || newConfig.subtitulo_lema || ''
-            }
-            if (JSON.stringify(prev) === JSON.stringify(next)) return prev
+            const next = { ...prev, ...newConfig }
+            // Update derived state if needed
             return next
           })
-
-          // Velocidad
-          if (newConfig.slider_marquesina_velocidad) {
-            const nextVel = Number(newConfig.slider_marquesina_velocidad)
-            setVelocidad((prev: number) => (prev === nextVel ? prev : nextVel))
-          }
-
-          // Mensajes
-          const nuevosMensajes: string[] = []
-          if (newConfig.anuncio_1) nuevosMensajes.push(newConfig.anuncio_1)
-          if (newConfig.anuncio_2) nuevosMensajes.push(newConfig.anuncio_2)
-          if (newConfig.anuncio_3) nuevosMensajes.push(newConfig.anuncio_3)
           
-          if (nuevosMensajes.length > 0) {
-            setMensajes((prev: string[]) => {
-              if (JSON.stringify(prev) === JSON.stringify(nuevosMensajes)) return prev
-              return nuevosMensajes
-            })
-          }
+          if (newConfig.slider_marquesina_velocidad) setVelocidad(Number(newConfig.slider_marquesina_velocidad))
+          
+          const msgs = []
+          if (newConfig.anuncio_1) msgs.push(newConfig.anuncio_1)
+          if (newConfig.anuncio_2) msgs.push(newConfig.anuncio_2)
+          if (newConfig.anuncio_3) msgs.push(newConfig.anuncio_3)
+          if (msgs.length > 0) setMensajes(msgs)
         }
-      } catch (error) {
-        console.error('Error loading config:', error)
+      } catch (err) {
+        console.error('Error loading config', err)
       }
     }
 
+    loadConfig()
+    
+    // Listen for config updates
+    const handleConfigUpdate = () => {
+        console.log('Config updated, reloading header...')
+        loadConfig()
+    }
+    
+    window.addEventListener('config-updated', handleConfigUpdate)
+    return () => window.removeEventListener('config-updated', handleConfigUpdate)
+  }, [])
+
+  useEffect(() => {
     const loadCategorias = async () => {
       try {
         const res = await fetch('/api/categories')
@@ -145,21 +143,15 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
         if (Array.isArray(data)) setFiltrosEspeciales(data.filter((f: any) => f.activo))
       } catch (error) { console.error(error) }
     }
-    
-    loadConfig()
+
     loadCategorias()
     loadFiltros()
 
-    window.addEventListener('config-updated', loadConfig)
-    window.addEventListener('filtros-updated', loadFiltros)
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'filtros-updated') loadFiltros()
-      if (e.key === 'config-updated') loadConfig()
-    })
+    const handleFiltrosUpdate = () => loadFiltros()
+    window.addEventListener('filtros-updated', handleFiltrosUpdate)
+    
     return () => {
-      window.removeEventListener('config-updated', loadConfig)
-      window.removeEventListener('filtros-updated', loadFiltros)
-      window.removeEventListener('storage', loadFiltros as any)
+        window.removeEventListener('filtros-updated', handleFiltrosUpdate)
     }
   }, [])
 

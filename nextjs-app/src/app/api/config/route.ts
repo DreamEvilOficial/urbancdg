@@ -57,6 +57,30 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
+    
+    // Support for bulk updates
+    if (body.updates && typeof body.updates === 'object') {
+        const updates = body.updates
+        const keys = Object.keys(updates)
+        
+        // Use a transaction or sequential updates (SQLite doesn't support concurrent writes well in this setup)
+        for (const clave of keys) {
+            const valor = updates[clave]
+            const valStr = JSON.stringify(valor)
+            
+            const exists = await db.get('SELECT id FROM configuracion WHERE clave = ?', [clave])
+            
+            if (exists) {
+                await db.run('UPDATE configuracion SET valor = ?, updated_at = CURRENT_TIMESTAMP WHERE clave = ?', [valStr, clave])
+            } else {
+                await db.run('INSERT INTO configuracion (id, clave, valor) VALUES (?, ?, ?)', [crypto.randomUUID(), clave, valStr])
+            }
+        }
+        
+        return NextResponse.json({ success: true, count: keys.length })
+    }
+
+    // Legacy single update support
     const { clave, valor } = body
 
     if (!clave) {
@@ -71,13 +95,6 @@ export async function POST(request: Request) {
     if (exists) {
         await db.run('UPDATE configuracion SET valor = ?, updated_at = CURRENT_TIMESTAMP WHERE clave = ?', [valStr, clave]);
     } else {
-        const { v4: uuidv4 } = require('uuid');
-        const id = uuidv4(); // We might need to import uuid if not available, or use random
-        // If uuid not available in this scope, use simple random
-        // But uuid is likely installed.
-        // Let's use db's random for now if uuid fails, or rely on client sending IT.
-        // Actually we can use crypto.randomUUID() in Node 19+ or just import.
-        
         await db.run('INSERT INTO configuracion (id, clave, valor) VALUES (?, ?, ?)', [crypto.randomUUID(), clave, valStr]);
     }
 

@@ -9,65 +9,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import VariantModal from './VariantModal'
+import CountdownTimer from './CountdownTimer'
 // import { motion } from 'framer-motion'
-
-function CountdownTimer({ targetDate }: { targetDate: string }) {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
-  const [isExpired, setIsExpired] = useState(false)
-
-  useEffect(() => {
-    const calculateTimeLeft = () => {
-      const difference = +new Date(targetDate) - +new Date()
-      
-      if (difference > 0) {
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60)
-        })
-      } else {
-        setIsExpired(true)
-      }
-    }
-
-    calculateTimeLeft()
-    const timer = setInterval(calculateTimeLeft, 1000)
-
-    return () => clearInterval(timer)
-  }, [targetDate])
-
-  if (isExpired) {
-    return (
-      <div className="text-center">
-        <span className="text-green-500 font-black text-lg tracking-widest">¡DISPONIBLE!</span>
-      </div>
-    )
-  }
-
-  return (
-    <div className="w-full text-center">
-      <div className="flex items-center justify-center gap-2 mb-2 text-white/60 text-[10px] font-bold uppercase tracking-[0.2em]">
-        <Clock className="w-3 h-3" /> Lanzamiento en
-      </div>
-      <div className="grid grid-cols-4 gap-1">
-        {[
-          { label: 'DÍAS', value: timeLeft.days },
-          { label: 'HRS', value: timeLeft.hours },
-          { label: 'MIN', value: timeLeft.minutes },
-          { label: 'SEG', value: timeLeft.seconds }
-        ].map((item, i) => (
-          <div key={i} className="flex flex-col items-center bg-white/5 rounded-lg p-1.5 border border-white/5">
-            <span className="text-lg md:text-xl font-black text-white leading-none">
-              {String(item.value).padStart(2, '0')}
-            </span>
-            <span className="text-[8px] font-bold text-white/40 mt-1">{item.label}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 interface Etiqueta {
   id: string
@@ -88,6 +31,7 @@ function ProductCard({ producto }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem)
   const [showModal, setShowModal] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
+  const [isUnlocked, setIsUnlocked] = useState(false)
 
   // Verificar si está guardado en localStorage al montar
   React.useEffect(() => {
@@ -119,7 +63,8 @@ function ProductCard({ producto }: ProductCardProps) {
   }
 
   // Verificar si es próximo lanzamiento
-  const isProximoLanzamiento = (producto as any).proximo_lanzamiento || (producto as any).proximamente || false
+  const isOriginallyProximo = (producto as any).proximo_lanzamiento || (producto as any).proximamente || false
+  const isProximoLanzamiento = !isUnlocked && isOriginallyProximo
   
   // Verificar si es producto TOP
   const isTopProduct = (producto as any).isTopProduct || false
@@ -266,13 +211,16 @@ function ProductCard({ producto }: ProductCardProps) {
     <div className="flex flex-col flex-grow items-center justify-center p-4">
        {(producto as any).fecha_lanzamiento ? (
          <div className="w-full mb-3">
-           <CountdownTimer targetDate={(producto as any).fecha_lanzamiento} />
+           <CountdownTimer 
+             targetDate={(producto as any).fecha_lanzamiento} 
+             onExpire={() => setIsUnlocked(true)}
+           />
          </div>
        ) : null}
        <button 
         type="button"
         disabled
-        className="w-full bg-zinc-900 text-white/50 py-3 rounded-lg font-black text-sm uppercase tracking-widest border border-white/10 relative overflow-hidden cursor-not-allowed"
+        className="w-full bg-zinc-900 text-white py-3 rounded-lg font-black text-sm uppercase tracking-widest border border-white/10 relative overflow-hidden"
       >
         <span className="relative z-10">PRÓXIMAMENTE</span>
       </button>
@@ -312,6 +260,12 @@ function ProductCard({ producto }: ProductCardProps) {
           <div className="flex flex-col gap-1 flex-grow">
             {/* El precio original ahora se muestra al lado del precio actual en el div de abajo */}
             
+            {isUnlocked && isOriginallyProximo && (
+               <div className="mb-2">
+                  <span className="text-green-500 font-black text-xs tracking-[0.2em] uppercase animate-pulse drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]">¡DESBLOQUEADO!</span>
+               </div>
+            )}
+
             <div className="flex items-baseline gap-2 mb-1">
               {formattedOriginalPrice && hasDiscount && (
                 <p className="text-sm md:text-base font-medium text-gray-500 line-through">
@@ -450,7 +404,7 @@ function ProductCard({ producto }: ProductCardProps) {
 
       {/* Imagen */}
       {isProximoLanzamiento ? (
-        <div className="relative block w-full aspect-[4/5] bg-black overflow-hidden cursor-not-allowed">
+        <div className="relative block w-full aspect-[4/5] bg-black overflow-hidden">
           <Image
             src={imgSrc}
             alt={productName}
@@ -458,7 +412,7 @@ function ProductCard({ producto }: ProductCardProps) {
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className={`object-cover transition-all duration-700 ${
               isProximoLanzamiento 
-                ? 'group-hover:scale-105 grayscale opacity-70' 
+                ? 'group-hover:scale-105' 
                 : 'group-hover:scale-110 group-hover:brightness-110'
             }`}
             onError={() => {
@@ -490,8 +444,8 @@ function ProductCard({ producto }: ProductCardProps) {
       {/* Product Info */}
       <div className="p-3 md:p-6 bg-black flex flex-col flex-grow">
         {isProximoLanzamiento ? (
-          <div className="block mb-2 group/title cursor-not-allowed">
-            <h3 className={`font-bold text-white/50 transition-colors leading-tight break-words line-clamp-2 min-h-[2.5rem] md:min-h-[3.5rem] ${
+          <div className="block mb-2 group/title">
+            <h3 className={`font-bold text-white transition-colors leading-tight break-words line-clamp-2 min-h-[2.5rem] md:min-h-[3.5rem] ${
               producto.nombre.length > 25 
                 ? 'text-[13px] md:text-base' 
                 : 'text-[14px] md:text-lg'
