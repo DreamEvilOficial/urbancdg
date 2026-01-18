@@ -273,14 +273,12 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                       <input 
                         type="text"
                         value={formData.precio}
-                        onChange={e => {
-                          const raw = e.target.value
-                          if (raw === '') {
-                            setFormData({...formData, precio: ''})
-                            return
+                        onChange={e => setFormData({...formData, precio: e.target.value})}
+                        onBlur={() => {
+                          if (formData.precio) {
+                            const num = toNumber(formData.precio)
+                            setFormData({...formData, precio: formatPrice(num)})
                           }
-                          const num = toNumber(raw)
-                          setFormData({...formData, precio: formatPrice(num)})
                         }}
                         className="w-full bg-[#111] border border-white/5 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold placeholder:text-white/20 focus:bg-black focus:border-white text-white transition-all outline-none"
                         placeholder="0"
@@ -324,14 +322,12 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                     <input 
                       type="text"
                       value={formData.precio_costo}
-                      onChange={e => {
-                        const raw = e.target.value
-                        if (raw === '') {
-                          setFormData({...formData, precio_costo: ''})
-                          return
+                      onChange={e => setFormData({...formData, precio_costo: e.target.value})}
+                      onBlur={() => {
+                        if (formData.precio_costo) {
+                          const num = toNumber(formData.precio_costo)
+                          setFormData({...formData, precio_costo: formatPrice(num)})
                         }
-                        const num = toNumber(raw)
-                        setFormData({...formData, precio_costo: formatPrice(num)})
                       }}
                       className="w-full bg-[#111] border border-white/5 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold placeholder:text-white/20 focus:bg-black focus:border-white text-white transition-all outline-none"
                       placeholder="0"
@@ -436,14 +432,12 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                             <input 
                               type="text"
                               value={formData.precio_original}
-                              onChange={e => {
-                                const raw = e.target.value
-                                if (raw === '') {
-                                  setFormData({...formData, precio_original: ''})
-                                  return
+                              onChange={e => setFormData({...formData, precio_original: e.target.value})}
+                              onBlur={() => {
+                                if (formData.precio_original) {
+                                  const num = toNumber(formData.precio_original)
+                                  setFormData({...formData, precio_original: formatPrice(num)})
                                 }
-                                const num = toNumber(raw)
-                                setFormData({...formData, precio_original: formatPrice(num)})
                               }}
                               className="w-full bg-black border border-white/10 pl-8 pr-4 py-4 rounded-2xl text-sm font-bold text-white/70 focus:border-white transition-all outline-none"
                               placeholder="0"
