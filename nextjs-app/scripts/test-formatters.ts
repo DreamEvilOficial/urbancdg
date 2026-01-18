@@ -38,4 +38,23 @@ assert(toNumber('1000') === 1000, `toNumber('1000') -> 1000`);
 // Wait. This breaks "250.000" as 250k.
 // I need to adjust toNumber logic.
 
+console.log("--- Reproduction Test ---");
+
+const inputs = [
+    "5000",
+    "5.000",
+    "5000.00",
+    "5000,00",
+    "5,000", // ambiguous?
+    "500",
+    "500000",
+    "500.000"
+];
+
+inputs.forEach(input => {
+    const num = toNumber(input);
+    const formatted = formatPrice(num);
+    console.log(`Input: "${input}" \t-> Number: ${num} \t-> Formatted: "${formatted}"`);
+});
+
 console.log('All tests passed!');

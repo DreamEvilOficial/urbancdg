@@ -1,9 +1,9 @@
 export const formatPrice = (value: number | string | null | undefined): string => {
   if (value === null || value === undefined) return '0'
   
-  const numberValue = typeof value === 'string' 
-    ? Number(value.replace(/\./g, '').replace(/,/g, '.')) 
-    : value
+  // Use toNumber to handle both numbers and string representations robustly
+  // (This handles "5000", "5.000", "5000.00", etc. correctly)
+  const numberValue = toNumber(value)
 
   if (isNaN(numberValue)) return '0'
 
