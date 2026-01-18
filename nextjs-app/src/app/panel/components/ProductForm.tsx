@@ -180,6 +180,11 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
     { name: 'Lila', hex: '#C8A2C8' }
   ]
 
+  const commonSizes = [
+    { label: 'Indumentaria', sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'] },
+    { label: 'Calzado', sizes: ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46'] }
+  ]
+
   function addVariant() {
     if (!newVariant.talle || !newVariant.color || !newVariant.stock) {
       toast.error('Completa talle, color y stock')
@@ -514,11 +519,36 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                       <select
                         value={newVariant.talle}
                         onChange={e => setNewVariant({...newVariant, talle: e.target.value})}
-                        className="w-full h-10 bg-[#06070c] border border-white/10 px-3 rounded-xl text-[11px] font-bold outline-none focus:border-white text-white transition-all appearance-none cursor-pointer"
+                        className="w-full h-10 bg-[#06070c] border border-white/10 px-3 rounded-xl text-[11px] font-bold outline-none focus:border-white text-white transition-all appearance-none cursor-pointer mb-2"
                       >
                         <option value="">Elegir...</option>
-                        {['UNI', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '38', '40', '42', '44', '46'].map(t => <option key={t} value={t}>{t}</option>)}
+                        {['UNI', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46'].map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
+                      
+                      {/* Atajos de Talles */}
+                      <div className="flex flex-col gap-2">
+                        {commonSizes.map((group, gIdx) => (
+                          <div key={gIdx} className="space-y-1">
+                            <span className="text-[7px] font-black text-gray-600 uppercase tracking-widest pl-1">{group.label}</span>
+                            <div className="flex flex-wrap gap-1">
+                              {group.sizes.map(s => (
+                                <button
+                                  key={s}
+                                  type="button"
+                                  onClick={() => setNewVariant({...newVariant, talle: s})}
+                                  className={`px-2 py-1 rounded text-[9px] font-bold transition-all border ${
+                                    newVariant.talle === s 
+                                      ? 'bg-white text-black border-white' 
+                                      : 'bg-transparent text-gray-400 border-white/10 hover:border-white/30 hover:text-white'
+                                  }`}
+                                >
+                                  {s}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
                     {/* Nombre Color */}

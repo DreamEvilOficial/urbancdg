@@ -33,7 +33,8 @@ function ProductosContent() {
 
   // Derived available filter options
   const availableOptions = useMemo(() => {
-    const sizes = new Set<string>()
+    const clothingSizes = new Set<string>()
+    const shoeSizes = new Set<string>()
     const colors = new Set<string>()
     let min = Infinity
     let max = 0
@@ -41,15 +42,35 @@ function ProductosContent() {
     allProductos.forEach((p: any) => {
       const vars = p.variantes || []
       vars.forEach((v: any) => {
-        if (v.talle) sizes.add(String(v.talle))
+        if (v.talle) {
+          const t = String(v.talle).toUpperCase()
+          // Si es numérico (ej: "38", "40") o parece talle de calzado
+          if (/^\d+(\.\d+)?$/.test(t) || ['35','36','37','38','39','40','41','42','43','44','45','46'].includes(t)) {
+             shoeSizes.add(t)
+          } else {
+             clothingSizes.add(t)
+          }
+        }
         if (v.color) colors.add(String(v.color.toLowerCase()))
       })
       if (p.precio < min) min = p.precio
       if (p.precio > max) max = p.precio
     })
 
+    // Sort helper for clothing sizes
+    const sizeOrder = ['XXXS', 'XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', 'UNI']
+    const sortClothing = (a: string, b: string) => {
+      const idxA = sizeOrder.indexOf(a)
+      const idxB = sizeOrder.indexOf(b)
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB
+      if (idxA !== -1) return -1
+      if (idxB !== -1) return 1
+      return a.localeCompare(b)
+    }
+
     return {
-      sizes: Array.from(sizes).sort(),
+      clothingSizes: Array.from(clothingSizes).sort(sortClothing),
+      shoeSizes: Array.from(shoeSizes).sort((a, b) => Number(a) - Number(b)),
       colors: Array.from(colors).sort(),
       absMin: min === Infinity ? 0 : min,
       absMax: max
@@ -375,23 +396,49 @@ function ProductosContent() {
                 <Tag className={`w-4 h-4 ${onlyOffers ? 'text-black' : 'text-pink-500'}`} />
               </button>
 
-              {/* Sizes */}
-              <div className="space-y-4">
-                 <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Talle</h4>
-                 <div className="flex flex-wrap gap-2">
-                    {availableOptions.sizes.map(size => (
-                      <button
-                        key={size}
-                        onClick={() => setSelectedSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size])}
-                        className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all ${
-                          selectedSizes.includes(size) ? 'bg-white text-black shadow-lg shadow-white/5' : 'bg-white/5 text-gray-400 border border-white/5 hover:border-white/20'
-                        }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                 </div>
-              </div>
+              {/* Clothing Sizes */}
+              {availableOptions.clothingSizes.length > 0 && (
+                <div className="space-y-4">
+                   <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Talles Indumentaria</h4>
+                   <div className="flex flex-wrap gap-2">
+                      {availableOptions.clothingSizes.map(size => (
+                        <button
+                          key={size}
+                          onClick={() => setSelectedSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size])}
+                          className={`min-w-[40px] h-10 px-3 rounded-lg text-[10px] font-black uppercase transition-all border ${
+                            selectedSizes.includes(size) 
+                              ? 'bg-white text-black border-white' 
+                              : 'bg-transparent text-gray-400 border-white/10 hover:border-white/30 hover:text-white'
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                   </div>
+                </div>
+              )}
+
+              {/* Shoe Sizes */}
+              {availableOptions.shoeSizes.length > 0 && (
+                <div className="space-y-4">
+                   <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Talles Calzado</h4>
+                   <div className="grid grid-cols-4 gap-2">
+                      {availableOptions.shoeSizes.map(size => (
+                        <button
+                          key={size}
+                          onClick={() => setSelectedSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size])}
+                          className={`h-10 rounded-lg text-[10px] font-black uppercase transition-all border ${
+                            selectedSizes.includes(size) 
+                              ? 'bg-white text-black border-white' 
+                              : 'bg-transparent text-gray-400 border-white/10 hover:border-white/30 hover:text-white'
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                   </div>
+                </div>
+              )}
 
               {/* Colors */}
               <div className="space-y-4">
@@ -455,22 +502,48 @@ function ProductosContent() {
                  </div>
               </div>
 
-              <div className="space-y-4">
-                 <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Talles</p>
-                 <div className="grid grid-cols-3 gap-3">
-                   {availableOptions.sizes.map(size => (
-                      <button
-                        key={size}
-                        onClick={() => setSelectedSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size])}
-                        className={`py-4 rounded-2xl text-xs font-black uppercase transition-all ${
-                          selectedSizes.includes(size) ? 'bg-white text-black' : 'bg-white/5 text-gray-500'
-                        }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                 </div>
-              </div>
+              {/* Mobile Sizes */}
+              {availableOptions.clothingSizes.length > 0 && (
+                <div className="space-y-4">
+                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Indumentaria</p>
+                   <div className="flex flex-wrap gap-3">
+                     {availableOptions.clothingSizes.map(size => (
+                        <button
+                          key={size}
+                          onClick={() => setSelectedSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size])}
+                          className={`min-w-[50px] h-12 rounded-xl text-xs font-black uppercase transition-all border ${
+                            selectedSizes.includes(size) 
+                              ? 'bg-white text-black border-white' 
+                              : 'bg-transparent text-gray-500 border-white/10'
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                   </div>
+                </div>
+              )}
+
+              {availableOptions.shoeSizes.length > 0 && (
+                <div className="space-y-4">
+                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Calzado</p>
+                   <div className="grid grid-cols-4 gap-3">
+                     {availableOptions.shoeSizes.map(size => (
+                        <button
+                          key={size}
+                          onClick={() => setSelectedSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size])}
+                          className={`h-12 rounded-xl text-xs font-black uppercase transition-all border ${
+                            selectedSizes.includes(size) 
+                              ? 'bg-white text-black border-white' 
+                              : 'bg-transparent text-gray-500 border-white/10'
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                   </div>
+                </div>
+              )}
               
               {/* Reset Mobile */}
               <button 
