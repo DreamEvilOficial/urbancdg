@@ -276,7 +276,7 @@ function ProductosContent() {
         element: (
           <span className="flex items-center gap-3 md:gap-5">
             DESCUENTOS
-            <Image src="/discount-icon.gif" alt="Descuento" width={60} height={60} className="w-10 h-10 md:w-16 md:h-16 -mt-2 object-contain" unoptimized />
+            <img src="/discount-icon.gif" alt="Descuento" width={60} height={60} className="w-10 h-10 md:w-16 md:h-16 -mt-2 object-contain" />
           </span>
         )
       }
@@ -288,7 +288,7 @@ function ProductosContent() {
         element: (
           <span className="flex items-center gap-3 md:gap-5">
             NUEVOS INGRESOS
-            <Image src="/new-label.gif" alt="Nuevo" width={60} height={60} className="w-10 h-10 md:w-16 md:h-16 -mt-2 object-contain" unoptimized />
+            <img src="/new-label.gif" alt="Nuevo" width={60} height={60} className="w-10 h-10 md:w-16 md:h-16 -mt-2 object-contain" />
           </span>
         )
       }
@@ -300,7 +300,7 @@ function ProductosContent() {
         element: (
           <span className="flex items-center gap-3 md:gap-5">
             PRÓXIMAMENTE
-            <Image src="/fire.gif" alt="Próximamente" width={60} height={60} className="w-10 h-10 md:w-16 md:h-16 -mt-2 object-contain" unoptimized />
+            <img src="/fire.gif" alt="Próximamente" width={60} height={60} className="w-10 h-10 md:w-16 md:h-16 -mt-2 object-contain" />
           </span>
         )
       }
