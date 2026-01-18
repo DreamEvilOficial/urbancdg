@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { productosAPI, categoriasAPI, etiquetasAPI, supabase, type Producto } from '@/lib/supabase'
+import { toNumber } from '@/lib/formatters'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { Menu, X } from 'lucide-react'
@@ -230,8 +231,8 @@ export default function AdminPage() {
         id: editingProduct ? editingProduct.id : undefined,
         nombre: data.nombre,
         descripcion: data.descripcion,
-        precio: Number(data.precio),
-        precio_original: data.precio_original ? Number(data.precio_original) : null,
+        precio: toNumber(data.precio),
+        precio_original: data.precio_original ? toNumber(data.precio_original) : null,
         descuento_porcentaje: data.descuento_porcentaje ? Number(data.descuento_porcentaje) : 0,
         categoria_id: normalizadoCategoriaId,
         subcategoria_id: normalizadoSubcategoriaId || undefined,
@@ -247,7 +248,7 @@ export default function AdminPage() {
         stock_minimo: data.stock_minimo ? Number(data.stock_minimo) : 5,
         proveedor_nombre: data.proveedor_nombre || undefined,
         proveedor_contacto: data.proveedor_contacto || undefined,
-        precio_costo: data.precio_costo ? Number(data.precio_costo) : undefined,
+        precio_costo: data.precio_costo ? toNumber(data.precio_costo) : undefined,
         slug,
         stock_actual: totalStock,
         activo: true
