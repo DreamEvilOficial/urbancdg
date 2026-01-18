@@ -10,7 +10,7 @@ export default function Footer() {
   const [mounted, setMounted] = useState(false)
   const [config, setConfig] = useState({
     nombre_tienda: 'URBAN',
-    direccion: 'Migre 692, Cañada de Gomez',
+    direccion: 'Mitre 692, Cañada de Gomez',
     telefono: '+54 9 3471598691',
     email: 'urbanindumentaria@hotmail.com',
     instagram: '@urban.cdg',

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import db from '@/lib/db'
 
 export async function POST(req: Request) {
   try {
@@ -25,12 +26,46 @@ export async function POST(req: Request) {
 
     if (error) {
       console.error('Error insertando notificación:', error)
-      return NextResponse.json({ error: 'Error guardando notificación' }, { status: 500 })
+      
+      // Auto-fix: Si la tabla no existe, intentamos crearla
+      if (error.code === '42P01' || error.message.includes('does not exist')) {
+        try {
+          console.log('Tabla no encontrada. Intentando crearla...')
+          await db.raw(`
+            CREATE TABLE IF NOT EXISTS proximamente_notificaciones (
+                id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+                email TEXT NOT NULL,
+                producto_id TEXT NOT NULL,
+                notificado BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+                UNIQUE(email, producto_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_proximamente_email ON proximamente_notificaciones(email);
+            CREATE INDEX IF NOT EXISTS idx_proximamente_producto ON proximamente_notificaciones(producto_id);
+            ALTER TABLE proximamente_notificaciones ENABLE ROW LEVEL SECURITY;
+            CREATE POLICY "Acceso total admin proximamente" ON proximamente_notificaciones FOR ALL USING (true);
+          `)
+          
+          // Reintentar inserción con DB directo
+          await db.run(`
+            INSERT INTO proximamente_notificaciones (email, producto_id)
+            VALUES (?, ?)
+            ON CONFLICT (email, producto_id) DO NOTHING
+          `, [email, producto_id])
+          
+          return NextResponse.json({ message: 'Notificación registrada correctamente (Tabla recuperada)' })
+        } catch (fixError: any) {
+          console.error('Error intentando crear tabla:', fixError)
+          return NextResponse.json({ error: 'Error crítico DB: ' + fixError.message }, { status: 500 })
+        }
+      }
+
+      return NextResponse.json({ error: 'Error guardando notificación: ' + error.message }, { status: 500 })
     }
 
     return NextResponse.json({ message: 'Notificación registrada correctamente' })
   } catch (error: any) {
     console.error('Error en API proximamente:', error)
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
+    return NextResponse.json({ error: 'Error interno del servidor: ' + error.message }, { status: 500 })
   }
 }
