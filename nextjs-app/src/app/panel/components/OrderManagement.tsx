@@ -283,6 +283,18 @@ export default function OrderManagement() {
                     </div>
                   </div>
 
+                  <div className="hidden lg:block text-center">
+                     <p className="text-[10px] text-white/35 uppercase font-black tracking-[0.32em] mb-1">Envío</p>
+                     <div className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-[0.2em] inline-flex items-center gap-2 ${
+                        orden.estado === 'enviado' ? 'bg-sky-500/15 text-sky-400 border border-sky-500/20' : 
+                        orden.estado === 'pendiente' ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20' :
+                        'bg-white/5 text-white/50 border border-white/10'
+                     }`}>
+                        <Truck className="w-3 h-3" />
+                        {orden.estado === 'enviado' ? 'Enviado' : orden.estado === 'pendiente' ? 'Pendiente' : orden.estado}
+                     </div>
+                  </div>
+
                   <div className="text-left md:text-center">
                     <p className="text-[9px] md:text-[10px] text-white/35 uppercase font-black tracking-[0.32em] mb-1">Fecha</p>
                     <p className="text-xs md:text-sm font-black text-white">
