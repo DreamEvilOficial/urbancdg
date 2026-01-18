@@ -21,21 +21,29 @@ export async function POST(req: NextRequest) {
         // Check if expired
         const expDate = new Date(order.transferencia_expiracion);
         if (expDate > new Date()) {
-             const row = await db.get('SELECT valor FROM configuracion WHERE clave = ?', ['bank_config']);
+             // Fetch Bank Config (Supports both legacy bank_config and individual keys)
+             const rows = await db.all("SELECT clave, valor FROM configuracion WHERE clave IN ('bank_config', 'cvu', 'alias', 'titular_cuenta', 'banco', 'titular')");
              let bankConfig: any = {};
-             if (row && row.valor) bankConfig = JSON.parse(row.valor);
+             
+             rows.forEach((r: any) => {
+                 if (r.clave === 'bank_config') {
+                     try { const bc = JSON.parse(r.valor); bankConfig = { ...bankConfig, ...bc }; } catch {}
+                 } else {
+                     // Normalize keys
+                     const key = r.clave === 'titular_cuenta' ? 'titular' : r.clave;
+                     bankConfig[key] = r.valor.replace(/^"|"$/g, ''); // Remove quotes if stored as JSON string of string
+                 }
+             });
              
              return NextResponse.json({
-                cbu: bankConfig.cbu || '',
-                titular: bankConfig.accountHolder || '',
-                bankName: bankConfig.bankName || '',
+                cbu: bankConfig.cbu || bankConfig.cvu || '',
+                titular: bankConfig.titular || bankConfig.titular_cuenta || '',
+                bankName: bankConfig.bankName || bankConfig.banco || '',
                 alias: bankConfig.alias || '',
                 amount: order.total_transferencia,
                 expiration: order.transferencia_expiracion
              });
         }
-        // If expired, maybe generate new? For now let's just extend or fail.
-        // Let's generate new.
     }
 
     // 2. Calculate Unique Amount
@@ -50,7 +58,6 @@ export async function POST(req: NextRequest) {
 
     while (attempts < 10) {
         // Random cents between 0.01 and 0.99
-        // MP sometimes ignores very small decimals? No, it's exact match.
         const cents = Math.floor(Math.random() * 99) + 1;
         uniqueAmount = baseTotal + (cents / 100);
         
@@ -81,24 +88,38 @@ export async function POST(req: NextRequest) {
         WHERE id = ?
     `, [uniqueAmount, expiration.toISOString(), orderId]);
     
-    // 5. Get Bank Config
-    const row = await db.get('SELECT valor FROM configuracion WHERE clave = ?', ['bank_config']);
+    // 5. Get Bank Config (Fetch all relevant keys)
+    const rows = await db.all("SELECT clave, valor FROM configuracion WHERE clave IN ('bank_config', 'cvu', 'alias', 'titular_cuenta', 'banco', 'titular')");
     let bankConfig: any = {};
-    if (row && row.valor) {
-        try { bankConfig = JSON.parse(row.valor); } catch {}
-    }
+    
+    rows.forEach((r: any) => {
+        if (r.clave === 'bank_config') {
+            try { const bc = JSON.parse(r.valor); bankConfig = { ...bankConfig, ...bc }; } catch {}
+        } else {
+            // Normalize keys
+            const key = r.clave === 'titular_cuenta' ? 'titular' : r.clave;
+            // Handle potential JSON string wrapping
+            let val = r.valor;
+            try { 
+                if (val.startsWith('"') && val.endsWith('"')) {
+                    val = JSON.parse(val);
+                }
+            } catch {}
+            bankConfig[key] = val;
+        }
+    });
 
     return NextResponse.json({
-        cbu: bankConfig.cbu || 'CBU NO CONFIGURADO',
-        titular: bankConfig.accountHolder || 'TITULAR NO CONFIGURADO',
-        bankName: bankConfig.bankName || '',
+        cbu: bankConfig.cbu || bankConfig.cvu || 'CBU NO CONFIGURADO',
+        titular: bankConfig.titular || bankConfig.titular_cuenta || 'TITULAR NO CONFIGURADO',
+        bankName: bankConfig.bankName || bankConfig.banco || '',
         alias: bankConfig.alias || '',
         amount: uniqueAmount,
         expiration: expiration.toISOString()
     });
 
   } catch (err: any) {
-    console.error('[transfer/create] Error:', err);
+    console.error('Transfer create error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
