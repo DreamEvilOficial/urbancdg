@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { sendOrderConfirmationEmail } from '@/lib/notifications';
 
 export async function POST(req: NextRequest) {
   try {
