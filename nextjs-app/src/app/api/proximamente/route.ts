@@ -27,10 +27,12 @@ export async function POST(req: Request) {
     if (error) {
       console.error('Error insertando notificación:', error)
       
-      // Auto-fix: Si la tabla no existe, intentamos crearla
-      if (error.code === '42P01' || error.message.includes('does not exist')) {
+      // Auto-fix: Si la tabla no existe o hay error de schema cache
+      if (error.code === '42P01' || error.message.includes('does not exist') || error.message.includes('schema cache') || error.message.includes('Could not find the table')) {
         try {
-          console.log('Tabla no encontrada. Intentando crearla...')
+          console.log('Error de tabla o schema cache. Intentando recuperación directa...')
+          
+          // Intentar crear tabla por si acaso
           await db.raw(`
             CREATE TABLE IF NOT EXISTS proximamente_notificaciones (
                 id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -43,19 +45,28 @@ export async function POST(req: Request) {
             CREATE INDEX IF NOT EXISTS idx_proximamente_email ON proximamente_notificaciones(email);
             CREATE INDEX IF NOT EXISTS idx_proximamente_producto ON proximamente_notificaciones(producto_id);
             ALTER TABLE proximamente_notificaciones ENABLE ROW LEVEL SECURITY;
-            CREATE POLICY "Acceso total admin proximamente" ON proximamente_notificaciones FOR ALL USING (true);
+            DO $$ 
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT FROM pg_policies 
+                    WHERE tablename = 'proximamente_notificaciones' 
+                    AND policyname = 'Acceso total admin proximamente'
+                ) THEN
+                    CREATE POLICY "Acceso total admin proximamente" ON proximamente_notificaciones FOR ALL USING (true);
+                END IF;
+            END $$;
           `)
           
-          // Reintentar inserción con DB directo
+          // Reintentar inserción con DB directo (bypassea PostgREST schema cache)
           await db.run(`
             INSERT INTO proximamente_notificaciones (email, producto_id)
             VALUES (?, ?)
             ON CONFLICT (email, producto_id) DO NOTHING
           `, [email, producto_id])
           
-          return NextResponse.json({ message: 'Notificación registrada correctamente (Tabla recuperada)' })
+          return NextResponse.json({ message: 'Notificación registrada correctamente (Recuperación exitosa)' })
         } catch (fixError: any) {
-          console.error('Error intentando crear tabla:', fixError)
+          console.error('Error intentando recuperación:', fixError)
           return NextResponse.json({ error: 'Error crítico DB: ' + fixError.message }, { status: 500 })
         }
       }
