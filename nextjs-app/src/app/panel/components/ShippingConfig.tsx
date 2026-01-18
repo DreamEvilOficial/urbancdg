@@ -10,17 +10,18 @@ export default function ShippingConfig() {
   const [showSecret, setShowSecret] = useState(false)
   const [config, setConfig] = useState({
     paqar_api_key: '',
-    paqar_secret: '',
-    paqar_mode: 'test' // test | production
+    paqar_secret: ''
   })
 
   useEffect(() => {
     fetch('/api/shipping/config')
       .then(res => res.json())
       .then(data => {
+        // Remove unwanted fields if any
+        const { paqar_mode, ...rest } = data
         setConfig(prev => ({
           ...prev,
-          ...data
+          ...rest
         }))
         setLoading(false)
       })
@@ -69,30 +70,7 @@ export default function ShippingConfig() {
       </div>
 
       <div className="space-y-4">
-        <div className="space-y-2">
-           <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Modo de Operación</label>
-           <div className="flex bg-black/20 p-1 rounded-xl border border-white/5 w-fit">
-              <button 
-                onClick={() => setConfig({...config, paqar_mode: 'test'})}
-                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${config.paqar_mode === 'test' ? 'bg-blue-500 text-white' : 'text-white/40 hover:text-white'}`}
-              >
-                TEST (Mock)
-              </button>
-              <button 
-                onClick={() => setConfig({...config, paqar_mode: 'production'})}
-                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${config.paqar_mode === 'production' ? 'bg-emerald-500 text-white' : 'text-white/40 hover:text-white'}`}
-              >
-                PRODUCCIÓN
-              </button>
-           </div>
-           {config.paqar_mode === 'test' && (
-             <p className="text-[10px] text-blue-300/60 flex items-center gap-2">
-               <AlertCircle className="w-3 h-3" />
-               En modo TEST no se generan envíos reales ni se cobra.
-             </p>
-           )}
-        </div>
-
+        
         <div className="space-y-2">
           <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">API Key</label>
           <input 

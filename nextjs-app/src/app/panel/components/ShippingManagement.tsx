@@ -90,6 +90,31 @@ export default function ShippingManagement() {
       }
   }
 
+  const handleManualStatus = async (status: string) => {
+    if (!selectedOrder) return
+    setLoading(true)
+    try {
+        const res = await fetch('/api/orders', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: selectedOrder.id, estado: status })
+        })
+
+        if (!res.ok) throw new Error('Error actualizando estado')
+        
+        toast.success(`Orden marcada como ${status}`)
+        // Remove if shipped, keep if pending? Or just refresh
+        // User asked to mark as sent or pending. 
+        // If sent, it should probably disappear from "pending orders" list in this view
+        setOrders(prev => prev.filter(o => o.id !== selectedOrder.id))
+        resetSelection()
+    } catch (error) {
+        toast.error('Falló la actualización')
+    } finally {
+        setLoading(false)
+    }
+  }
+
   const printLabel = () => {
       if (!generatedLabel) return
       const printWindow = window.open('', '_blank')
@@ -358,6 +383,29 @@ export default function ShippingManagement() {
                                   className="py-4 border-2 border-black text-black rounded-xl font-black uppercase tracking-widest hover:bg-black/5 transition-all"
                               >
                                   Siguiente Orden
+                              </button>
+                          </div>
+                      </div>
+                  )}
+                  
+                  {/* Manual Actions */}
+                  {!generatedLabel && selectedOrder && (
+                      <div className="bg-white/[0.03] border border-white/10 p-6 rounded-[30px] space-y-4">
+                          <h4 className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Acciones Manuales</h4>
+                          <div className="grid grid-cols-2 gap-4">
+                              <button 
+                                  onClick={() => handleManualStatus('enviado')}
+                                  disabled={loading}
+                                  className="py-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                              >
+                                  Marcar Enviado
+                              </button>
+                              <button 
+                                  onClick={() => handleManualStatus('pendiente')}
+                                  disabled={loading}
+                                  className="py-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                              >
+                                  Marcar Pendiente
                               </button>
                           </div>
                       </div>

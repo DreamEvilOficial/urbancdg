@@ -40,14 +40,13 @@ export const paqarService = {
   config: {
     baseUrl: process.env.PAQAR_API_URL || 'https://api.correoargentino.com.ar/paqar/v1',
     apiKey: process.env.PAQAR_API_KEY,
-    secret: process.env.PAQAR_SECRET,
-    mode: 'test' // Default to test
+    secret: process.env.PAQAR_SECRET
   },
 
   // Authenticate
   async authenticate(config: any): Promise<string> {
-    if (config.mode === 'test' || !config.apiKey) {
-      console.log('Paq.ar: Using Mock Authentication')
+    if (!config.apiKey) {
+      console.warn('Paq.ar: Missing API Key - Using Mock Authentication (Fallback)')
       return 'mock-token'
     }
 

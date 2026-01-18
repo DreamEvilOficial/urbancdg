@@ -30,24 +30,7 @@ export async function POST(req: Request) {
     const serviceConfig = {
        ...paqarService.config,
        apiKey: configMap['paqar_api_key'] || process.env.PAQAR_API_KEY,
-       secret: configMap['paqar_secret'] || process.env.PAQAR_SECRET,
-       mode: configMap['paqar_mode'] || 'test'
-    }
-
-    // Force mock mode if configured
-    if (serviceConfig.mode === 'test') {
-        // We can force the service to use mock token by clearing the key or handling it in service
-        // But cleaner is to let service handle it.
-        // We will modify PaqarService to accept a 'mode' or just handle it here.
-        // If test mode, we pass a special flag or just rely on the existing mock fallback logic
-        // But existing fallback logic only works if Key is MISSING.
-        // If user puts a fake key in test mode, we might want to ensure it still mocks.
-        
-        // Let's pass a special 'forceMock' flag to createShipment if possible, or handle it in service.
-        // For now, if mode is test, we unset the apiKey passed to the service config (if we were instantiating it)
-        // Since paqarService is a singleton object, we should probably modify it to accept config per request or update it.
-        // Modifying global singleton is risky for concurrency (though Next.js serverless is usually isolated).
-        // Better: create a new instance or pass config to createShipment.
+       secret: configMap['paqar_secret'] || process.env.PAQAR_SECRET
     }
 
     // 3. Generate Label
