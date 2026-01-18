@@ -36,69 +36,124 @@ export interface PaqarLabelData {
 const MOCK_DELAY = 1500
 
 export const paqarService = {
-  // Config (would normally come from env)
+  // Default Config
   config: {
-    baseUrl: 'https://api.correoargentino.com.ar/paqar/v1',
+    baseUrl: process.env.PAQAR_API_URL || 'https://api.correoargentino.com.ar/paqar/v1',
     apiKey: process.env.PAQAR_API_KEY,
-    secret: process.env.PAQAR_SECRET
+    secret: process.env.PAQAR_SECRET,
+    mode: 'test' // Default to test
   },
 
-  // Authenticate (Mock/Placeholder)
-  async authenticate(): Promise<string> {
-    // In real implementation: POST /token with credentials
-    if (!this.config.apiKey) {
-      console.warn('Paq.ar API Key missing, using mock mode')
+  // Authenticate
+  async authenticate(config: any): Promise<string> {
+    if (config.mode === 'test' || !config.apiKey) {
+      console.log('Paq.ar: Using Mock Authentication')
+      return 'mock-token'
     }
-    await new Promise(resolve => setTimeout(resolve, 500))
-    return 'mock-token-xyz'
+
+    try {
+      const res = await fetch(`${config.baseUrl}/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: config.apiKey,
+          secret: config.secret
+        })
+      })
+      
+      if (!res.ok) {
+          const errText = await res.text()
+          throw new Error(`Paq.ar Auth Failed: ${res.status} ${errText}`)
+      }
+      const data = await res.json()
+      return data.token
+    } catch (error) {
+      console.error('Paq.ar Auth Error:', error)
+      throw error
+    }
   },
 
   // Create Shipment (Imposicion)
-  async createShipment(order: any): Promise<PaqarLabelData> {
-    await this.authenticate()
-    await new Promise(resolve => setTimeout(resolve, MOCK_DELAY))
-
-    // Parse address logic simpler for mock
-    // User might have "Calle 123" in one string
-    const addressParts = (order.direccion_envio || '').split(' ')
-    const number = addressParts.pop() || 'S/N'
-    const street = addressParts.join(' ') || 'Calle Principal'
-
-    // Mock response
-    const trackingNumber = `CP${Math.floor(Math.random() * 1000000000)}AR`
+  async createShipment(order: any, senderOverride?: any, configOverride?: any): Promise<PaqarLabelData> {
+    // Merge config
+    const config = { ...this.config, ...configOverride }
     
-    return {
-      sender: {
-        nombre: 'Urban CDG Official',
-        calle: 'Av. Corrientes',
-        numero: '1234',
-        localidad: 'CABA',
-        provincia: 'CABA',
-        cp: '1000'
-      },
+    const token = await this.authenticate(config)
+
+    // Determine sender data (override or default)
+    const sender = senderOverride || {
+      nombre: 'Urban CDG Official',
+      calle: 'Av. Corrientes',
+      numero: '1234',
+      localidad: 'CABA',
+      provincia: 'CABA',
+      cp: '1000'
+    }
+
+    // Parse address
+    const addressParts = (order.direccion_envio || '').split(' ')
+    const number = addressParts.length > 1 ? addressParts.pop() : 'S/N'
+    const street = addressParts.join(' ') || order.direccion_envio || 'Calle Principal'
+
+    const shipmentData = {
+      sender,
       receiver: {
         nombre: order.cliente_nombre || 'Cliente',
         email: order.cliente_email,
         telefono: order.cliente_telefono,
         calle: street,
         numero: number,
-        localidad: order.ciudad || 'Ciudad',
-        provincia: order.provincia || 'Provincia',
-        cp: order.codigo_postal || '0000'
+        localidad: order.ciudad || order.envio_ciudad || 'Ciudad',
+        provincia: order.provincia || order.envio_provincia || 'Provincia',
+        cp: order.codigo_postal || order.envio_codigo_postal || '0000'
       },
       package: {
-        peso: 1.0,
+        peso: 1.0, // Default 1kg
         largo: 40,
         ancho: 30,
         alto: 10,
         valorDeclarado: order.total || 0
       },
-      trackingNumber,
-      productType: 'CP' // Paquetería Clásica
+      productType: 'CP' as const
+    }
+
+    if (token === 'mock-token') {
+      await new Promise(resolve => setTimeout(resolve, MOCK_DELAY))
+      return {
+        ...shipmentData,
+        trackingNumber: `CP${Math.floor(Math.random() * 1000000000)}AR`
+      }
+    }
+
+    // Real API Call
+    try {
+      const res = await fetch(`${config.baseUrl}/imposicion`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(shipmentData)
+      })
+
+      if (!res.ok) {
+        const errText = await res.text()
+        throw new Error(`Paq.ar Create Shipment Failed: ${res.status} ${errText}`)
+      }
+      const data = await res.json()
+      
+      return {
+        ...shipmentData,
+        trackingNumber: data.trackingNumber || data.numero,
+        labelUrl: data.labelUrl || data.etiqueta
+      }
+    } catch (error) {
+      console.error('Paq.ar Create Shipment Error:', error)
+      throw error
     }
   },
 
-  // Helper to generate the Label HTML for printing
+  // Helper to generate the Label HTML for printing (Client-side use mostly)
   generateLabelHtml(data: PaqarLabelData): string {
     return `
       <html>
