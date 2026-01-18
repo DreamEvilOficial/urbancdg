@@ -122,13 +122,22 @@ function SuccessContent() {
             <Home className="w-4 h-4" />
             Volver al Inicio
           </Link>
-          <Link 
-            href={`/seguimiento?id=${order.numero_orden || ordenId}`} 
+          <a 
+            href={`https://www.correoargentino.com.ar/formularios/e-commerce?id=${order.tracking_code || order.numero_orden || ordenId}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center gap-2 px-6 py-3 bg-pink-600 text-white rounded-full font-bold hover:bg-pink-700 transition hover:scale-105 active:scale-95"
+            onClick={(e) => {
+              const code = order.tracking_code || order.numero_orden || ordenId;
+              if (!code) {
+                e.preventDefault();
+                alert('Código de seguimiento no disponible aún.');
+              }
+            }}
           >
             <Truck className="w-4 h-4" />
-            Seguir Pedido
-          </Link>
+            Seguimiento de envío
+          </a>
           <Link 
             href="/productos" 
             className="flex items-center gap-2 px-6 py-3 bg-gray-900 border border-gray-700 text-white rounded-full font-bold hover:bg-gray-800 transition hover:scale-105 active:scale-95"
@@ -140,14 +149,6 @@ function SuccessContent() {
 
         {/* Review Section */}
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="h-px bg-gray-800 flex-1"></div>
-            <h2 className="text-xl font-bold text-center uppercase tracking-wider text-pink-500">
-              ¿Qué te parecieron tus productos?
-            </h2>
-            <div className="h-px bg-gray-800 flex-1"></div>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {orderItems.map((item: any, index: number) => {
               // Buscar el ID real del producto. 

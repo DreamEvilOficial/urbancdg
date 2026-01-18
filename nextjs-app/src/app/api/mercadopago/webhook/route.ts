@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { sendOrderConfirmationEmail } from '@/lib/notifications'
 
 export async function POST(request: NextRequest) {
   try {
@@ -59,6 +60,9 @@ export async function POST(request: NextRequest) {
              console.error('Error updating order in Supabase:', error);
              throw error;
         }
+        
+        // Enviar notificación por email
+        await sendOrderConfirmationEmail(orderId);
         
         console.log(`Order ${orderId} updated to completed successfully via Supabase Admin`)
       }

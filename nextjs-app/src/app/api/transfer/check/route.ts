@@ -180,6 +180,9 @@ export async function POST(req: NextRequest) {
             `, [validPayment.id, orderId]);
         });
 
+        // Enviar email de confirmación
+        await sendOrderConfirmationEmail(orderId);
+
         return NextResponse.json({ status: 'approved', paid: true, payment_id: validPayment.id });
     }
 

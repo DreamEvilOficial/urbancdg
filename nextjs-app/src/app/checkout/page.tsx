@@ -15,6 +15,7 @@ type CheckoutFormData = {
   nombre: string
   apellido: string
   telefono: string
+  email?: string
   direccion: string
   numero: string
   departamento: string
@@ -163,7 +164,8 @@ export default function CheckoutPage() {
         shippingCost, 
         shippingOption, 
         finalTotal,
-        direccion_envio: direccionCompleta
+        direccion_envio: direccionCompleta,
+        receiveEmails
       }))
 
       toast.success('Datos guardados', { id: toastId })
