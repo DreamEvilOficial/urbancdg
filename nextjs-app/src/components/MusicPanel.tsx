@@ -143,6 +143,14 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
     if (tracks.length === 0) return
     setCurrentIndex((p) => (p - 1 + tracks.length) % tracks.length)
   }
+
+  function playRandomTrack() {
+    if (tracks.length === 0) return
+    const randomIndex = Math.floor(Math.random() * tracks.length)
+    setCurrentIndex(randomIndex)
+    setTimeout(() => play(), 100)
+  }
+
   function toggleMute() {
     setMuted((m) => !m)
     iframeRef.current?.contentWindow?.postMessage(
