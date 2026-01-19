@@ -333,12 +333,12 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
                   const clave = filtro.clave.toLowerCase().replace('/', '')
                   
                   if (clave === 'descuentos' || clave === 'ofertas') {
-                     iconElement = <img src="/discount-icon.gif" alt="Descuentos" className="w-6 h-6 object-contain" />
-                  } else if (clave === 'nuevos' || clave === 'nuevos-ingresos') {
-                     iconElement = <img src="/new-label.gif" alt="Nuevos" className="w-6 h-6 object-contain" />
-                  } else if (clave === 'proximamente') {
-                     iconElement = <img src="/fire.gif" alt="Próximamente" className="w-6 h-6 object-contain" />
-                  } else if (filtro.imagen_url) {
+                      iconElement = <img src="/discount-icon.gif" alt="Descuentos" className="w-6 h-6 object-contain" />
+                   } else if (clave === 'nuevos' || clave === 'nuevos-ingresos') {
+                      iconElement = <img src="/new-label.gif" alt="Nuevos" className="w-6 h-6 object-contain" />
+                   } else if (clave === 'proximamente') {
+                      iconElement = <img src="/fire.gif" alt="Próximamente" className="w-6 h-6 object-contain" />
+                   } else if (filtro.imagen_url) {
                     iconElement = (
                       <div className="relative w-6 h-6 flex-shrink-0">
                         <img 
