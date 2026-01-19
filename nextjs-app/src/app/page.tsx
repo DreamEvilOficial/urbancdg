@@ -72,7 +72,7 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-transparent relative z-10">
+    <div className="min-h-screen bg-black relative z-10">
       <BannerSlider initialConfig={config} />
 
       <div className="relative z-20 -mt-10 md:-mt-16">
