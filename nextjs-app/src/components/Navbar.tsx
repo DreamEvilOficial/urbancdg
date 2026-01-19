@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useCartStore } from '@/store/cartStore'
 import { ShoppingCart, ChevronDown, ChevronRight, Home, MessageCircle, Music2, Truck } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
@@ -17,7 +18,7 @@ export default function Navbar() {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const [showCart, setShowCart] = useState(false)
-  const [logoUrl, setLogoUrl] = useState('')
+  const [logoUrl, setLogoUrl] = useState('/urban.png')
   const [nombreTienda, setNombreTienda] = useState('Urban Indumentaria')
   const [categorias, setCategorias] = useState<Array<{id: string, nombre: string, slug: string, icono?: string, subcategorias?: Array<{id: string, nombre: string, slug: string}>}>>([])
   const [showProductsMenu, setShowProductsMenu] = useState(false)
@@ -239,16 +240,15 @@ export default function Navbar() {
             {/* Logo centrado */}
             <div className="flex justify-center items-center py-7 border-b border-gray-800">
               <Link href="/" prefetch={true} className="flex flex-col items-center gap-1">
-                {logoUrl ? (
-                  <img src={logoUrl} alt={nombreTienda} className="h-[62px] md:h-[80px] object-contain" />
-                ) : (
-                  <div className="text-center">
-                    <div className="flex items-center gap-2">
-                      <span className="text-3xl md:text-4xl font-bold tracking-[0.3em] text-white">URBAN</span>
-                    </div>
-                    <span className="text-[11px] md:text-sm font-light tracking-[0.3em] text-gray-400 uppercase">Streetwear • Urban • Fits</span>
-                  </div>
-                )}
+                <Image
+                  src={logoUrl || '/urban.png'}
+                  alt={nombreTienda}
+                  width={260}
+                  height={72}
+                  priority
+                  sizes="(max-width: 768px) 160px, 260px"
+                  className="h-[62px] md:h-[80px] w-auto object-contain"
+                />
               </Link>
             </div>
             

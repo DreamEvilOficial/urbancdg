@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import Image from 'next/image'
 
 export default function PageLoader() {
   const [loading, setLoading] = useState(true)
@@ -48,14 +49,21 @@ export default function PageLoader() {
         <div className="text-center">
           {/* Logo animado */}
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
+            initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.4 }}
             className="mb-8"
           >
-            <div className="text-center">
-              <span className="text-4xl md:text-6xl font-bold tracking-[0.3em] text-white block">URBAN</span>
-              <span className="text-2xl md:text-3xl font-light tracking-[0.5em] text-white">INDUMENTARIA</span>
+            <div className="flex items-center justify-center">
+              <Image
+                src="/urban.png"
+                alt="Urban Indumentaria"
+                width={260}
+                height={72}
+                priority
+                sizes="(max-width: 768px) 160px, 260px"
+                className="h-16 md:h-20 w-auto object-contain"
+              />
             </div>
           </motion.div>
 
