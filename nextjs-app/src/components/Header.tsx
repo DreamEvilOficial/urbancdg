@@ -494,7 +494,15 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
                   {/* Filtros Especiales */}
                   {filtrosEspeciales.map((filtro) => {
                     let iconElement = null
-                    if (filtro.imagen_url) {
+                    const clave = filtro.clave.toLowerCase().replace('/', '')
+
+                    if (clave === 'descuentos' || clave === 'ofertas') {
+                       iconElement = <img src="/discount-icon.gif" alt="Descuentos" className="w-5 h-5 object-contain" />
+                    } else if (clave === 'nuevos' || clave === 'nuevos-ingresos') {
+                       iconElement = <img src="/new-label.gif" alt="Nuevos" className="w-5 h-5 object-contain" />
+                    } else if (clave === 'proximamente') {
+                       iconElement = <img src="/fire.gif" alt="Próximamente" className="w-5 h-5 object-contain" />
+                    } else if (filtro.imagen_url) {
                       iconElement = (
                         <div className="relative w-5 h-5 flex-shrink-0">
                           <img 
@@ -506,8 +514,6 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
                       )
                     } else if (filtro.icono) {
                       iconElement = <span className="text-sm">{filtro.icono}</span>
-                    } else if (['descuentos', 'nuevos', 'proximamente'].includes(filtro.clave)) {
-                       iconElement = <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                     }
 
                     return (
