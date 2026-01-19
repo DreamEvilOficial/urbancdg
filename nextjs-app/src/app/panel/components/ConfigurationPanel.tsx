@@ -124,6 +124,7 @@ export default function ConfigurationPanel() {
         mensaje_sin_stock: data.mensaje_sin_stock || 'Producto sin stock',
         mensaje_carrito_vacio: data.mensaje_carrito_vacio || 'Tu carrito está vacío',
         mensaje_compra_exitosa: data.mensaje_compra_exitosa || '¡Gracias por tu compra!',
+        share_description: data.share_description || 'Redefiniendo el Streetwear. Tu estilo, sin límites. Descubrí los últimos drops y armá tu fit.',
         anuncio_1: data.anuncio_1 || '',
         anuncio_2: data.anuncio_2 || '',
         anuncio_3: data.anuncio_3 || '',
