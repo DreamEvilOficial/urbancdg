@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import NextImage from 'next/image'
-import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
 import { Save, Trash2, Plus, X } from 'lucide-react'
+
+const DEFAULT_SHARE_DESCRIPTION =
+  'Redefiniendo el Streetwear. Tu estilo, sin límites. Descubrí los últimos drops y armá tu fit.'
 
 interface ConfigData {
   logo_url: string
@@ -33,7 +35,9 @@ export default function ConfigurationPanel() {
     logo_url: '',
     nombre_tienda: 'Urban Indumentaria',
     lema_tienda: 'Streetwear — drops — fits',
-    brand_tagline: 'Streetwear sin filtro. Drops reales, fits pesados y calidad para bancarla en la calle. No rules, solo estilo.',
+    brand_tagline:
+      'Streetwear sin filtro. Drops reales, fits pesados y calidad para bancarla en la calle. No rules, solo estilo.',
+    share_description: DEFAULT_SHARE_DESCRIPTION,
     mercadopago_public_key: '',
     mercadopago_access_token: '',
     cvu: '',
@@ -58,7 +62,6 @@ export default function ConfigurationPanel() {
     mensaje_sin_stock: 'Producto sin stock',
     mensaje_carrito_vacio: 'Tu carrito está vacío',
     mensaje_compra_exitosa: '¡Gracias por tu compra!',
-    share_description: 'Redefiniendo el Streetwear. Tu estilo, sin límites. Descubrí los últimos drops y armá tu fit.',
     anuncio_1: '',
     anuncio_2: '',
     anuncio_3: '',
@@ -90,14 +93,17 @@ export default function ConfigurationPanel() {
         logo_url: data.logo_url || '',
         nombre_tienda: data.nombre_tienda || 'Urban Indumentaria',
         lema_tienda: data.lema_tienda || 'Streetwear — drops — fits',
-        brand_tagline: data.brand_tagline || 'Streetwear sin filtro. Drops reales, fits pesados y calidad para bancarla en la calle. No rules, solo estilo.',
+        brand_tagline:
+          data.brand_tagline ||
+          'Streetwear sin filtro. Drops reales, fits pesados y calidad para bancarla en la calle. No rules, solo estilo.',
+        share_description: data.share_description || DEFAULT_SHARE_DESCRIPTION,
         mercadopago_public_key: data.mercadopago_public_key || '',
         mercadopago_access_token: data.mercadopago_access_token || '',
         cvu: data.cvu || '',
         alias: data.alias || '',
         titular_cuenta: data.titular_cuenta || '',
         banco: data.banco || '',
-        maintenance_mode: data.maintenance_mode === 'true' || data.maintenance_mode === true, 
+        maintenance_mode: data.maintenance_mode === 'true' || data.maintenance_mode === true,
         banner_urls: parsedBannerUrls,
         envio_gratis_umbral: Number(data.envio_gratis_umbral ?? 50000),
         envio_gratis_forzado: data.envio_gratis_forzado === true || data.envio_gratis_forzado === 'true',
@@ -124,7 +130,6 @@ export default function ConfigurationPanel() {
         mensaje_sin_stock: data.mensaje_sin_stock || 'Producto sin stock',
         mensaje_carrito_vacio: data.mensaje_carrito_vacio || 'Tu carrito está vacío',
         mensaje_compra_exitosa: data.mensaje_compra_exitosa || '¡Gracias por tu compra!',
-        share_description: data.share_description || 'Redefiniendo el Streetwear. Tu estilo, sin límites. Descubrí los últimos drops y armá tu fit.',
         anuncio_1: data.anuncio_1 || '',
         anuncio_2: data.anuncio_2 || '',
         anuncio_3: data.anuncio_3 || '',
@@ -218,6 +223,21 @@ export default function ConfigurationPanel() {
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+    const maxSizeBytes = 2 * 1024 * 1024
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Formato de logo no permitido. Usa PNG, JPG o WEBP.')
+      e.target.value = ''
+      return
+    }
+
+    if (file.size > maxSizeBytes) {
+      toast.error('El logo es demasiado pesado. Máximo 2MB.')
+      e.target.value = ''
+      return
+    }
 
     setUploadingLogo(true)
     try {
@@ -338,7 +358,7 @@ export default function ConfigurationPanel() {
            </div>
         </div>
         
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div>
             <label className="block text-[10px] font-black mb-2 text-white/45 uppercase tracking-[0.28em] px-1">Nombre de la Tienda</label>
             <input
@@ -415,6 +435,34 @@ export default function ConfigurationPanel() {
                 <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} disabled={uploadingLogo} />
               </label>
             )}
+          </div>
+
+          <div className="mt-4 border border-white/10 rounded-2xl bg-white/[0.02] p-4">
+            <p className="text-[10px] font-black text-white/45 uppercase tracking-[0.28em] mb-3 px-1">Preview al compartir</p>
+            <div className="flex gap-3">
+              <div className="w-16 h-16 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                {config.logo_url ? (
+                  <img
+                    src={config.logo_url}
+                    alt="Preview logo"
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <span className="text-[10px] font-black text-white/40 tracking-[0.18em]">LOGO</span>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-white/60 mb-1 truncate">
+                  {config.nombre_tienda || 'URBAN'}
+                </p>
+                <p className="text-[11px] text-white/80 font-semibold leading-snug line-clamp-2">
+                  {config.share_description || DEFAULT_SHARE_DESCRIPTION}
+                </p>
+                <p className="mt-2 text-[10px] text-white/35 font-bold uppercase tracking-[0.22em]">
+                  {process.env.NEXT_PUBLIC_SITE_URL || 'urbancdg.vercel.app'}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -675,16 +723,6 @@ export default function ConfigurationPanel() {
               type="text"
               value={mensajes.mensaje_compra_exitosa}
               onChange={e => setMensajes({ ...mensajes, mensaje_compra_exitosa: e.target.value })}
-              className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl text-sm font-bold focus:border-accent/40 transition outline-none"
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-[10px] font-black mb-2 text-white/45 uppercase tracking-[0.28em] px-1">Descripción al Compartir (SEO)</label>
-            <input
-              type="text"
-              value={mensajes.share_description}
-              onChange={e => setMensajes({ ...mensajes, share_description: e.target.value })}
-              placeholder="Descripción corta que aparece al compartir el enlace de la tienda..."
               className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl text-sm font-bold focus:border-accent/40 transition outline-none"
             />
           </div>

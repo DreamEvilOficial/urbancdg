@@ -7,6 +7,8 @@ import DevToolsProtection from '@/components/DevToolsProtection'
 
 import { supabase } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 const urbanist = Urbanist({
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700'],
@@ -52,15 +54,17 @@ export async function generateMetadata(): Promise<Metadata> {
     console.error('Error fetching metadata:', e)
   }
 
-  // Ensure absolute URL for OG Image
-  const ogImageUrl = logoUrl.startsWith('http') 
-    ? logoUrl 
-    : `https://urbancdg.vercel.app${logoUrl.startsWith('/') ? '' : '/'}${logoUrl}`
+  const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'https://urbancdg.vercel.app'
+  const siteUrl = rawSiteUrl.endsWith('/') ? rawSiteUrl.slice(0, -1) : rawSiteUrl
+
+  const ogImageUrl = logoUrl.startsWith('http')
+    ? logoUrl
+    : `${siteUrl}${logoUrl.startsWith('/') ? '' : '/'}${logoUrl}`
 
   return {
     title,
     description,
-    metadataBase: new URL('https://urbancdg.vercel.app'),
+    metadataBase: new URL(siteUrl),
     openGraph: {
       title: `${title} | Streetwear & Drops`,
       description: shareDescription,
