@@ -241,7 +241,7 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
               {/* Playback Controls - Always Visible */}
               <div className="flex items-center justify-center gap-4">
                  <button 
-                   onClick={shuffle} 
+                   onClick={playRandomTrack} 
                    className={`p-2 rounded-full hover:bg-white/10 transition ${isDarkMode ? 'text-white/40 hover:text-white' : 'text-black/40 hover:text-black'}`} 
                    title="Aleatorio" 
                    aria-label="Reproducir aleatorio"
