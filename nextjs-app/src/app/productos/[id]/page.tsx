@@ -228,6 +228,7 @@ export default function ProductDetailPage() {
           {/* Details Section - Compacted and Shrunken by 20% */}
           <div className="lg:col-span-5 lg:col-offset-1 space-y-6">
             <div className="space-y-2">
+              <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase italic leading-none">{producto.nombre}</h1>
               {primaryDrop && (
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/40">
                   <span className="text-[8px] font-black text-accent tracking-[0.3em]">DROP</span>
@@ -236,7 +237,6 @@ export default function ProductDetailPage() {
                   </span>
                 </div>
               )}
-              <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase italic leading-none">{producto.nombre}</h1>
               <p className="text-white/45 text-[10px] font-bold uppercase tracking-widest">REF: {producto.slug?.toUpperCase()}</p>
             </div>
 
