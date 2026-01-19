@@ -72,31 +72,58 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-black relative z-10">
+    <div className="min-h-screen bg-[#020202] relative z-10 selection:bg-white/20 selection:text-white">
+      {/* 1. Fondo Ambiental con Profundidad */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        {/* Gradiente Superior Izquierdo - Azul Profundo */}
+        <div className="absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] bg-blue-900/10 rounded-full blur-[120px] mix-blend-screen opacity-40 animate-pulse-slow" />
+        
+        {/* Gradiente Inferior Derecho - Violeta/Púrpura */}
+        <div className="absolute -bottom-[20%] -right-[10%] w-[70vw] h-[70vw] bg-purple-900/10 rounded-full blur-[120px] mix-blend-screen opacity-40 animate-pulse-slow delay-1000" />
+        
+        {/* Luz Cenital Sutil */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[100vw] h-[50vh] bg-gradient-to-b from-white/[0.02] to-transparent blur-3xl" />
+        
+        {/* Textura de Ruido Sutil (Opcional, simulada con gradiente radial complejo) */}
+        <div className="absolute inset-0 bg-[radial-gradient(transparent_0%,#000_100%)] opacity-80" />
+      </div>
+
       <BannerSlider initialConfig={config} />
 
       <div className="relative z-20 -mt-10 md:-mt-16">
-        <div className="pointer-events-none absolute inset-x-0 -top-10 md:-top-16 h-16 bg-gradient-to-b from-transparent to-black" />
-        <div className="bg-black border-t border-white/10 rounded-t-[42px] md:rounded-t-[64px] shadow-[0_-20px_80px_-30px_rgba(0,0,0,0.7)] relative">
-          <div className="pointer-events-none absolute top-0 left-0 w-20 h-20 bg-black/40 blur-3xl rounded-br-full -z-10" />
-          <div className="pointer-events-none absolute top-0 right-0 w-20 h-20 bg-black/40 blur-3xl rounded-bl-full -z-10" />
+        {/* Transición Suave entre Banner y Contenido */}
+        <div className="pointer-events-none absolute inset-x-0 -top-32 h-32 bg-gradient-to-b from-transparent to-[#020202]" />
+        
+        {/* Contenedor Principal con Glassmorphism Avanzado */}
+        <div className="bg-[#050505]/80 backdrop-blur-[40px] border-t border-white/5 rounded-t-[42px] md:rounded-t-[64px] shadow-[0_-20px_80px_-30px_rgba(0,0,0,0.8)] relative overflow-hidden">
           
+          {/* Efectos de Iluminación Interna */}
+          <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-full h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          <div className="pointer-events-none absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-white/[0.01] to-transparent" />
+          
+          {/* Orbes de Luz Decorativos en el Contenedor */}
+          <div className="pointer-events-none absolute top-20 left-0 w-64 h-64 bg-blue-500/5 rounded-full blur-[80px]" />
+          <div className="pointer-events-none absolute top-40 right-0 w-64 h-64 bg-purple-500/5 rounded-full blur-[80px]" />
+
           {showTopPicks && <TopProducts products={topProducts} />}
 
           {sections.map((section: any) => (
-              <section key={section.id} className="reveal max-w-7xl mx-auto px-2 md:px-4 py-8 md:py-16">
-                <div className="text-center mb-8 md:mb-12">
-                  <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight flex items-center justify-center gap-1 md:gap-3 px-2 uppercase">
+              <section key={section.id} className="reveal max-w-7xl mx-auto px-2 md:px-4 py-8 md:py-16 relative">
+                {/* Separador Sutil entre Secciones */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+                
+                <div className="text-center mb-8 md:mb-12 relative z-10">
+                  <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight flex items-center justify-center gap-1 md:gap-3 px-2 uppercase drop-shadow-lg">
                     {section.gif_url && (
                       <img src={section.gif_url} alt="" width={64} height={64} className="w-8 h-8 md:w-16 md:h-16 flex-shrink-0 object-contain" />
                     )}
-                    <span className="text-center">{section.titulo}</span>
+                    <span className="text-center bg-clip-text text-transparent bg-gradient-to-b from-white to-white/70">{section.titulo}</span>
                     {section.gif_url && (
                       <img src={section.gif_url} alt="" width={64} height={64} className="w-8 h-8 md:w-16 md:h-16 flex-shrink-0 object-contain" />
                     )}
                   </h2>
-                  <div className="w-24 h-1 bg-white mx-auto"></div>
-                  {section.subtitulo && <p className="text-gray-400 mt-4">{section.subtitulo}</p>}
+                  <div className="w-24 h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent mx-auto"></div>
+                  {section.subtitulo && <p className="text-gray-400 mt-4 font-medium tracking-wide">{section.subtitulo}</p>}
                 </div>
                 
                 {section.productos.length > 0 ? (
@@ -108,6 +135,9 @@ export default async function Home() {
             ))}
 
           <Reviews />
+          
+          {/* Footer Blur Overlay para suavizar el final */}
+          <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-black to-transparent pointer-events-none" />
         </div>
       </div>
     </div>
