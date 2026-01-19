@@ -76,8 +76,8 @@ export default async function Home() {
       <BannerSlider initialConfig={config} />
 
       <div className="relative z-20 -mt-10 md:-mt-16">
-        <div className="pointer-events-none absolute inset-x-0 -top-10 md:-top-16 h-16 bg-gradient-to-b from-transparent to-[#05060a]" />
-        <div className="bg-[#06070c]/70 backdrop-blur-2xl border-t border-white/10 rounded-t-[42px] md:rounded-t-[64px] shadow-[0_-20px_80px_-30px_rgba(0,0,0,0.7)] relative">
+        <div className="pointer-events-none absolute inset-x-0 -top-10 md:-top-16 h-16 bg-gradient-to-b from-transparent to-black" />
+        <div className="bg-black border-t border-white/10 rounded-t-[42px] md:rounded-t-[64px] shadow-[0_-20px_80px_-30px_rgba(0,0,0,0.7)] relative">
           <div className="pointer-events-none absolute top-0 left-0 w-20 h-20 bg-black/40 blur-3xl rounded-br-full -z-10" />
           <div className="pointer-events-none absolute top-0 right-0 w-20 h-20 bg-black/40 blur-3xl rounded-bl-full -z-10" />
           
@@ -88,11 +88,11 @@ export default async function Home() {
                 <div className="text-center mb-8 md:mb-12">
                   <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight flex items-center justify-center gap-1 md:gap-3 px-2 uppercase">
                     {section.gif_url && (
-                      <Image src={section.gif_url} alt="" width={64} height={64} className="w-8 h-8 md:w-16 md:h-16 flex-shrink-0 object-contain" unoptimized />
+                      <img src={section.gif_url} alt="" width={64} height={64} className="w-8 h-8 md:w-16 md:h-16 flex-shrink-0 object-contain" />
                     )}
                     <span className="text-center">{section.titulo}</span>
                     {section.gif_url && (
-                      <Image src={section.gif_url} alt="" width={64} height={64} className="w-8 h-8 md:w-16 md:h-16 flex-shrink-0 object-contain" unoptimized />
+                      <img src={section.gif_url} alt="" width={64} height={64} className="w-8 h-8 md:w-16 md:h-16 flex-shrink-0 object-contain" />
                     )}
                   </h2>
                   <div className="w-24 h-1 bg-white mx-auto"></div>
