@@ -494,7 +494,7 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
                   {/* Filtros Especiales */}
                   {filtrosEspeciales.map((filtro) => {
                     let iconElement = null
-                    const clave = filtro.clave.toLowerCase().replace('/', '')
+                    const clave = filtro.clave.toLowerCase().replace('/', '').trim()
 
                     if (clave === 'descuentos' || clave === 'ofertas') {
                        iconElement = <img src="/discount-icon.gif" alt="Descuentos" className="w-5 h-5 object-contain" />
