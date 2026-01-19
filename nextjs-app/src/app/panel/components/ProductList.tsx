@@ -16,6 +16,7 @@ interface ProductListProps {
 export default function ProductList({ productos, categorias, drops, onEdit, onDelete, onNew }: ProductListProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('todos')
+  const [dropFilter, setDropFilter] = useState('todos')
   const [stockFilter, setStockFilter] = useState('todos') // todos, bajo, agotado
   const [statusFilter, setStatusFilter] = useState('todos') // todos, activos, inactivos
 
@@ -25,6 +26,12 @@ export default function ProductList({ productos, categorias, drops, onEdit, onDe
                           (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()))
     const matchesCategory = categoryFilter === 'todos' || p.categoria_id === categoryFilter
     
+    let matchesDrop = true
+    if (dropFilter !== 'todos') {
+      const pDrops = (p as any).drops || []
+      matchesDrop = pDrops.some((d: any) => d.id === dropFilter)
+    }
+    
     let matchesStock = true
     if (stockFilter === 'bajo') matchesStock = (p.stock_actual || 0) > 0 && (p.stock_actual || 0) < 5
     if (stockFilter === 'agotado') matchesStock = (p.stock_actual || 0) <= 0
@@ -33,7 +40,7 @@ export default function ProductList({ productos, categorias, drops, onEdit, onDe
     if (statusFilter === 'activos') matchesStatus = !!p.activo
     if (statusFilter === 'inactivos') matchesStatus = !p.activo
 
-    return matchesSearch && matchesCategory && matchesStock && matchesStatus
+    return matchesSearch && matchesCategory && matchesDrop && matchesStock && matchesStatus
   })
 
   return (
@@ -68,6 +75,7 @@ export default function ProductList({ productos, categorias, drops, onEdit, onDe
             onClick={() => {
               setSearchTerm('')
               setCategoryFilter('todos')
+              setDropFilter('todos')
               setStockFilter('todos')
               setStatusFilter('todos')
             }}
@@ -299,6 +307,19 @@ export default function ProductList({ productos, categorias, drops, onEdit, onDe
                       <span className="px-2 py-1 text-[8px] font-black uppercase tracking-[0.32em] rounded-full bg-white/[0.03] text-white/60 border border-white/10">
                         {categorias.find(c => c.id === producto.categoria_id)?.nombre || 'General'}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {Array.isArray((producto as any).drops) && (producto as any).drops.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {(producto as any).drops.map((d: any) => (
+                            <span key={d.id} className="px-2 py-1 text-[8px] font-black uppercase tracking-wider rounded-lg bg-accent/10 text-accent border border-accent/40">
+                              {d.nombre}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-[9px] font-bold text-white/20 uppercase tracking-wider">-</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex flex-col">
