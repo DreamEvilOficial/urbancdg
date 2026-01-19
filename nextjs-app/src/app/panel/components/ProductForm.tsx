@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, Upload, Plus, Trash2 } from 'lucide-react'
-import { Producto, supabase } from '@/lib/supabase'
+import { Producto, Drop, supabase } from '@/lib/supabase'
 import { formatPrice, toNumber } from '@/lib/formatters'
 import toast from 'react-hot-toast'
 import NextImage from 'next/image'
@@ -9,11 +9,12 @@ interface ProductFormProps {
   producto?: Producto | null
   categorias: any[]
   etiquetas: any[]
+  drops?: Drop[]
   onSave: (data: any) => Promise<void>
   onCancel: () => void
 }
 
-export default function ProductForm({ producto, categorias, etiquetas, onSave, onCancel }: ProductFormProps) {
+export default function ProductForm({ producto, categorias, etiquetas, drops, onSave, onCancel }: ProductFormProps) {
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   
@@ -38,7 +39,8 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
     proveedor_nombre: '',
     proveedor_contacto: '',
     precio_costo: '',
-    fecha_lanzamiento: ''
+    fecha_lanzamiento: '',
+    drop_ids: [] as string[]
   })
 
   useEffect(() => {
@@ -68,7 +70,8 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
         proveedor_nombre: producto.proveedor_nombre || '',
         proveedor_contacto: producto.proveedor_contacto || '',
         precio_costo: formatPrice(producto.precio_costo),
-        fecha_lanzamiento: producto.fecha_lanzamiento ? new Date(producto.fecha_lanzamiento).toISOString().slice(0, 16) : ''
+        fecha_lanzamiento: producto.fecha_lanzamiento ? new Date(producto.fecha_lanzamiento).toISOString().slice(0, 16) : '',
+        drop_ids: (producto.drops || []).map(d => d.id)
       })
     }
   }, [producto])
@@ -339,6 +342,56 @@ export default function ProductForm({ producto, categorias, etiquetas, onSave, o
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Asignación de Drops */}
+              <div className="p-6 bg-[#111] rounded-3xl border border-white/5 space-y-4">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Asignar a Drops</h4>
+                {drops && drops.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                    {drops.map(drop => (
+                      <label key={drop.id} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                        formData.drop_ids.includes(drop.id) 
+                          ? 'bg-accent/10 border-accent/30' 
+                          : 'bg-black border-white/5 hover:bg-white/5'
+                      }`}>
+                        <input
+                          type="checkbox"
+                          checked={formData.drop_ids.includes(drop.id)}
+                          onChange={(e) => {
+                            const checked = e.target.checked
+                            setFormData(prev => ({
+                              ...prev,
+                              drop_ids: checked 
+                                ? [...prev.drop_ids, drop.id]
+                                : prev.drop_ids.filter(id => id !== drop.id)
+                            }))
+                          }}
+                          className="hidden"
+                        />
+                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                          formData.drop_ids.includes(drop.id)
+                            ? 'bg-accent border-accent text-black'
+                            : 'border-white/20'
+                        }`}>
+                          {formData.drop_ids.includes(drop.id) && <span className="text-[10px]">✓</span>}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs font-bold truncate ${formData.drop_ids.includes(drop.id) ? 'text-accent' : 'text-white'}`}>
+                            {drop.nombre}
+                          </p>
+                          {drop.fecha_lanzamiento && (
+                            <p className="text-[9px] text-white/40 font-mono mt-0.5">
+                              {new Date(drop.fecha_lanzamiento).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-white/30 italic">No hay drops disponibles. Crea uno primero en la sección Drops.</p>
+                )}
               </div>
 
               {/* Visibilidad y Lanzamiento */}

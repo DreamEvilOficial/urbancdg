@@ -1,18 +1,19 @@
 import { useState } from 'react'
 import { formatPrice } from '@/lib/formatters'
 import { Plus, Edit, Trash2, Search, Filter } from 'lucide-react'
-import { Producto } from '@/lib/supabase'
+import { Producto, Drop } from '@/lib/supabase'
 import NextImage from 'next/image'
 
 interface ProductListProps {
   productos: Producto[]
   categorias: any[]
+  drops?: Drop[]
   onEdit: (producto: Producto) => void
   onDelete: (id: string) => void
   onNew: () => void
 }
 
-export default function ProductList({ productos, categorias, onEdit, onDelete, onNew }: ProductListProps) {
+export default function ProductList({ productos, categorias, drops, onEdit, onDelete, onNew }: ProductListProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('todos')
   const [stockFilter, setStockFilter] = useState('todos') // todos, bajo, agotado
@@ -196,6 +197,11 @@ export default function ProductList({ productos, categorias, onEdit, onDelete, o
                           <span className="px-2 py-1 text-[8px] font-black uppercase tracking-wider rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">En Venta</span>
                        ) : (
                           <span className="px-2 py-1 text-[8px] font-black uppercase tracking-wider rounded-lg bg-red-500/10 text-red-400 border border-red-500/20">Pausado</span>
+                       )}
+                       {Array.isArray((producto as any).drops) && (producto as any).drops.length > 0 && (
+                         <span className="px-2 py-1 text-[8px] font-black uppercase tracking-wider rounded-lg bg-accent/10 text-accent border border-accent/40">
+                           {(producto as any).drops[0].nombre}
+                         </span>
                        )}
                     </div>
 

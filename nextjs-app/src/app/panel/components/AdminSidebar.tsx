@@ -15,7 +15,8 @@ import {
   X,
   BarChart3,
   Truck,
-  Tag
+  Tag,
+  Flame
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { authAPI } from "@/lib/supabase";
@@ -141,6 +142,13 @@ export default function AdminSidebar({
               id="productos"
               icon={Package}
               label="Productos"
+              activeTab={activeTab}
+              setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
+            />
+            <SidebarItem
+              id="drops"
+              icon={Flame}
+              label="Drops"
               activeTab={activeTab}
               setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
             />

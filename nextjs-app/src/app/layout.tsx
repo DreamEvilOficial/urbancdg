@@ -33,14 +33,20 @@ export async function generateMetadata(): Promise<Metadata> {
     
     if (data) {
       const config = data.reduce((acc: any, item: any) => {
-        acc[item.clave] = item.valor
+        let value: any = item.valor
+        if (typeof value === 'string') {
+          try {
+            value = JSON.parse(value)
+          } catch {}
+        }
+        acc[item.clave] = value
         return acc
       }, {})
 
-      if (config.nombre_tienda) title = config.nombre_tienda
-      if (config.lema_tienda) description = config.lema_tienda
-      if (config.share_description) shareDescription = config.share_description
-      if (config.logo_url) logoUrl = config.logo_url
+      if (typeof config.nombre_tienda === 'string' && config.nombre_tienda) title = config.nombre_tienda
+      if (typeof config.lema_tienda === 'string' && config.lema_tienda) description = config.lema_tienda
+      if (typeof config.share_description === 'string' && config.share_description) shareDescription = config.share_description
+      if (typeof config.logo_url === 'string' && config.logo_url) logoUrl = config.logo_url
     }
   } catch (e) {
     console.error('Error fetching metadata:', e)

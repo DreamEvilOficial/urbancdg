@@ -50,6 +50,20 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         dimensiones: product.dimensiones ? (typeof product.dimensiones === 'string' ? JSON.parse(product.dimensiones) : product.dimensiones) : null,
         metadata: product.metadata ? (typeof product.metadata === 'string' ? JSON.parse(product.metadata) : product.metadata) : null,
     };
+
+    try {
+        const drops = await db.all(
+            `SELECT d.* 
+             FROM producto_drops pd
+             JOIN drops d ON d.id = pd.drop_id
+             WHERE pd.producto_id = ?
+             ORDER BY d.fecha_lanzamiento DESC, d.created_at DESC`,
+            [id]
+        );
+        (parsedProduct as any).drops = drops || [];
+    } catch {
+        (parsedProduct as any).drops = [];
+    }
     
     // Backend Auto-Unlock Logic REMOVED
     // We maintain the flag in DB.
@@ -73,9 +87,13 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // 2. Build dynamic update query
     const body = await req.json();
     const { id: bodyId, ...updates } = body;
+
+    const dropIds = Array.isArray((updates as any).drop_ids)
+        ? (updates as any).drop_ids.filter((d: any) => typeof d === 'string' && d)
+        : undefined;
+    delete (updates as any).drop_ids;
 
     // Get current product state to check for status changes
     const currentProduct = await db.get('SELECT * FROM productos WHERE id = ?', [id]) as any;
@@ -219,14 +237,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     try {
         // Primero intentamos con transacción si el pool está disponible
         await db.transaction(async (tx) => {
-            // Update Product
             const result = await db.run(`UPDATE productos SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, values, tx);
             
             if (result.changes === 0) {
                  throw new Error('PRODUCT_NOT_FOUND');
             }
 
-            // Sync variants table if variants are provided
             if (updates.variantes) {
                 try {
                     await syncVariants(db, id, updates.variantes, tx);
@@ -236,7 +252,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
                 }
             }
 
-            // Log operation (Intentamos insertar log, pero no fallamos si falla el log)
+            if (dropIds) {
+                await syncProductDrops(db, id, dropIds, tx);
+            }
+
             try {
                 await db.run(`INSERT INTO admin_logs (action, details, target_id) VALUES (?, ?, ?)`, 
                     ['PRODUCT_UPDATE', logDetails, id], tx);
@@ -416,43 +435,56 @@ async function syncVariants(db: any, productId: string, variantsInput: any, tx: 
             // Upsert using ? placeholders for compatibility
             const sql = `
                 INSERT INTO variantes (producto_id, talle, color, color_hex, stock, sku, imagen_url, activo, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, true, CURRENT_TIMESTAMP)
-                ON CONFLICT (producto_id, talle, color_hex) DO UPDATE SET
-                    stock = EXCLUDED.stock,
-                    color = EXCLUDED.color,
-                    imagen_url = EXCLUDED.imagen_url,
-                    activo = true,
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(producto_id, talle, color_hex) 
+                DO UPDATE SET 
+                    stock = excluded.stock,
+                    sku = excluded.sku,
+                    imagen_url = excluded.imagen_url,
+                    activo = excluded.activo,
                     updated_at = CURRENT_TIMESTAMP
             `;
-            const params = [productId, v.talle, colorName, colorHex, stock, sku, imagenUrl];
-
-            if (tx) {
-                await db.run(sql, params, tx);
-            } else {
-                await db.run(sql, params);
-            }
             
-            validKeys.push({ talle: v.talle, hex: colorHex });
+            await db.run(sql, [productId, v.talle, colorName, colorHex, stock, sku, imagenUrl, true], tx);
+            
+            // Track valid keys to delete others later
+            validKeys.push({ talle: v.talle, color_hex: colorHex });
         }
 
+        // Delete variants that are not in the update list
+        // Note: SQLite doesn't support complex WHERE (a,b) NOT IN ((x,y),...) easily.
+        // We'll construct a condition.
         if (validKeys.length > 0) {
-            // Use ? placeholders for DELETE condition too
-            const conditions = validKeys.map(() => `NOT (talle = ? AND color_hex = ?)`).join(' AND ');
-            const params = [productId, ...validKeys.flatMap(k => [k.talle, k.hex])];
-            const sql = `DELETE FROM variantes WHERE producto_id = ? AND (${conditions})`;
-            
-            if (tx) {
-                await db.run(sql, params, tx);
-            } else {
-                await db.run(sql, params);
-            }
+             const conditions = validKeys.map(() => `NOT (talle = ? AND color_hex = ?)`).join(' AND ');
+             const params = validKeys.flatMap(k => [k.talle, k.color_hex]);
+             await db.run(`DELETE FROM variantes WHERE producto_id = ? AND (${conditions})`, [productId, ...params], tx);
         } else {
-            const sql = 'DELETE FROM variantes WHERE producto_id = ?';
-            if (tx) {
-                await db.run(sql, [productId], tx);
-            } else {
-                await db.run(sql, [productId]);
-            }
+             // If input array was empty (but valid array), delete all?
+             // Logic above "if (!v.talle || !v.color) continue" might result in empty validKeys even if input not empty.
+             // If validKeys is empty, it means no valid variants remaining.
+             await db.run('DELETE FROM variantes WHERE producto_id = ?', [productId], tx);
         }
     }
 }
+
+// Helper function to sync product drops
+async function syncProductDrops(db: any, productId: string, dropIds: string[], tx: any) {
+    // 1. Delete existing associations
+    await db.run('DELETE FROM producto_drops WHERE producto_id = ?', [productId], tx);
+
+    if (!dropIds || dropIds.length === 0) {
+        return;
+    }
+
+    // 2. Insert new ones
+    for (const dropId of dropIds) {
+        await db.run(
+            `INSERT INTO producto_drops (producto_id, drop_id)
+             VALUES (?, ?)
+             ON CONFLICT (producto_id, drop_id) DO NOTHING`,
+            [productId, dropId],
+            tx
+        );
+    }
+}
+

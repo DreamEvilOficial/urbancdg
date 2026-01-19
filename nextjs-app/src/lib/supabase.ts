@@ -53,6 +53,19 @@ export interface Producto {
   metadata?: any
   created_at: string
   updated_at?: string
+  drops?: Drop[]
+}
+
+export interface Drop {
+  id: string
+  nombre: string
+  slug: string
+  fecha_lanzamiento?: string
+  descripcion?: string
+  imagen_url?: string
+  activo: boolean
+  created_at?: string
+  updated_at?: string
 }
 
 export interface Categoria {

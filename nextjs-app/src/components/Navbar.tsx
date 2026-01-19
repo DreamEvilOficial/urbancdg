@@ -5,7 +5,6 @@ import { useCartStore } from '@/store/cartStore'
 import { ShoppingCart, ChevronDown, ChevronRight, Home, MessageCircle, Music2, Truck } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CategoryIcon } from './IconSelector'
@@ -348,11 +347,11 @@ export default function Navbar() {
                 if (iconToUse) {
                   iconElement = <img src={iconToUse} alt={filtro.nombre} className="w-5 h-5 object-contain" />
                 } else if (filtro.clave === 'descuentos' || filtro.clave === 'Descuentos') {
-                  iconElement = <Image src="/discount-icon.gif" alt="Descuento" width={20} height={20} className="w-5 h-5" unoptimized />
+                  iconElement = <img src="/discount-icon.gif?v=2" alt="Descuento" className="w-5 h-5 object-contain" />
                 } else if (filtro.clave === 'nuevos' || filtro.clave === 'Nuevos' || filtro.clave === 'nuevos-ingresos') {
-                  iconElement = <Image src="/new-label.gif" alt="Nuevo" width={20} height={20} className="w-5 h-5" unoptimized />
+                  iconElement = <img src="/new-label.gif?v=2" alt="Nuevo" className="w-5 h-5 object-contain" />
                 } else if (filtro.clave === 'proximamente' || filtro.clave === 'Proximamente') {
-                  iconElement = <Image src="/fire.gif" alt="Próximamente" width={20} height={20} className="w-5 h-5" unoptimized />
+                  iconElement = <img src="/fire.gif?v=2" alt="Próximamente" className="w-5 h-5 object-contain" />
                 } else {
                   iconElement = <span className="text-base">{filtro.icono || '🏷️'}</span>
                 }
@@ -452,11 +451,11 @@ export default function Navbar() {
                   if (iconToUse) {
                     iconElement = <img src={iconToUse} alt={filtro.nombre} className="w-5 h-5 object-contain" />
                   } else if (filtro.clave === 'descuentos' || filtro.clave === 'Descuentos') {
-                    iconElement = <Image src="/discount-icon.gif" alt="Descuento" width={20} height={20} className="w-5 h-5" unoptimized />
+                    iconElement = <img src="/discount-icon.gif?v=2" alt="Descuento" className="w-5 h-5 object-contain" />
                   } else if (filtro.clave === 'nuevos' || filtro.clave === 'Nuevos' || filtro.clave === 'nuevos-ingresos') {
-                    iconElement = <Image src="/new-label.gif" alt="Nuevo" width={20} height={20} className="w-5 h-5" unoptimized />
+                    iconElement = <img src="/new-label.gif?v=2" alt="Nuevo" className="w-5 h-5 object-contain" />
                   } else if (filtro.clave === 'proximamente' || filtro.clave === 'Proximamente') {
-                    iconElement = <Image src="/fire.gif" alt="Próximamente" width={20} height={20} className="w-5 h-5" unoptimized />
+                    iconElement = <img src="/fire.gif?v=2" alt="Próximamente" className="w-5 h-5 object-contain" />
                   } else {
                     iconElement = <span className="text-base">{filtro.icono || '🏷️'}</span>
                   }

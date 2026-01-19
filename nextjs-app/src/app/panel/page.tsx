@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { productosAPI, categoriasAPI, etiquetasAPI, supabase, type Producto } from '@/lib/supabase'
+import { productosAPI, categoriasAPI, etiquetasAPI, supabase, type Producto, type Drop } from '@/lib/supabase'
 import { toNumber } from '@/lib/formatters'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
@@ -25,6 +25,7 @@ import InventoryReport from './components/InventoryReport'
 import StatsDashboard from './components/StatsDashboard'
 import ShippingManagement from './components/ShippingManagement'
 import CouponManagement from './components/CouponManagement'
+import DropsManagement from './components/DropsManagement'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -59,6 +60,7 @@ export default function AdminPage() {
   const [productos, setProductos] = useState<Producto[]>([])
   const [categorias, setCategorias] = useState<any[]>([])
   const [etiquetas, setEtiquetas] = useState<any[]>([])
+  const [drops, setDrops] = useState<Drop[]>([])
   
   // UI State
   const [showProductForm, setShowProductForm] = useState(false)
@@ -85,7 +87,7 @@ export default function AdminPage() {
     const allowedTabs: string[] = []
 
     if (permissions.catalog) {
-      allowedTabs.push('home', 'productos', 'categorias', 'destacados', 'filtros')
+      allowedTabs.push('home', 'productos', 'drops', 'categorias', 'destacados', 'filtros')
     }
 
     if (permissions.sales) {
@@ -141,16 +143,21 @@ export default function AdminPage() {
       const prodsPromise = productosAPI.obtenerTodosAdmin()
       const catsPromise = categoriasAPI.obtenerTodas()
       const tagsPromise = etiquetasAPI.obtenerTodas()
+      const dropsPromise = fetch('/api/drops').then(res => {
+        if (!res.ok) throw new Error('Error drops')
+        return res.json()
+      })
       const configPromise = fetch('/api/config').then(res => {
         if (!res.ok) throw new Error('Error configs')
         return res.json()
       })
 
       // Usar allSettled para que si falla uno no falle todo
-      const [prodsRes, catsRes, tagsRes, configRes] = await Promise.allSettled([
+      const [prodsRes, catsRes, tagsRes, dropsRes, configRes] = await Promise.allSettled([
         prodsPromise,
         catsPromise,
         tagsPromise,
+        dropsPromise,
         configPromise
       ])
 
@@ -172,6 +179,10 @@ export default function AdminPage() {
       if (tagsRes.status === 'fulfilled') {
         const tags = tagsRes.value; // API returns directly array
         setEtiquetas(tags)
+      }
+
+      if (dropsRes.status === 'fulfilled') {
+        setDrops(dropsRes.value)
       }
       
       if (configRes.status === 'fulfilled') {
@@ -251,7 +262,8 @@ export default function AdminPage() {
         precio_costo: data.precio_costo ? toNumber(data.precio_costo) : undefined,
         slug,
         stock_actual: totalStock,
-        activo: true
+        activo: true,
+        drop_ids: Array.isArray(data.drop_ids) ? data.drop_ids : []
       }
 
       if (editingProduct) {
@@ -443,6 +455,7 @@ export default function AdminPage() {
                 producto={editingProduct}
                 categorias={categorias}
                 etiquetas={etiquetas}
+                drops={drops}
                 onSave={handleSaveProduct}
                 onCancel={() => {
                   setShowProductForm(false)
@@ -453,6 +466,7 @@ export default function AdminPage() {
               <ProductList 
                 productos={productos}
                 categorias={categorias}
+                drops={drops}
                 onEdit={(p) => {
                   setEditingProduct(p)
                   setShowProductForm(true)
@@ -468,6 +482,10 @@ export default function AdminPage() {
 
           {activeTab === 'destacados' && permissions.catalog && (
             <FeaturedProductsManagement />
+          )}
+
+          {activeTab === 'drops' && permissions.catalog && (
+            <DropsManagement />
           )}
 
           {activeTab === 'categorias' && permissions.catalog && (

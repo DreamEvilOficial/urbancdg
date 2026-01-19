@@ -45,7 +45,6 @@ export async function GET(request: Request) {
             `, [id]);
             if (!product) return NextResponse.json(null);
 
-            // Fetch real-time variants from dedicated table
             const variants = await db.all('SELECT * FROM variantes WHERE producto_id = ? AND activo = true', [id]);
             const normalized = normalizeProduct(product);
             if (variants && variants.length > 0) {
@@ -55,6 +54,21 @@ export async function GET(request: Request) {
                     color: v.color_hex 
                 }));
             }
+
+            try {
+                const drops = await db.all(
+                    `SELECT d.* 
+                     FROM producto_drops pd
+                     JOIN drops d ON d.id = pd.drop_id
+                     WHERE pd.producto_id = ?
+                     ORDER BY d.fecha_lanzamiento DESC, d.created_at DESC`,
+                    [id]
+                );
+                (normalized as any).drops = drops || [];
+            } catch (e) {
+                (normalized as any).drops = [];
+            }
+
             return NextResponse.json(normalized);
         }
 
@@ -70,7 +84,6 @@ export async function GET(request: Request) {
             `, [slug]);
             if (!product) return NextResponse.json([]);
             
-            // Fetch real-time variants from dedicated table
             const variants = await db.all('SELECT * FROM variantes WHERE producto_id = ? AND activo = true', [product.id]);
             const normalized = normalizeProduct(product);
             if (variants && variants.length > 0) {
@@ -80,6 +93,21 @@ export async function GET(request: Request) {
                     color: v.color_hex
                 }));
             }
+
+            try {
+                const drops = await db.all(
+                    `SELECT d.* 
+                     FROM producto_drops pd
+                     JOIN drops d ON d.id = pd.drop_id
+                     WHERE pd.producto_id = ?
+                     ORDER BY d.fecha_lanzamiento DESC, d.created_at DESC`,
+                    [product.id]
+                );
+                (normalized as any).drops = drops || [];
+            } catch (e) {
+                (normalized as any).drops = [];
+            }
+
             return NextResponse.json([normalized]);
         }
 
@@ -121,19 +149,30 @@ export async function GET(request: Request) {
 
         const products = await db.all(sql, params);
         
-        // Normalizar campos JSON si vienen como string (por compatibilidad)
         const normalized = products.map(p => {
             const n = normalizeProduct(p);
-            
-            // Backend Auto-Unlock Logic REMOVED per user request
-            // We keep the flags in DB so admin can manage them manually.
-            // Frontend handles the "buyability" based on time comparison.
-
             if (n && n.nombre.toUpperCase().includes('ADIDAS')) {
                 console.log(`[DEBUG ADIDAS] ID: ${n.id}, AVG: ${n.avg_rating}, COUNT: ${n.review_count}, RawAVG: ${p.avg_rating}`);
             }
             return n;
         });
+
+        const withIds = normalized.filter(p => p && p.id);
+        for (const p of withIds) {
+            try {
+                const drops = await db.all(
+                    `SELECT d.* 
+                     FROM producto_drops pd
+                     JOIN drops d ON d.id = pd.drop_id
+                     WHERE pd.producto_id = ?
+                     ORDER BY d.fecha_lanzamiento DESC, d.created_at DESC`,
+                    [p.id]
+                );
+                (p as any).drops = drops || [];
+            } catch {
+                (p as any).drops = [];
+            }
+        }
 
         return NextResponse.json(normalized);
     } catch (error: any) {
@@ -155,6 +194,9 @@ export async function POST(request: Request) {
 
         const body = await request.json();
         const id = body.id || uuidv4();
+        const dropIds = Array.isArray(body.drop_ids)
+            ? body.drop_ids.filter((d: any) => typeof d === 'string' && d)
+            : [];
         
         // Sanitización de inputs
         const nombreSafe = sanitizeInput(body.nombre || '');
@@ -277,14 +319,25 @@ export async function POST(request: Request) {
                     validKeys.push({ talle: v.talle, hex: colorHex });
                 }
 
-                // 2. Deactivate/Delete variants not in the list
                 if (validKeys.length > 0) {
-                    const conditions = validKeys.map((_, i) => `NOT (talle = $${i*2 + 2} AND color_hex = $${i*2 + 3})`).join(' AND ');
-                    const params = [id, ...validKeys.flatMap(k => [k.talle, k.hex])];
-                    await db.run(`DELETE FROM variantes WHERE producto_id = $1 AND (${conditions})`, params, tx);
+                    const conditions = validKeys.map(() => `NOT (talle = ? AND color_hex = ?)`).join(' AND ');
+                    const deleteParams = [id, ...validKeys.flatMap(k => [k.talle, k.hex])];
+                    await db.run(`DELETE FROM variantes WHERE producto_id = ? AND (${conditions})`, deleteParams, tx);
                 } else {
-                    // If empty list provided (but array exists), delete all
                     await db.run('DELETE FROM variantes WHERE producto_id = ?', [id], tx);
+                }
+            }
+
+            if (dropIds) {
+                await db.run('DELETE FROM producto_drops WHERE producto_id = ?', [id], tx);
+                for (const dropId of dropIds) {
+                    await db.run(
+                        `INSERT INTO producto_drops (producto_id, drop_id) 
+                         VALUES (?, ?)
+                         ON CONFLICT (producto_id, drop_id) DO NOTHING`,
+                        [id, dropId],
+                        tx
+                    );
                 }
             }
         });
