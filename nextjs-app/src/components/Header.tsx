@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ShoppingCart, Bookmark, ChevronDown, Home, Menu, X, Search, Music2 } from 'lucide-react'
 import dynamic from 'next/dynamic'
@@ -330,14 +331,14 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
                 {/* Special Filters */}
                 {filtrosEspeciales.filter(f => f.activo).slice(0, 6).map((filtro) => {
                   let iconElement = null
-                  const clave = filtro.clave.toLowerCase().replace('/', '')
+                  const clave = filtro.clave.toLowerCase().replace('/', '').trim()
                   
                   if (clave === 'descuentos' || clave === 'ofertas') {
-                      iconElement = <img src="/discount-icon.gif" alt="Descuentos" className="w-6 h-6 object-contain" />
+                      iconElement = <Image src="/discount-icon.gif" alt="Descuentos" width={24} height={24} className="w-6 h-6 object-contain" unoptimized />
                    } else if (clave === 'nuevos' || clave === 'nuevos-ingresos') {
-                      iconElement = <img src="/new-label.gif" alt="Nuevos" className="w-6 h-6 object-contain" />
+                      iconElement = <Image src="/new-label.gif" alt="Nuevos" width={24} height={24} className="w-6 h-6 object-contain" unoptimized />
                    } else if (clave === 'proximamente') {
-                      iconElement = <img src="/fire.gif" alt="Próximamente" className="w-6 h-6 object-contain" />
+                      iconElement = <Image src="/fire.gif" alt="Próximamente" width={24} height={24} className="w-6 h-6 object-contain" unoptimized />
                    } else if (filtro.imagen_url) {
                     iconElement = (
                       <div className="relative w-6 h-6 flex-shrink-0">
