@@ -337,31 +337,15 @@ export default function ProductDetailPage() {
                   <div>
                     <h3 className="text-xl font-black text-white uppercase tracking-widest mb-2">Próximamente</h3>
                     <p className="text-white/40 text-xs font-medium max-w-[250px] mx-auto">
-                      Este producto aún no está disponible para la venta. Dejanos tu email y te avisamos cuando llegue.
+                      Este producto aún no está disponible para la venta.
                     </p>
                   </div>
 
-                  {!notified ? (
-                    <form onSubmit={handleNotify} className="flex gap-2 max-w-sm mx-auto">
-                      <input 
-                        type="email" 
-                        placeholder="tu@email.com" 
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder:text-white/20 outline-none focus:border-accent/50 transition-colors"
-                      />
-                      <button type="submit" className="bg-white text-black px-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-white/90 transition-colors">
-                        Avísame
-                      </button>
-                    </form>
-                  ) : (
-                    <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 inline-block">
-                      <p className="text-green-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                        <ShieldCheck className="w-4 h-4" />
-                        ¡Te avisaremos!
-                      </p>
-                    </div>
-                  )}
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-4 inline-block">
+                    <p className="text-white/60 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                      SIN STOCK
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <>
