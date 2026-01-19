@@ -259,6 +259,7 @@ export default function ProductList({ productos, categorias, drops, onEdit, onDe
               <tr>
                 <th className="px-4 py-3 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em]">Producto</th>
                 <th className="px-4 py-3 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em]">Tipo</th>
+                <th className="px-4 py-3 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em]">Drop</th>
                 <th className="px-4 py-3 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em] whitespace-nowrap">Precio Venta</th>
                 <th className="px-4 py-3 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em] whitespace-nowrap">Disponibilidad</th>
                 <th className="px-4 py-3 text-left text-[10px] font-black text-white/45 uppercase tracking-[0.35em]">Estado</th>
@@ -401,7 +402,7 @@ export default function ProductList({ productos, categorias, drops, onEdit, onDe
                 })
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-8 py-20 text-center">
+                  <td colSpan={7} className="px-8 py-20 text-center">
                     <div className="flex flex-col items-center gap-4">
                       <div className="w-16 h-16 bg-white/[0.03] rounded-full flex items-center justify-center border border-white/10">
                         <Filter className="w-8 h-8 text-white/15" />
