@@ -451,15 +451,11 @@ export default function ConfigurationPanel() {
             <p className="text-[10px] font-black text-white/45 uppercase tracking-[0.28em] mb-3 px-1">Preview al compartir</p>
             <div className="flex gap-3">
               <div className="w-16 h-16 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
-                {config.logo_url ? (
-                  <img
-                    src={config.logo_url}
-                    alt="Preview logo"
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <span className="text-[10px] font-black text-white/40 tracking-[0.18em]">LOGO</span>
-                )}
+                <img
+                  src="/publicsite.png"
+                  alt="Preview compartir"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-white/60 mb-1 truncate">

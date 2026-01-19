@@ -26,6 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
   let description = 'Redefiniendo el Streetwear. Tu estilo, sin límites.'
   let shareDescription = 'Redefiniendo el Streetwear. Tu estilo, sin límites. Descubrí los últimos drops y armá tu fit.'
   let logoUrl = '/urban.png'
+  let shareImagePath = '/publicsite.png'
 
   try {
     const client = supabaseAdmin || supabase
@@ -33,7 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
     const { data } = await client
       .from('configuracion')
       .select('clave, valor')
-      .in('clave', ['nombre_tienda', 'lema_tienda', 'share_description', 'logo_url'])
+      .in('clave', ['nombre_tienda', 'lema_tienda', 'share_description', 'logo_url', 'share_image_url'])
     
     if (data) {
       const config = data.reduce((acc: any, item: any) => {
@@ -51,6 +52,7 @@ export async function generateMetadata(): Promise<Metadata> {
       if (typeof config.lema_tienda === 'string' && config.lema_tienda) description = config.lema_tienda
       if (typeof config.share_description === 'string' && config.share_description) shareDescription = config.share_description
       if (typeof config.logo_url === 'string' && config.logo_url) logoUrl = config.logo_url
+      if (typeof config.share_image_url === 'string' && config.share_image_url) shareImagePath = config.share_image_url
     }
   } catch (e) {
     console.error('Error fetching metadata:', e)
@@ -59,9 +61,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'https://urbancdg.vercel.app'
   const siteUrl = rawSiteUrl.endsWith('/') ? rawSiteUrl.slice(0, -1) : rawSiteUrl
 
-  const normalizedLogoUrl = logoUrl || '/urban.png'
-  const isSvgLogo = normalizedLogoUrl.toLowerCase().endsWith('.svg')
-  const ogBasePath = isSvgLogo ? '/urban.png' : normalizedLogoUrl
+  const normalizedSharePath = shareImagePath || '/publicsite.png'
+  const isSvgShare = normalizedSharePath.toLowerCase().endsWith('.svg')
+  const ogBasePath = isSvgShare ? '/publicsite.png' : normalizedSharePath
 
   const ogImageUrl = ogBasePath.startsWith('http')
     ? ogBasePath
