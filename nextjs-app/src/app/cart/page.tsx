@@ -28,12 +28,6 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-transparent text-white selection:bg-white selection:text-black flex flex-col relative z-10">
-      {/* Background Decor */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-40">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-accent2/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent/10 rounded-full blur-[120px]" />
-      </div>
-
       <div className="max-w-6xl mx-auto w-full px-4 md:px-6 relative z-10 flex flex-col flex-1 pb-10">
         {/* Compact Header */}
         <div className="pt-8 pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">

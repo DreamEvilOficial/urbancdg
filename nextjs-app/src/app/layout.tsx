@@ -66,6 +66,8 @@ export const viewport: Viewport = {
   maximumScale: 1,
 }
 
+import BackgroundEffect from '@/components/BackgroundEffect'
+
 export default function RootLayout({
   children,
 }: {
@@ -73,7 +75,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" suppressHydrationWarning className="h-full">
-      <body className={`${urbanist.variable} ${bebasNeue.variable} h-full font-sans antialiased`}>
+      <body className={`${urbanist.variable} ${bebasNeue.variable} h-full font-sans antialiased bg-[#020202]`}>
+        <BackgroundEffect />
         <ClientLayout>
           {children}
         </ClientLayout>
