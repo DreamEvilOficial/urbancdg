@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { productosAPI, type Producto } from '@/lib/supabase'
 import { useCartStore } from '@/store/cartStore'
-import { ShoppingBag, ChevronLeft, ChevronRight, Minus, Plus, ShieldCheck, CreditCard, Banknote, ArrowLeft, Ticket, Bell, CheckCircle } from 'lucide-react'
+import { ShoppingBag, ChevronLeft, ChevronRight, Minus, Plus, ArrowLeft, Ticket, Bell } from 'lucide-react'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
 import ProductCard from '@/components/ProductCard'
@@ -31,8 +31,6 @@ export default function ProductDetailPage() {
   const [selectedColor, setSelectedColor] = useState('')
   const [cantidad, setCantidad] = useState(1)
   const [isImageLoading, setIsImageLoading] = useState(true)
-  const [notified, setNotified] = useState(false)
-  const [email, setEmail] = useState('')
   
   const addItem = useCartStore((state) => state.addItem)
 
@@ -77,43 +75,6 @@ export default function ProductDetailPage() {
     window.scrollTo(0, 0)
     cargarProducto() 
   }, [productSlug, cargarProducto])
-
-  const handleNotify = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!email.trim()) {
-      toast.error('Ingresá un email válido')
-      return
-    }
-    if (!producto) {
-      toast.error('Producto no disponible')
-      return
-    }
-
-    try {
-      const res = await fetch('/api/proximamente', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          producto_id: producto.id, 
-          email: email.trim() 
-        })
-      })
-
-      if (!res.ok) {
-        let message = 'No se pudo registrar la alerta'
-        try {
-          const data = await res.json()
-          if (data?.error) message = data.error
-        } catch {}
-        throw new Error(message)
-      }
-
-      setNotified(true)
-      toast.success('Te avisaremos cuando esté disponible')
-    } catch (error: any) {
-      toast.error(error.message || 'Error al registrar alerta')
-    }
-  }
 
   const variantes = producto?.variantes || []
   const hasVariants = variantes.length > 0
@@ -224,17 +185,11 @@ export default function ProductDetailPage() {
     <div className="min-h-screen bg-transparent text-white selection:bg-white selection:text-black pb-20 overflow-x-hidden relative z-10">
       <div className="max-w-5xl mx-auto px-4 md:px-6 relative z-10 scale-[0.95] origin-top transition-all pt-10">
         
-        {/* Navigation - Compacted */}
         <div className="pb-6 flex items-center justify-between">
           <button onClick={() => router.back()} className="group flex items-center gap-2 text-white/50 hover:text-white transition-all text-[9px] font-black uppercase tracking-[0.2em]">
             <ArrowLeft className="w-3 h-3 group-hover:-translate-x-1 transition-transform" />
             <span>Volver</span>
           </button>
-          <div className="bg-white/5 px-3 py-1 rounded-xl border border-white/10">
-            <span className="text-[8px] font-black uppercase text-white/55 tracking-widest">
-              {primaryDrop ? String(primaryDrop.nombre || '').toUpperCase() : 'DROP SELECT'}
-            </span>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -273,6 +228,14 @@ export default function ProductDetailPage() {
           {/* Details Section - Compacted and Shrunken by 20% */}
           <div className="lg:col-span-5 lg:col-offset-1 space-y-6">
             <div className="space-y-2">
+              {primaryDrop && (
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/40">
+                  <span className="text-[8px] font-black text-accent tracking-[0.3em]">DROP</span>
+                  <span className="text-[9px] font-black text-white uppercase tracking-[0.2em]">
+                    {String(primaryDrop.nombre || '').toUpperCase()}
+                  </span>
+                </div>
+              )}
               <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase italic leading-none">{producto.nombre}</h1>
               <p className="text-white/45 text-[10px] font-bold uppercase tracking-widest">REF: {producto.slug?.toUpperCase()}</p>
             </div>
@@ -406,32 +369,11 @@ export default function ProductDetailPage() {
               <div className="pt-2 flex items-center justify-between">
                 {(!hasVariants || (selectedTalle && selectedColor)) && stockDisponible <= 0 ? (
                   <div className="w-full">
-                    {!notified ? (
-                      <div className="space-y-3">
-                        <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest text-center">
-                          ¡Sin Stock! Avísame cuando ingrese
-                        </p>
-                        <form onSubmit={handleNotify} className="flex gap-2">
-                          <input 
-                            type="email" 
-                            placeholder="tu@email.com" 
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}
-                            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder:text-white/20 outline-none focus:border-red-500/50 transition-colors"
-                          />
-                          <button type="submit" className="bg-red-500 text-white px-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-colors">
-                            <Bell className="w-4 h-4" />
-                          </button>
-                        </form>
-                      </div>
-                    ) : (
-                      <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 text-center">
-                        <p className="text-green-400 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-                          <CheckCircle className="w-4 h-4" />
-                          ¡Listo! Te avisaremos
-                        </p>
-                      </div>
-                    )}
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+                      <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest">
+                        SIN STOCK
+                      </p>
+                    </div>
                   </div>
                 ) : (
                   <>
