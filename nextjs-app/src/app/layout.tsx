@@ -47,12 +47,21 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
+    metadataBase: new URL('https://urbancdg.vercel.app'),
     openGraph: {
       title: `${title} | Streetwear & Drops`,
       description: shareDescription,
       type: 'website',
       locale: 'es_AR',
       siteName: title,
+      images: [
+        {
+          url: '/Logaso.png',
+          width: 800,
+          height: 600,
+          alt: title,
+        },
+      ],
     },
     icons: {
       icon: '/favicon.svg',
