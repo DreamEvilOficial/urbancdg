@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Maximize2, Minimize2, X, Music2, ChevronDown } from 'lucide-react'
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Maximize2, Minimize2, X, Music2, ChevronDown, Shuffle } from 'lucide-react'
 
 type Track = { url: string; title?: string }
 
@@ -35,6 +35,7 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
   const [isDarkMode, setIsDarkMode] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [shouldLoad, setShouldLoad] = useState(false)
+  const [autoPlayEnabled, setAutoPlayEnabled] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const toggleFullscreen = () => {
@@ -230,7 +231,16 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
             {/* Bottom Controls */}
             <div className="mt-4 flex flex-col gap-3">
               {/* Playback Controls - Always Visible */}
-              <div className="flex items-center justify-center gap-6">
+              <div className="flex items-center justify-center gap-4">
+                 <button 
+                   onClick={shuffle} 
+                   className={`p-2 rounded-full hover:bg-white/10 transition ${isDarkMode ? 'text-white/40 hover:text-white' : 'text-black/40 hover:text-black'}`} 
+                   title="Aleatorio" 
+                   aria-label="Reproducir aleatorio"
+                 >
+                   <Shuffle className="w-4 h-4" />
+                 </button>
+
                  <button onClick={prev} className={`p-2 rounded-full hover:bg-white/10 transition ${isDarkMode ? 'text-white' : 'text-black'}`} title="Anterior" aria-label="Anterior canción">
                    <SkipBack className="w-5 h-5 fill-current" />
                  </button>
@@ -247,6 +257,8 @@ export default function MusicPanel({ open, onClose }: { open: boolean; onClose: 
                  <button onClick={next} className={`p-2 rounded-full hover:bg-white/10 transition ${isDarkMode ? 'text-white' : 'text-black'}`} title="Siguiente" aria-label="Siguiente canción">
                    <SkipForward className="w-5 h-5 fill-current" />
                  </button>
+                 
+                 <div className="w-8" /> {/* Spacer to balance layout if needed, or just leave it centered */}
               </div>
 
               {/* Volume & Additional */}
