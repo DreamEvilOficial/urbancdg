@@ -342,24 +342,57 @@ export default function Navbar() {
               {/* Filtros especiales */}
               {filtrosEspeciales.map((filtro) => {
                 let iconElement = null
-                const iconToUse = filtro.imagen_url || (isImageUrl(filtro.icono) ? filtro.icono : null)
+                const clave = filtro.clave.toLowerCase().replace('/', '').trim()
 
-                if (iconToUse) {
-                  iconElement = <img src={iconToUse} alt={filtro.nombre} className="w-5 h-5 object-contain" />
-                } else if (filtro.clave === 'descuentos' || filtro.clave === 'Descuentos') {
-                  iconElement = <img src="/discount-icon.gif?v=2" alt="Descuento" className="w-5 h-5 object-contain" />
-                } else if (filtro.clave === 'nuevos' || filtro.clave === 'Nuevos' || filtro.clave === 'nuevos-ingresos') {
-                  iconElement = <img src="/new-label.gif?v=2" alt="Nuevo" className="w-5 h-5 object-contain" />
-                } else if (filtro.clave === 'proximamente' || filtro.clave === 'Proximamente') {
-                  iconElement = <img src="/fire.gif?v=2" alt="Próximamente" className="w-5 h-5 object-contain" />
+                if (clave === 'descuentos' || clave === 'ofertas') {
+                  iconElement = (
+                    <img
+                      src="/discount-icon.gif?v=2"
+                      alt="Descuento"
+                      className="w-5 h-5 object-contain"
+                    />
+                  )
+                } else if (clave === 'nuevos' || clave === 'nuevos-ingresos') {
+                  iconElement = (
+                    <img
+                      src="/new-label.gif?v=2"
+                      alt="Nuevo"
+                      className="w-5 h-5 object-contain"
+                    />
+                  )
+                } else if (clave === 'proximamente') {
+                  iconElement = (
+                    <img
+                      src="/fire.gif?v=2"
+                      alt="Próximamente"
+                      className="w-5 h-5 object-contain"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                      }}
+                    />
+                  )
+                } else if (filtro.imagen_url || isImageUrl(filtro.icono)) {
+                  const src = filtro.imagen_url || filtro.icono
+                  iconElement = (
+                    <img
+                      src={src}
+                      alt={filtro.nombre}
+                      className="w-5 h-5 object-contain"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                      }}
+                    />
+                  )
                 } else {
                   iconElement = <span className="text-base">{filtro.icono || '🏷️'}</span>
                 }
-                
+
+                const filterSlug = filtro.clave.startsWith('/') ? filtro.clave.substring(1) : filtro.clave
+
                 return (
                   <Link 
                     key={filtro.id}
-                    href={`/productos?filter=${filtro.clave}`} 
+                    href={`/productos?filter=${filterSlug}`} 
                     className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
                   >
                     {iconElement}
@@ -446,24 +479,57 @@ export default function Navbar() {
                 {filtrosEspeciales.length > 0 && <div className="border-t border-gray-800 my-1" />}
                 {filtrosEspeciales.map((filtro) => {
                   let iconElement = null
-                  const iconToUse = filtro.imagen_url || (isImageUrl(filtro.icono) ? filtro.icono : null)
+                  const clave = filtro.clave.toLowerCase().replace('/', '').trim()
 
-                  if (iconToUse) {
-                    iconElement = <img src={iconToUse} alt={filtro.nombre} className="w-5 h-5 object-contain" />
-                  } else if (filtro.clave === 'descuentos' || filtro.clave === 'Descuentos') {
-                    iconElement = <img src="/discount-icon.gif?v=2" alt="Descuento" className="w-5 h-5 object-contain" />
-                  } else if (filtro.clave === 'nuevos' || filtro.clave === 'Nuevos' || filtro.clave === 'nuevos-ingresos') {
-                    iconElement = <img src="/new-label.gif?v=2" alt="Nuevo" className="w-5 h-5 object-contain" />
-                  } else if (filtro.clave === 'proximamente' || filtro.clave === 'Proximamente') {
-                    iconElement = <img src="/fire.gif?v=2" alt="Próximamente" className="w-5 h-5 object-contain" />
+                  if (clave === 'descuentos' || clave === 'ofertas') {
+                    iconElement = (
+                      <img
+                        src="/discount-icon.gif?v=2"
+                        alt="Descuento"
+                        className="w-5 h-5 object-contain"
+                      />
+                    )
+                  } else if (clave === 'nuevos' || clave === 'nuevos-ingresos') {
+                    iconElement = (
+                      <img
+                        src="/new-label.gif?v=2"
+                        alt="Nuevo"
+                        className="w-5 h-5 object-contain"
+                      />
+                    )
+                  } else if (clave === 'proximamente') {
+                    iconElement = (
+                      <img
+                        src="/fire.gif?v=2"
+                        alt="Próximamente"
+                        className="w-5 h-5 object-contain"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none'
+                        }}
+                      />
+                    )
+                  } else if (filtro.imagen_url || isImageUrl(filtro.icono)) {
+                    const src = filtro.imagen_url || filtro.icono
+                    iconElement = (
+                      <img
+                        src={src}
+                        alt={filtro.nombre}
+                        className="w-5 h-5 object-contain"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none'
+                        }}
+                      />
+                    )
                   } else {
                     iconElement = <span className="text-base">{filtro.icono || '🏷️'}</span>
                   }
 
+                  const filterSlug = filtro.clave.startsWith('/') ? filtro.clave.substring(1) : filtro.clave
+
                   return (
                     <Link
                       key={filtro.id}
-                      href={`/productos?filter=${filtro.clave}`}
+                      href={`/productos?filter=${filterSlug}`}
                       onClick={() => setShowMobileMenu(false)}
                       className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
                     >

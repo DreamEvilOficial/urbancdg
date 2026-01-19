@@ -216,6 +216,9 @@ export default function ProductDetailPage() {
   if (!producto) return <div className="min-h-screen bg-transparent flex items-center justify-center text-xs font-black uppercase tracking-widest text-white/60">Producto no hallado</div>
 
   const isProximoLanzamiento = (producto as any).proximo_lanzamiento || (producto as any).proximamente
+  const primaryDrop = Array.isArray((producto as any).drops) && (producto as any).drops.length > 0
+    ? (producto as any).drops[0]
+    : null
 
   return (
     <div className="min-h-screen bg-transparent text-white selection:bg-white selection:text-black pb-20 overflow-x-hidden relative z-10">
@@ -228,7 +231,9 @@ export default function ProductDetailPage() {
             <span>Volver</span>
           </button>
           <div className="bg-white/5 px-3 py-1 rounded-xl border border-white/10">
-            <span className="text-[8px] font-black uppercase text-white/55 tracking-widest">Drop Select</span>
+            <span className="text-[8px] font-black uppercase text-white/55 tracking-widest">
+              {primaryDrop ? String(primaryDrop.nombre || '').toUpperCase() : 'DROP SELECT'}
+            </span>
           </div>
         </div>
 

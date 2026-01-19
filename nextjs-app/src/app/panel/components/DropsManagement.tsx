@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, Search, X, Save, Image as ImageIcon } from 'lucide-react'
-import { Drop } from '@/lib/supabase'
+import { Plus, Edit, Trash2, Search, X, Save, Image as ImageIcon, ExternalLink, Link2 } from 'lucide-react'
+import { Drop, type Producto } from '@/lib/supabase'
 import toast from 'react-hot-toast'
 import NextImage from 'next/image'
 
@@ -11,6 +11,11 @@ export default function DropsManagement() {
   const [showForm, setShowForm] = useState(false)
   const [editingDrop, setEditingDrop] = useState<Drop | null>(null)
   const [saving, setSaving] = useState(false)
+  const [linkedProducts, setLinkedProducts] = useState<Producto[]>([])
+  const [allProducts, setAllProducts] = useState<Producto[]>([])
+  const [loadingProducts, setLoadingProducts] = useState(false)
+  const [updatingLinks, setUpdatingLinks] = useState(false)
+  const [productSearch, setProductSearch] = useState('')
 
   // Form State
   const [formData, setFormData] = useState({
@@ -41,6 +46,7 @@ export default function DropsManagement() {
 
   function handleNew() {
     setEditingDrop(null)
+    setLinkedProducts([])
     setFormData({
       nombre: '',
       fecha_lanzamiento: '',
@@ -58,7 +64,79 @@ export default function DropsManagement() {
       descripcion: drop.descripcion || '',
       imagen_url: drop.imagen_url || ''
     })
+    loadDropProducts(drop.id)
     setShowForm(true)
+  }
+
+  async function loadDropProducts(dropId: string) {
+    try {
+      setLoadingProducts(true)
+
+      const [assignedRes, allRes] = await Promise.all([
+        fetch(`/api/drops/${dropId}/products`),
+        allProducts.length === 0 ? fetch('/api/products?admin=true') : Promise.resolve(null as any)
+      ])
+
+      if (!assignedRes.ok) {
+        const data = await assignedRes.json().catch(() => ({}))
+        throw new Error(data.error || 'Error al cargar productos del drop')
+      }
+
+      const assignedData = await assignedRes.json()
+      setLinkedProducts(Array.isArray(assignedData) ? assignedData : [])
+
+      if (allRes) {
+        if (!allRes.ok) {
+          const data = await allRes.json().catch(() => ({}))
+          throw new Error(data.error || 'Error al cargar productos')
+        }
+        const allData = await allRes.json()
+        setAllProducts(Array.isArray(allData) ? allData : [])
+      }
+    } catch (error: any) {
+      console.error(error)
+      toast.error(error.message || 'No se pudieron cargar los productos relacionados')
+    } finally {
+      setLoadingProducts(false)
+    }
+  }
+
+  async function toggleProductOnDrop(product: Producto) {
+    if (!editingDrop) return
+    try {
+      setUpdatingLinks(true)
+
+      const currentIds = linkedProducts.map(p => p.id)
+      const alreadyLinked = currentIds.includes(product.id)
+      const newIds = alreadyLinked
+        ? currentIds.filter(id => id !== product.id)
+        : [...currentIds, product.id]
+
+      const newLinked = allProducts.filter(p => newIds.includes(p.id))
+      setLinkedProducts(newLinked)
+
+      const res = await fetch(`/api/drops/${editingDrop.id}/products`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productIds: newIds })
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al actualizar productos del drop')
+      }
+
+      toast.success(alreadyLinked ? 'Producto removido del drop' : 'Producto agregado al drop')
+    } catch (error: any) {
+      console.error(error)
+      toast.error(error.message || 'No se pudieron actualizar los productos del drop')
+      if (editingDrop) {
+        loadDropProducts(editingDrop.id)
+      }
+    } finally {
+      setUpdatingLinks(false)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -236,6 +314,126 @@ export default function DropsManagement() {
               </button>
             </div>
           </form>
+
+          {editingDrop && (
+            <div className="mt-8 border-t border-white/10 pt-6 space-y-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40">
+                    Productos asociados
+                  </p>
+                  <p className="text-xs text-white/50">
+                    Gestioná qué productos pertenecen a este drop. Los cambios se guardan en tiempo real.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Search className="w-4 h-4 text-white/40" />
+                  <input
+                    type="text"
+                    placeholder="Buscar producto por nombre o SKU..."
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    className="bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white outline-none focus:border-accent/60 transition-colors w-56"
+                  />
+                </div>
+              </div>
+
+              {loadingProducts ? (
+                <div className="flex items-center gap-3 text-xs text-white/60">
+                  <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  Cargando productos del drop...
+                </div>
+              ) : (
+                <>
+                  {linkedProducts.length === 0 && (
+                    <div className="text-[11px] text-white/40 bg-white/5 border border-dashed border-white/10 rounded-2xl px-4 py-3">
+                      Este drop todavía no tiene productos asignados.
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-80 overflow-y-auto custom-scrollbar pr-2">
+                    {allProducts
+                      .filter((p) => {
+                        if (!productSearch.trim()) return true
+                        const term = productSearch.toLowerCase()
+                        return (
+                          p.nombre.toLowerCase().includes(term) ||
+                          (p.sku || '').toLowerCase().includes(term)
+                        )
+                      })
+                      .map((product) => {
+                        const isLinked = linkedProducts.some((p) => p.id === product.id)
+                        const firstImage =
+                          (Array.isArray(product.imagenes) && product.imagenes[0]) ||
+                          product.imagen_url ||
+                          ''
+
+                        return (
+                          <div
+                            key={product.id}
+                            className={`flex items-center gap-3 rounded-2xl border px-3 py-2.5 text-xs transition-all ${
+                              isLinked
+                                ? 'border-accent/60 bg-accent/10'
+                                : 'border-white/10 bg-white/[0.03] hover:border-white/20'
+                            }`}
+                          >
+                            <div className="w-10 h-10 rounded-xl overflow-hidden bg-white/5 flex-shrink-0 relative">
+                              {firstImage ? (
+                                <img
+                                  src={firstImage}
+                                  alt={product.nombre}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none'
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-white/20 text-[10px]">
+                                  SIN IMG
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-white truncate text-xs">
+                                {product.nombre}
+                              </p>
+                              <p className="text-[10px] text-white/45 font-mono truncate">
+                                {product.sku || 'SIN-SKU'}
+                              </p>
+                            </div>
+                            <div className="flex flex-col gap-1 items-end">
+                              <button
+                                type="button"
+                                onClick={() => toggleProductOnDrop(product)}
+                                disabled={updatingLinks}
+                                className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-[0.18em] transition-colors ${
+                                  isLinked
+                                    ? 'bg-white/10 text-accent border border-accent/50 hover:bg-white/20'
+                                    : 'bg-accent text-ink border border-accent hover:brightness-95'
+                                } disabled:opacity-50`}
+                              >
+                                {isLinked ? 'Quitar' : 'Agregar'}
+                              </button>
+                              {product.slug && (
+                                <a
+                                  href={`/productos/${product.slug}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-[9px] text-white/45 hover:text-white/80 transition-colors"
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                  Ver en tienda
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <>
