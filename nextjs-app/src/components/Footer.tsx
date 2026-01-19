@@ -14,7 +14,7 @@ export default function Footer() {
     telefono: '+54 9 3471598691',
     email: 'urbanindumentaria@hotmail.com',
     instagram: '@urban.cdg',
-    logo_url: '/logo.svg',
+    logo_url: '/urban.png',
     brand_tagline: 'Streetwear sin filtro. Drops reales, fits pesados y calidad para bancarla en la calle. No rules, solo estilo.'
   })
 

@@ -25,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
   let title = 'URBAN'
   let description = 'Redefiniendo el Streetwear. Tu estilo, sin límites.'
   let shareDescription = 'Redefiniendo el Streetwear. Tu estilo, sin límites. Descubrí los últimos drops y armá tu fit.'
-  let logoUrl = '/logo.svg'
+  let logoUrl = '/urban.png'
 
   try {
     const client = supabaseAdmin || supabase
@@ -59,9 +59,13 @@ export async function generateMetadata(): Promise<Metadata> {
   const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'https://urbancdg.vercel.app'
   const siteUrl = rawSiteUrl.endsWith('/') ? rawSiteUrl.slice(0, -1) : rawSiteUrl
 
-  const ogImageUrl = logoUrl.startsWith('http')
-    ? logoUrl
-    : `${siteUrl}${logoUrl.startsWith('/') ? '' : '/'}${logoUrl}`
+  const normalizedLogoUrl = logoUrl || '/urban.png'
+  const isSvgLogo = normalizedLogoUrl.toLowerCase().endsWith('.svg')
+  const ogBasePath = isSvgLogo ? '/urban.png' : normalizedLogoUrl
+
+  const ogImageUrl = ogBasePath.startsWith('http')
+    ? ogBasePath
+    : `${siteUrl}${ogBasePath.startsWith('/') ? '' : '/'}${ogBasePath}`
 
   return {
     title,
@@ -78,6 +82,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: ogImageUrl,
           width: 800,
           height: 600,
+          type: 'image/png',
           alt: title,
         },
       ],

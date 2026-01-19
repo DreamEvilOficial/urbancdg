@@ -823,7 +823,7 @@ export default function ProductForm({ producto, categorias, etiquetas, drops, on
                         src={img} 
                         alt={`Imagen producto ${idx + 1}`}
                         className="w-full h-full object-cover"
-                        onError={(e) => (e.currentTarget.src = '/logo.svg')}
+                        onError={(e) => (e.currentTarget.src = '/urban.png')}
                       />
                     )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">

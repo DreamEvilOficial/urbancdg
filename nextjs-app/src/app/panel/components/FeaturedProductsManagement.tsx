@@ -251,8 +251,8 @@ export default function FeaturedProductsManagement() {
                     // Check logic for fallback image to match ProductCard logic roughly
                     const getSafeImage = (p: Producto) => {
                         const url = p.imagen_url || (p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : null)
-                        if (!url) return '/logo.svg'
-                        if (url.startsWith('http') && !url.includes('supabase.co')) return '/logo.svg'
+                        if (!url) return '/urban.png'
+                        if (url.startsWith('http') && !url.includes('supabase.co')) return '/urban.png'
                         return url
                     }
                     const img = getSafeImage(product)
@@ -262,7 +262,7 @@ export default function FeaturedProductsManagement() {
                         <td className="p-4">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-lg overflow-hidden bg-white/5 flex-shrink-0 border border-white/10">
-                                <img src={img} className="w-full h-full object-cover" alt="" onError={(e) => (e.currentTarget.src = '/logo.svg')} />
+                                <img src={img} className="w-full h-full object-cover" alt="" onError={(e) => (e.currentTarget.src = '/urban.png')} />
                             </div>
                             <div className="min-w-0">
                                 <div className="font-bold text-white text-xs uppercase truncate">{product.nombre}</div>
@@ -341,8 +341,8 @@ export default function FeaturedProductsManagement() {
             {filteredProducts.map(product => {
                 const getSafeImage = (p: Producto) => {
                     const url = p.imagen_url || (p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : null)
-                    if (!url) return '/logo.svg'
-                    if (url.startsWith('http') && !url.includes('supabase.co')) return '/logo.svg'
+                    if (!url) return '/urban.png'
+                    if (url.startsWith('http') && !url.includes('supabase.co')) return '/urban.png'
                     return url
                 }
                 const img = getSafeImage(product)
@@ -350,7 +350,7 @@ export default function FeaturedProductsManagement() {
                     <div key={product.id} className="bg-white/5 rounded-2xl p-4 border border-white/10">
                         <div className="flex items-start gap-4 mb-4">
                             <div className="w-16 h-16 rounded-xl overflow-hidden bg-black/20 border border-white/10 flex-shrink-0">
-                                <img src={img} className="w-full h-full object-cover" alt="" onError={(e) => (e.currentTarget.src = '/logo.svg')} />
+                                <img src={img} className="w-full h-full object-cover" alt="" onError={(e) => (e.currentTarget.src = '/urban.png')} />
                             </div>
                             <div className="min-w-0 flex-1">
                                 <h3 className="font-bold text-white text-sm uppercase truncate">{product.nombre}</h3>

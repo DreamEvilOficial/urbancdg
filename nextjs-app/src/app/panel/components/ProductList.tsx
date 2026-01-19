@@ -150,9 +150,9 @@ export default function ProductList({ productos, categorias, drops, onEdit, onDe
           filteredProducts.map((producto) => {
             const getSafeImage = (p: Producto) => {
               const url = p.imagen_url || (p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : null)
-              if (!url) return '/logo.svg'
+              if (!url) return '/urban.png'
               // Si es una URL completa que no es de supabase ni relativa, fallback
-              if (url.startsWith('http') && !url.includes('supabase.co')) return '/logo.svg'
+              if (url.startsWith('http') && !url.includes('supabase.co')) return '/urban.png'
               return url
             }
             const img = getSafeImage(producto)
@@ -271,8 +271,8 @@ export default function ProductList({ productos, categorias, drops, onEdit, onDe
                 filteredProducts.map((producto) => {
                   const getSafeImage = (p: Producto) => {
                     const url = p.imagen_url || (p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : null)
-                    if (!url) return '/logo.svg'
-                    if (url.startsWith('http') && !url.includes('supabase.co')) return '/logo.svg'
+                    if (!url) return '/urban.png'
+                    if (url.startsWith('http') && !url.includes('supabase.co')) return '/urban.png'
                     return url
                   }
                   const img = getSafeImage(producto)

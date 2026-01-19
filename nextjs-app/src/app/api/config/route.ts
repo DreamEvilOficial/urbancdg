@@ -4,7 +4,7 @@ import db from '@/lib/db'
 export async function GET() {
   const defaultConfig = {
     nombre_tienda: 'URBAN',
-    logo_url: '/logo.svg',
+    logo_url: '/urban.png',
     favicon_url: '/favicon.svg',
     anuncio_1: '',
     anuncio_2: '',

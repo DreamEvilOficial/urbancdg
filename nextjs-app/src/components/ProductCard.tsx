@@ -136,7 +136,7 @@ function ProductCard({ producto }: ProductCardProps) {
     }
     
     // Fallback
-    return '/logo.svg'
+    return '/urban.png'
   }, [producto])
 
   const [imgSrc, setImgSrc] = useState<string>(productImage)
@@ -428,7 +428,7 @@ function ProductCard({ producto }: ProductCardProps) {
             }`}
             onError={() => {
               console.warn(`Error loading image for ${productName}: ${imgSrc}`)
-              setImgSrc('/logo.svg')
+              setImgSrc('/urban.png')
             }}
           />
         </div>
@@ -446,7 +446,7 @@ function ProductCard({ producto }: ProductCardProps) {
             }`}
             onError={() => {
               console.warn(`Error loading image for ${productName}: ${imgSrc}`)
-              setImgSrc('/logo.svg')
+              setImgSrc('/urban.png')
             }}
           />
         </Link>
