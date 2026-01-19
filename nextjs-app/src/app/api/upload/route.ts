@@ -9,7 +9,7 @@ export async function POST(req: Request) {
 
     const formData = await req.formData();
     const file = formData.get('file') as File;
-    const folder = formData.get('folder') as string || 'uploads';
+    const folder = (formData.get('folder') as string) || 'uploads';
 
     if (!file) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
@@ -19,13 +19,16 @@ export async function POST(req: Request) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Generar un nombre de archivo único
     const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
-    
-    // Usar el parámetro folder como nombre del bucket (ej: 'banners', 'productos')
-    // Si folder es 'uploads', usar un bucket default o 'public' si existe
-    const bucketName = folder === 'uploads' ? 'public' : folder;
-    const filePath = fileName; // En el bucket raíz
+
+    const normalizedFolder = folder.toLowerCase();
+    const bucketName =
+      normalizedFolder === 'uploads'
+        ? 'public'
+        : normalizedFolder === 'logos'
+        ? 'tiendas'
+        : normalizedFolder;
+    const filePath = fileName;
 
     // Subir el archivo al bucket correspondiente
     const { data, error } = await supabaseAdmin.storage

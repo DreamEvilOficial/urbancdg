@@ -246,7 +246,17 @@ export default function ConfigurationPanel() {
       formData.append('folder', 'logos')
 
       const res = await fetch('/api/upload', { method: 'POST', body: formData })
-      if (!res.ok) throw new Error('Error al subir')
+
+      if (!res.ok) {
+        let message = 'Error al subir logo'
+        try {
+          const errorData = await res.json()
+          if (errorData?.error) {
+            message = errorData.error
+          }
+        } catch {}
+        throw new Error(message)
+      }
       
       const { publicUrl } = await res.json()
       
@@ -254,7 +264,7 @@ export default function ConfigurationPanel() {
       toast.success('Logo subido exitosamente')
     } catch (error: any) {
       console.error('Logo upload error:', error)
-      toast.error('Error al subir logo')
+      toast.error(error.message || 'Error al subir logo')
     } finally {
       setUploadingLogo(false)
     }
