@@ -23,12 +23,13 @@ export async function generateMetadata(): Promise<Metadata> {
   let title = 'URBAN'
   let description = 'Redefiniendo el Streetwear. Tu estilo, sin límites.'
   let shareDescription = 'Redefiniendo el Streetwear. Tu estilo, sin límites. Descubrí los últimos drops y armá tu fit.'
+  let logoUrl = '/Logaso.png' // Default logo if not configured
 
   try {
     const { data } = await supabase
       .from('configuracion')
       .select('clave, valor')
-      .in('clave', ['nombre_tienda', 'lema_tienda', 'share_description'])
+      .in('clave', ['nombre_tienda', 'lema_tienda', 'share_description', 'logo_url'])
     
     if (data) {
       const config = data.reduce((acc: any, item: any) => {
@@ -39,10 +40,16 @@ export async function generateMetadata(): Promise<Metadata> {
       if (config.nombre_tienda) title = config.nombre_tienda
       if (config.lema_tienda) description = config.lema_tienda
       if (config.share_description) shareDescription = config.share_description
+      if (config.logo_url) logoUrl = config.logo_url
     }
   } catch (e) {
     console.error('Error fetching metadata:', e)
   }
+
+  // Ensure absolute URL for OG Image
+  const ogImageUrl = logoUrl.startsWith('http') 
+    ? logoUrl 
+    : `https://urbancdg.vercel.app${logoUrl.startsWith('/') ? '' : '/'}${logoUrl}`
 
   return {
     title,
@@ -56,7 +63,7 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: title,
       images: [
         {
-          url: '/Logaso.png',
+          url: ogImageUrl,
           width: 800,
           height: 600,
           alt: title,

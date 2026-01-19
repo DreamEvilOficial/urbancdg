@@ -58,6 +58,7 @@ export default function ConfigurationPanel() {
     mensaje_sin_stock: 'Producto sin stock',
     mensaje_carrito_vacio: 'Tu carrito está vacío',
     mensaje_compra_exitosa: '¡Gracias por tu compra!',
+    share_description: 'Redefiniendo el Streetwear. Tu estilo, sin límites. Descubrí los últimos drops y armá tu fit.',
     anuncio_1: '',
     anuncio_2: '',
     anuncio_3: '',
@@ -673,6 +674,16 @@ export default function ConfigurationPanel() {
               type="text"
               value={mensajes.mensaje_compra_exitosa}
               onChange={e => setMensajes({ ...mensajes, mensaje_compra_exitosa: e.target.value })}
+              className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl text-sm font-bold focus:border-accent/40 transition outline-none"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-[10px] font-black mb-2 text-white/45 uppercase tracking-[0.28em] px-1">Descripción al Compartir (SEO)</label>
+            <input
+              type="text"
+              value={mensajes.share_description}
+              onChange={e => setMensajes({ ...mensajes, share_description: e.target.value })}
+              placeholder="Descripción corta que aparece al compartir el enlace de la tienda..."
               className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl text-sm font-bold focus:border-accent/40 transition outline-none"
             />
           </div>
