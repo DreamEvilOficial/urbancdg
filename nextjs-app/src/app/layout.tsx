@@ -5,7 +5,7 @@ import { Toaster } from 'react-hot-toast'
 import ClientLayout from '@/components/ClientLayout'
 import DevToolsProtection from '@/components/DevToolsProtection'
 
-import { supabase } from '@/lib/supabase'
+import { supabase, supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,10 +25,12 @@ export async function generateMetadata(): Promise<Metadata> {
   let title = 'URBAN'
   let description = 'Redefiniendo el Streetwear. Tu estilo, sin límites.'
   let shareDescription = 'Redefiniendo el Streetwear. Tu estilo, sin límites. Descubrí los últimos drops y armá tu fit.'
-  let logoUrl = '/Logaso.png' // Default logo if not configured
+  let logoUrl = '/logo.svg'
 
   try {
-    const { data } = await supabase
+    const client = supabaseAdmin || supabase
+
+    const { data } = await client
       .from('configuracion')
       .select('clave, valor')
       .in('clave', ['nombre_tienda', 'lema_tienda', 'share_description', 'logo_url'])
