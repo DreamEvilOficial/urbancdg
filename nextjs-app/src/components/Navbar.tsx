@@ -9,6 +9,8 @@ import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CategoryIcon } from './IconSelector'
+import GifIcon from './GifIcon'
+import GifPreloader from './GifPreloader'
 
 const Cart = dynamic(() => import('./Cart'), { ssr: false })
 const MusicPanel = dynamic(() => import('./MusicPanel'), { ssr: false })
@@ -199,6 +201,7 @@ export default function Navbar() {
 
   return (
     <>
+      <GifPreloader />
       <div className={`sticky top-0 z-[1000000] transition-transform duration-300 ${hideNavbar ? '-translate-y-full' : 'translate-y-0'}`}>
         {/* AnnouncementSlider integrado - Scroll continuo */}
         {mensajes.length > 0 && (
@@ -346,7 +349,7 @@ export default function Navbar() {
 
                 if (clave === 'descuentos' || clave === 'ofertas') {
                   iconElement = (
-                    <img
+                    <GifIcon
                       src="/discount-icon.gif?v=2"
                       alt="Descuento"
                       className="w-5 h-5 object-contain"
@@ -354,7 +357,7 @@ export default function Navbar() {
                   )
                 } else if (clave === 'nuevos' || clave === 'nuevos-ingresos') {
                   iconElement = (
-                    <img
+                    <GifIcon
                       src="/new-label.gif?v=2"
                       alt="Nuevo"
                       className="w-5 h-5 object-contain"
@@ -362,25 +365,19 @@ export default function Navbar() {
                   )
                 } else if (clave === 'proximamente') {
                   iconElement = (
-                    <img
+                    <GifIcon
                       src="/fire.gif?v=2"
                       alt="Próximamente"
                       className="w-5 h-5 object-contain"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none'
-                      }}
                     />
                   )
                 } else if (filtro.imagen_url || isImageUrl(filtro.icono)) {
                   const src = filtro.imagen_url || filtro.icono
                   iconElement = (
-                    <img
+                    <GifIcon
                       src={src}
                       alt={filtro.nombre}
                       className="w-5 h-5 object-contain"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none'
-                      }}
                     />
                   )
                 } else {
@@ -483,7 +480,7 @@ export default function Navbar() {
 
                   if (clave === 'descuentos' || clave === 'ofertas') {
                     iconElement = (
-                      <img
+                      <GifIcon
                         src="/discount-icon.gif?v=2"
                         alt="Descuento"
                         className="w-5 h-5 object-contain"
@@ -491,7 +488,7 @@ export default function Navbar() {
                     )
                   } else if (clave === 'nuevos' || clave === 'nuevos-ingresos') {
                     iconElement = (
-                      <img
+                      <GifIcon
                         src="/new-label.gif?v=2"
                         alt="Nuevo"
                         className="w-5 h-5 object-contain"
@@ -499,25 +496,19 @@ export default function Navbar() {
                     )
                   } else if (clave === 'proximamente') {
                     iconElement = (
-                      <img
+                      <GifIcon
                         src="/fire.gif?v=2"
                         alt="Próximamente"
                         className="w-5 h-5 object-contain"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none'
-                        }}
                       />
                     )
                   } else if (filtro.imagen_url || isImageUrl(filtro.icono)) {
                     const src = filtro.imagen_url || filtro.icono
                     iconElement = (
-                      <img
+                      <GifIcon
                         src={src}
                         alt={filtro.nombre}
                         className="w-5 h-5 object-contain"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none'
-                        }}
                       />
                     )
                   } else {

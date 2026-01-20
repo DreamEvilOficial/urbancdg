@@ -268,16 +268,19 @@ export default function AdminSidebar({
               setActiveTab={(tab) => { setActiveTab(tab); onNavigate && onNavigate(); }}
             />
           )}
-          <button
-            onClick={async () => {
-              await authAPI.signOut();
-              window.location.reload();
-            }}
-            className="w-full flex items-center gap-3 px-3 py-2 mt-2 text-red-300/90 hover:bg-red-500/10 hover:text-red-200 rounded-lg transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="font-black text-[11px] uppercase tracking-[0.22em]">Cerrar Sesión</span>
-          </button>
+        </div>
+
+        <div className="mt-auto px-3 pb-2">
+            <button
+                onClick={async () => {
+                await authAPI.signOut();
+                window.location.reload();
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2 text-red-300/90 hover:bg-red-500/10 hover:text-red-200 rounded-lg transition-colors group"
+            >
+                <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                <span className="font-black text-[11px] uppercase tracking-[0.22em]">Cerrar Sesión</span>
+            </button>
         </div>
       </nav>
     </aside>

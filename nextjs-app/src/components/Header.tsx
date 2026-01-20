@@ -9,6 +9,8 @@ import dynamic from 'next/dynamic'
 import { useCartStore } from '@/store/cartStore'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CategoryIcon } from './IconSelector'
+import GifIcon from './GifIcon'
+import GifPreloader from './GifPreloader'
 
 const Cart = dynamic(() => import('./Cart'), { ssr: false })
 const SavedProducts = dynamic(() => import('./SavedProducts'), { ssr: false })
@@ -185,6 +187,7 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
 
   return (
     <>
+      <GifPreloader />
       <div className={`sticky top-0 z-[100] transition-transform duration-300 ${hideNavbar ? '-translate-y-full' : 'translate-y-0'}`}>
         {/* 1. Announcement Bar */}
         {mensajes.length > 0 && (
@@ -492,16 +495,16 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
                     const clave = filtro.clave.toLowerCase().replace('/', '').trim()
 
                     if (clave === 'descuentos' || clave === 'ofertas') {
-                       iconElement = <img src="/discount-icon.gif" alt="Descuentos" className="w-5 h-5 object-contain" />
+                       iconElement = <GifIcon src="/discount-icon.gif?v=2" alt="Descuentos" className="w-5 h-5 object-contain" />
                     } else if (clave === 'nuevos' || clave === 'nuevos-ingresos') {
-                       iconElement = <img src="/new-label.gif" alt="Nuevos" className="w-5 h-5 object-contain" />
+                       iconElement = <GifIcon src="/new-label.gif?v=2" alt="Nuevos" className="w-5 h-5 object-contain" />
                     } else if (clave === 'proximamente') {
                        // Add random query param to bust cache just in case
-                       iconElement = <img src="/fire.gif?v=2" alt="Próximamente" className="w-5 h-5 object-contain" />
+                       iconElement = <GifIcon src="/fire.gif?v=2" alt="Próximamente" className="w-5 h-5 object-contain" />
                     } else if (filtro.imagen_url) {
                       iconElement = (
                         <div className="relative w-5 h-5 flex-shrink-0">
-                          <img 
+                          <GifIcon 
                             src={filtro.imagen_url} 
                             alt={filtro.nombre} 
                             className="w-full h-full object-contain" 
