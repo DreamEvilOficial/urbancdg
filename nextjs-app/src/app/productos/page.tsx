@@ -240,6 +240,43 @@ function ProductosContent() {
       return { text: `BÚSQUEDA: "${searchQuery.toUpperCase()}"`, element: `BÚSQUEDA: "${searchQuery.toUpperCase()}"` }
     }
 
+    // Fix: Prioritize hardcoded special filters to ensure correct display and avoid duplication
+    if (normalizedFilter === 'descuentos' || normalizedFilter === 'ofertas') {
+      return {
+        text: 'DESCUENTOS',
+        element: (
+          <span className="flex items-center gap-3 md:gap-5">
+            DESCUENTOS
+            <img src="/discount-icon.gif?v=2" alt="Descuento" width={60} height={60} className="w-10 h-10 md:w-16 md:h-16 -mt-2 object-contain" />
+          </span>
+        )
+      }
+    }
+
+    if (normalizedFilter === 'nuevos' || normalizedFilter === 'nuevos-ingresos') {
+      return {
+        text: 'NUEVOS INGRESOS',
+        element: (
+          <span className="flex items-center gap-3 md:gap-5">
+            NUEVOS INGRESOS
+            <img src="/new-label.gif?v=2" alt="Nuevo" width={60} height={60} className="w-10 h-10 md:w-16 md:h-16 -mt-2 object-contain" />
+          </span>
+        )
+      }
+    }
+
+    if (normalizedFilter === 'proximamente') {
+      return {
+        text: 'PRÓXIMAMENTE',
+        element: (
+          <span className="flex items-center gap-3 md:gap-5">
+            PRÓXIMAMENTE
+            <img src="/fire.gif?v=2" alt="Próximamente" width={60} height={60} className="w-10 h-10 md:w-16 md:h-16 -mt-2 object-contain" />
+          </span>
+        )
+      }
+    }
+
     // Primero intentar buscar en filtros dinámicos
     const dynamicFilter = filtrosEspeciales.find(f => {
       const filterClave = f.clave.replace(/^\/+|\/+$/g, '').toLowerCase()
@@ -268,30 +305,6 @@ function ProductosContent() {
                 <span className="text-2xl md:text-4xl">{dynamicFilter.icono}</span>
               ) : null
             )}
-          </span>
-        )
-      }
-    }
-
-    if (normalizedFilter === 'descuentos' || normalizedFilter === 'ofertas') {
-      return {
-        text: 'DESCUENTOS',
-        element: (
-          <span className="flex items-center gap-3 md:gap-5">
-            DESCUENTOS
-            <img src="/discount-icon.gif" alt="Descuento" width={60} height={60} className="w-10 h-10 md:w-16 md:h-16 -mt-2 object-contain" />
-          </span>
-        )
-      }
-    }
-
-    if (normalizedFilter === 'nuevos' || normalizedFilter === 'nuevos-ingresos') {
-      return {
-        text: 'NUEVOS INGRESOS',
-        element: (
-          <span className="flex items-center gap-3 md:gap-5">
-            NUEVOS INGRESOS
-            <img src="/new-label.gif" alt="Nuevo" width={60} height={60} className="w-10 h-10 md:w-16 md:h-16 -mt-2 object-contain" />
           </span>
         )
       }
