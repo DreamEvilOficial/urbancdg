@@ -331,7 +331,7 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
               {/* Special Filters */}
               {filtrosEspeciales.filter(f => f.activo).slice(0, 6).map((filtro) => {
                 let iconElement = null
-                const clave = filtro.clave.toLowerCase().replace('/', '').trim()
+                const clave = filtro.clave.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace('/', '').trim()
 
                 if (clave === 'descuentos' || clave === 'ofertas') {
                   iconElement = (

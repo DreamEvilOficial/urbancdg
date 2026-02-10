@@ -21,7 +21,7 @@ function ProductosContent() {
   const subcategoriaSlug = searchParams.get('subcategoria_slug') || searchParams.get('subcategoria')
   const filterParam = searchParams.get('filter') || ''
   // Normalizar filtro: quitar slashes y pasar a minusculas
-  const normalizedFilter = filterParam.replace(/^\/+|\/+$/g, '').toLowerCase()
+  const normalizedFilter = filterParam.replace(/^\/+|\/+$/g, '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
   const searchQuery = searchParams.get('q') || ''
 
   // Filter States

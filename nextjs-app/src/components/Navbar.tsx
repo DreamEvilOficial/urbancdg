@@ -342,7 +342,7 @@ export default function Navbar() {
               {/* Filtros especiales */}
               {filtrosEspeciales.map((filtro) => {
                 let iconElement = null
-                const clave = filtro.clave.toLowerCase().replace('/', '').trim()
+                const clave = filtro.clave.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace('/', '').trim()
 
                 if (clave === 'descuentos' || clave === 'ofertas') {
                   iconElement = (
