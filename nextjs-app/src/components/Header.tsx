@@ -333,7 +333,31 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
                 let iconElement = null
                 const clave = filtro.clave.toLowerCase().replace('/', '').trim()
 
-                if (filtro.imagen_url) {
+                if (clave === 'descuentos' || clave === 'ofertas') {
+                  iconElement = (
+                    <img
+                      src="/discount-icon.gif?v=2"
+                      alt="Descuento"
+                      className="w-5 h-5 object-contain"
+                    />
+                  )
+                } else if (clave === 'nuevos' || clave === 'nuevos-ingresos') {
+                  iconElement = (
+                    <img
+                      src="/new-label.gif?v=2"
+                      alt="Nuevo"
+                      className="w-5 h-5 object-contain"
+                    />
+                  )
+                } else if (clave === 'proximamente') {
+                  iconElement = (
+                    <img
+                      src="/fire.gif?v=2"
+                      alt="Próximamente"
+                      className="w-5 h-5 object-contain"
+                    />
+                  )
+                } else if (filtro.imagen_url) {
                   iconElement = (
                     <div className="relative w-6 h-6 flex-shrink-0">
                       <img
@@ -344,23 +368,19 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
                     </div>
                   )
                 } else if (filtro.icono) {
-                  // Check if it's a valid icon name from our set, otherwise ignore it if it's just text to avoid duplication
-                  // simplified check: if it acts as a name, don't show it as icon
-                  if (filtro.icono !== filtro.nombre && filtro.icono.length < 20) {
-                    iconElement = <span className="text-sm"><CategoryIcon iconName={filtro.icono} className="w-4 h-4" /></span>
-                  }
+                  // Fix: Case-insensitive check to prevent duplicate text like "Descuentos" and "DESCUENTOS"
+                  const iconText = filtro.icono.trim();
+                  const nameText = filtro.nombre.trim();
 
-                  if (filtro.icono === filtro.nombre) {
-                    iconElement = null;
-                  } else {
-                    // Fix: Only render if it looks like an emoji or short code, AND isn't the name.
-                    const isEmoji = /\p{Emoji}/u.test(filtro.icono);
+                  if (iconText.toUpperCase() !== nameText.toUpperCase() && iconText.length < 20) {
+                    const isEmoji = /\p{Emoji}/u.test(iconText);
                     if (isEmoji) {
-                      iconElement = <span className="text-sm">{filtro.icono}</span>
+                      iconElement = <span className="text-sm">{iconText}</span>
                     } else {
-                      // Assume it might be an icon name
-                      iconElement = <CategoryIcon iconName={filtro.icono} className="w-4 h-4" />
+                      iconElement = <CategoryIcon iconName={iconText} className="w-4 h-4" />
                     }
+                  } else {
+                    iconElement = null;
                   }
                 }
 

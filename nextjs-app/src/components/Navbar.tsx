@@ -379,7 +379,10 @@ export default function Navbar() {
                   )
                 } else {
                   // Start Fix
-                  if (filtro.icono === filtro.nombre) {
+                  const iconText = filtro.icono ? filtro.icono.trim() : '';
+                  const nameText = filtro.nombre.trim();
+
+                  if (iconText.toUpperCase() === nameText.toUpperCase()) {
                     iconElement = null;
                   } else if (filtro.icono && filtro.icono.length < 20) {
                     const isEmoji = /\p{Emoji}/u.test(filtro.icono);
@@ -390,7 +393,12 @@ export default function Navbar() {
                       iconElement = <CategoryIcon iconName={filtro.icono} className="w-4 h-4" />
                     }
                   } else {
-                    iconElement = <span className="text-base">{filtro.icono || '🏷️'}</span>
+                    // Fallback for long text or unknown
+                    if (filtro.icono) {
+                      iconElement = <span className="text-base">{filtro.icono}</span>
+                    } else {
+                      iconElement = <span className="text-base">{'🏷️'}</span>
+                    }
                   }
                   // End Fix
                 }
