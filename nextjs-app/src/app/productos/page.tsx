@@ -263,8 +263,8 @@ function ProductosContent() {
                 />
               </div>
             ) : (
-              // Fix: Only render if it looks like an emoji or is a short code AND isn't the name
-              (dynamicFilter.icono && dynamicFilter.icono !== dynamicFilter.nombre && (/\p{Emoji}/u.test(dynamicFilter.icono) || dynamicFilter.icono.length < 20)) ? (
+              // Fix: Compare case-insensitive to prevent duplication
+              (dynamicFilter.icono && dynamicFilter.icono.trim().toUpperCase() !== dynamicFilter.nombre.trim().toUpperCase() && (/\p{Emoji}/u.test(dynamicFilter.icono) || dynamicFilter.icono.length < 20)) ? (
                 <span className="text-2xl md:text-4xl">{dynamicFilter.icono}</span>
               ) : null
             )}
@@ -403,8 +403,8 @@ function ProductosContent() {
                         key={size}
                         onClick={() => setSelectedSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size])}
                         className={`min-w-[40px] h-10 px-3 rounded-lg text-[10px] font-black uppercase transition-all border ${selectedSizes.includes(size)
-                            ? 'bg-white text-black border-white'
-                            : 'bg-transparent text-gray-400 border-white/10 hover:border-white/30 hover:text-white'
+                          ? 'bg-white text-black border-white'
+                          : 'bg-transparent text-gray-400 border-white/10 hover:border-white/30 hover:text-white'
                           }`}
                       >
                         {size}
@@ -424,8 +424,8 @@ function ProductosContent() {
                         key={size}
                         onClick={() => setSelectedSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size])}
                         className={`h-10 rounded-lg text-[10px] font-black uppercase transition-all border ${selectedSizes.includes(size)
-                            ? 'bg-white text-black border-white'
-                            : 'bg-transparent text-gray-400 border-white/10 hover:border-white/30 hover:text-white'
+                          ? 'bg-white text-black border-white'
+                          : 'bg-transparent text-gray-400 border-white/10 hover:border-white/30 hover:text-white'
                           }`}
                       >
                         {size}
@@ -506,8 +506,8 @@ function ProductosContent() {
                       key={size}
                       onClick={() => setSelectedSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size])}
                       className={`min-w-[50px] h-12 rounded-xl text-xs font-black uppercase transition-all border ${selectedSizes.includes(size)
-                          ? 'bg-white text-black border-white'
-                          : 'bg-transparent text-gray-500 border-white/10'
+                        ? 'bg-white text-black border-white'
+                        : 'bg-transparent text-gray-500 border-white/10'
                         }`}
                     >
                       {size}
@@ -526,8 +526,8 @@ function ProductosContent() {
                       key={size}
                       onClick={() => setSelectedSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size])}
                       className={`h-12 rounded-xl text-xs font-black uppercase transition-all border ${selectedSizes.includes(size)
-                          ? 'bg-white text-black border-white'
-                          : 'bg-transparent text-gray-500 border-white/10'
+                        ? 'bg-white text-black border-white'
+                        : 'bg-transparent text-gray-500 border-white/10'
                         }`}
                     >
                       {size}
