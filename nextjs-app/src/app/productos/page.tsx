@@ -301,9 +301,17 @@ function ProductosContent() {
               </div>
             ) : (
               // Fix: Compare case-insensitive to prevent duplication
-              (dynamicFilter.icono && dynamicFilter.icono.trim().toUpperCase() !== dynamicFilter.nombre.trim().toUpperCase() && (/\p{Emoji}/u.test(dynamicFilter.icono) || dynamicFilter.icono.length < 20)) ? (
-                <span className="text-2xl md:text-4xl">{dynamicFilter.icono}</span>
-              ) : null
+              // Also normalize accents to handle "Próximamente" vs "PROXIMAMENTE"
+              (() => {
+                const normalizeText = (text: string) => text.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                const iconTextNormalized = normalizeText(dynamicFilter.icono || '');
+                const nameTextNormalized = normalizeText(dynamicFilter.nombre || '');
+
+                if (dynamicFilter.icono && iconTextNormalized !== nameTextNormalized && (/\p{Emoji}/u.test(dynamicFilter.icono) || dynamicFilter.icono.length < 20)) {
+                  return <span className="text-2xl md:text-4xl">{dynamicFilter.icono}</span>
+                }
+                return null;
+              })()
             )}
           </span>
         )

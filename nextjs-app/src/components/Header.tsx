@@ -369,15 +369,18 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
                   )
                 } else if (filtro.icono) {
                   // Fix: Case-insensitive check to prevent duplicate text like "Descuentos" and "DESCUENTOS"
-                  const iconText = filtro.icono.trim();
-                  const nameText = filtro.nombre.trim();
+                  // Also normalize accents to handle "Próximamente" vs "PROXIMAMENTE"
+                  const normalizeText = (text: string) => text.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-                  if (iconText.toUpperCase() !== nameText.toUpperCase() && iconText.length < 20) {
-                    const isEmoji = /\p{Emoji}/u.test(iconText);
+                  const iconTextNormalized = normalizeText(filtro.icono);
+                  const nameTextNormalized = normalizeText(filtro.nombre);
+
+                  if (iconTextNormalized !== nameTextNormalized && filtro.icono.length < 20) {
+                    const isEmoji = /\p{Emoji}/u.test(filtro.icono);
                     if (isEmoji) {
-                      iconElement = <span className="text-sm">{iconText}</span>
+                      iconElement = <span className="text-sm">{filtro.icono}</span>
                     } else {
-                      iconElement = <CategoryIcon iconName={iconText} className="w-4 h-4" />
+                      iconElement = <CategoryIcon iconName={filtro.icono} className="w-4 h-4" />
                     }
                   } else {
                     iconElement = null;
