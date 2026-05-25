@@ -13,6 +13,13 @@ export default function CountdownTimer({ targetDate, onExpire }: { targetDate: s
   }, [])
 
   useEffect(() => {
+    if (isExpired && onExpire) {
+      onExpire()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isExpired])
+
+  useEffect(() => {
     const calculateTimeLeft = () => {
       // Handle potential different date formats
       let dateStr = targetDate
@@ -42,12 +49,7 @@ export default function CountdownTimer({ targetDate, onExpire }: { targetDate: s
         setIsExpired(false)
       } else {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 })
-        setIsExpired(prev => {
-          if (!prev && onExpire) {
-            onExpire()
-          }
-          return true
-        })
+        setIsExpired(true)
       }
     }
 
