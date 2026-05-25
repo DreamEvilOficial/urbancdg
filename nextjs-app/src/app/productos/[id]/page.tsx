@@ -8,6 +8,7 @@ import { ShoppingBag, ChevronLeft, ChevronRight, Minus, Plus, ArrowLeft, Ticket,
 import Image from 'next/image'
 import toast from 'react-hot-toast'
 import ProductCard from '@/components/ProductCard'
+import CountdownTimer from '@/components/CountdownTimer'
 import dynamic from 'next/dynamic'
 import { formatPrice } from '@/lib/formatters'
 
@@ -176,7 +177,27 @@ export default function ProductDetailPage() {
   if (loading) return <div className="min-h-screen bg-transparent flex items-center justify-center"><div className="w-8 h-8 border-2 border-white/10 border-t-white rounded-full animate-spin" /></div>
   if (!producto) return <div className="min-h-screen bg-transparent flex items-center justify-center text-xs font-black uppercase tracking-widest text-white/60">Producto no hallado</div>
 
-  const isProximoLanzamiento = (producto as any).proximo_lanzamiento || (producto as any).proximamente
+  const isOriginallyProximo = (producto as any).proximo_lanzamiento || (producto as any).proximamente || false;
+  const isTimeExpired = useMemo(() => {
+      if (!isOriginallyProximo) return false;
+      const dateStr = (producto as any).fecha_lanzamiento;
+      if (!dateStr) return false;
+      const target = new Date(dateStr).getTime();
+      if (isNaN(target)) return false;
+      return target <= Date.now();
+  }, [isOriginallyProximo, producto]);
+
+  const [isUnlocked, setIsUnlocked] = useState(false);
+
+  // Sync state when product loads
+  useEffect(() => {
+    if (producto) {
+      setIsUnlocked(isTimeExpired);
+    }
+  }, [producto, isTimeExpired]);
+
+  const isProximoLanzamiento = !isUnlocked && isOriginallyProximo;
+
   const primaryDrop = Array.isArray((producto as any).drops) && (producto as any).drops.length > 0
     ? (producto as any).drops[0]
     : null
@@ -299,9 +320,18 @@ export default function ProductDetailPage() {
                   </div>
                   <div>
                     <h3 className="text-xl font-black text-white uppercase tracking-widest mb-2">Próximamente</h3>
-                    <p className="text-white/40 text-xs font-medium max-w-[250px] mx-auto">
-                      Este producto aún no está disponible para la venta.
-                    </p>
+                    {(producto as any).fecha_lanzamiento ? (
+                      <div className="max-w-[300px] mx-auto mt-4">
+                        <CountdownTimer 
+                          targetDate={(producto as any).fecha_lanzamiento} 
+                          onExpire={() => setIsUnlocked(true)}
+                        />
+                      </div>
+                    ) : (
+                      <p className="text-white/40 text-xs font-medium max-w-[250px] mx-auto">
+                        Este producto aún no está disponible para la venta.
+                      </p>
+                    )}
                   </div>
 
                   <div className="bg-white/5 border border-white/10 rounded-xl p-4 inline-block">

@@ -363,7 +363,7 @@ export default function Navbar() {
                 } else if (clave === 'proximamente') {
                   iconElement = (
                     <img
-                      src="/fire.gif?v=2"
+                      src="/Fire.gif?v=2"
                       alt="Próximamente"
                       className="w-5 h-5 object-contain"
                     />
@@ -516,7 +516,7 @@ export default function Navbar() {
                   } else if (clave === 'proximamente') {
                     iconElement = (
                       <img
-                        src="/fire.gif?v=2"
+                        src="/Fire.gif?v=2"
                         alt="Próximamente"
                         className="w-5 h-5 object-contain"
                       />

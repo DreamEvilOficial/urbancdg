@@ -7,7 +7,7 @@ import { gifPersistence } from '@/lib/gif-persistence'
 const CRITICAL_GIFS = [
   '/discount-icon.gif?v=2',
   '/new-label.gif?v=2',
-  '/fire.gif?v=2'
+  '/Fire.gif?v=2'
 ]
 
 export default function GifPreloader() {

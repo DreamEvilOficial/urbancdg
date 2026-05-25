@@ -271,7 +271,7 @@ function ProductosContent() {
         element: (
           <span className="flex items-center gap-3 md:gap-5">
             PRÓXIMAMENTE
-            <img src="/fire.gif?v=2" alt="Próximamente" width={60} height={60} className="w-10 h-10 md:w-16 md:h-16 -mt-2 object-contain" />
+            <img src="/Fire.gif?v=2" alt="Próximamente" width={60} height={60} className="w-10 h-10 md:w-16 md:h-16 -mt-2 object-contain" />
           </span>
         )
       }
@@ -324,7 +324,7 @@ function ProductosContent() {
         element: (
           <span className="flex items-center gap-3 md:gap-5">
             PRÓXIMAMENTE
-            <img src="/fire.gif" alt="Próximamente" width={60} height={60} className="w-10 h-10 md:w-16 md:h-16 -mt-2 object-contain" />
+            <img src="/Fire.gif" alt="Próximamente" width={60} height={60} className="w-10 h-10 md:w-16 md:h-16 -mt-2 object-contain" />
           </span>
         )
       }

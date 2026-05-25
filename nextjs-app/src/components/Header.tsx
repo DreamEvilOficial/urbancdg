@@ -352,7 +352,7 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
                 } else if (clave === 'proximamente') {
                   iconElement = (
                     <img
-                      src="/fire.gif?v=2"
+                      src="/Fire.gif?v=2"
                       alt="Próximamente"
                       className="w-5 h-5 object-contain"
                     />
@@ -537,7 +537,7 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
                       iconElement = <img src="/new-label.gif?v=2" alt="Nuevos" className="w-5 h-5 object-contain" />
                     } else if (clave === 'proximamente') {
                       // Add random query param to bust cache just in case
-                      iconElement = <img src="/fire.gif?v=2" alt="Próximamente" className="w-5 h-5 object-contain" />
+                      iconElement = <img src="/Fire.gif?v=2" alt="Próximamente" className="w-5 h-5 object-contain" />
                     } else if (filtro.imagen_url) {
                       iconElement = (
                         <div className="relative w-5 h-5 flex-shrink-0">

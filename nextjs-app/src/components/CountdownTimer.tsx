@@ -42,10 +42,12 @@ export default function CountdownTimer({ targetDate, onExpire }: { targetDate: s
         setIsExpired(false)
       } else {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 })
-        if (!isExpired) {
-             setIsExpired(true)
-             if (onExpire) onExpire()
-        }
+        setIsExpired(prev => {
+          if (!prev && onExpire) {
+            onExpire()
+          }
+          return true
+        })
       }
     }
 
