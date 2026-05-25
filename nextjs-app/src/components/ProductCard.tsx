@@ -72,7 +72,7 @@ function ProductCard({ producto }: ProductCardProps) {
       const target = new Date(dateStr).getTime()
       if (isNaN(target)) return false
       return target <= Date.now()
-  }, [isOriginallyProximo, (producto as any).fecha_lanzamiento])
+  }, [isOriginallyProximo, producto])
 
   const [isUnlocked, setIsUnlocked] = useState(isTimeExpired)
   const isProximoLanzamiento = !isUnlocked && isOriginallyProximo

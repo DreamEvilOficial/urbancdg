@@ -40,6 +40,7 @@ export default function TransferPayment({ orderTotal, orderItems, orderId, order
     return () => {
       document.body.style.overflow = 'unset'
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId])
 
   // Polling para verificar pago
@@ -69,6 +70,7 @@ export default function TransferPayment({ orderTotal, orderItems, orderId, order
     }, 3000)
 
     return () => clearInterval(checkInterval)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId, expired, transferData])
 
   useEffect(() => {
