@@ -18,7 +18,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Falta id' }, { status: 400 })
     }
 
-    const token = process.env.MERCADOPAGO_ACCESS_TOKEN
+    const db = (await import('@/lib/db')).default
+    let token = '';
+    
+    const tokenRow = await db.get("SELECT valor FROM configuracion WHERE clave = 'mercadopago_access_token'");
+    if (tokenRow && tokenRow.valor) {
+        try { token = JSON.parse(tokenRow.valor); } catch { token = tokenRow.valor; }
+    }
+    
+    if (!token) {
+        token = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
+    }
+
     if (!token) {
       return NextResponse.json({ error: 'Servidor sin credenciales MP' }, { status: 500 })
     }

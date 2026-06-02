@@ -15,7 +15,18 @@ export async function POST(request: NextRequest) {
     }
 
     if (topic === 'payment' || topic === 'charge') {
-      const token = process.env.MERCADOPAGO_ACCESS_TOKEN
+      const db = (await import('@/lib/db')).default
+      let token = '';
+      
+      const tokenRow = await db.get("SELECT valor FROM configuracion WHERE clave = 'mercadopago_access_token'");
+      if (tokenRow && tokenRow.valor) {
+          try { token = JSON.parse(tokenRow.valor); } catch { token = tokenRow.valor; }
+      }
+      
+      if (!token) {
+          token = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
+      }
+      
       if (!token) {
         console.error('MERCADOPAGO_ACCESS_TOKEN not configured')
         return NextResponse.json({ status: 'error', message: 'Server config error' }, { status: 500 })

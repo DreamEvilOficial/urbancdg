@@ -26,15 +26,17 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Order not configured for transfer' }, { status: 400 });
     }
 
-    // 2. Token Acquisition
-    let token = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
+    // 2. Token Acquisition: Primero intentamos desde la DB, luego desde ENV
+    let token = '';
     
-    // If not in env, check database
+    const tokenRow = await db.get("SELECT valor FROM configuracion WHERE clave = 'mercadopago_access_token'");
+    if (tokenRow && tokenRow.valor) {
+        try { token = JSON.parse(tokenRow.valor); } catch { token = tokenRow.valor; }
+    }
+    
+    // Si no está en DB, buscar en env como fallback
     if (!token) {
-        const tokenRow = await db.get("SELECT valor FROM configuracion WHERE clave = 'mercadopago_access_token'");
-        if (tokenRow && tokenRow.valor) {
-            try { token = JSON.parse(tokenRow.valor); } catch { token = tokenRow.valor; }
-        }
+        token = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
     }
     
     if (!token) {

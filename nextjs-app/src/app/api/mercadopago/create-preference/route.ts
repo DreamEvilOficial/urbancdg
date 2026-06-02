@@ -7,14 +7,16 @@ export async function POST(request: NextRequest) {
 
     // Obtener Access Token: Primero intentamos desde la DB, luego desde ENV
     const db = (await import('@/lib/db')).default
-    let token = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
+    let token = '';
     
-    // Si no está en env, buscar en DB como fallback
+    const tokenRow = await db.get("SELECT valor FROM configuracion WHERE clave = 'mercadopago_access_token'")
+    if (tokenRow && tokenRow.valor) {
+        try { token = JSON.parse(tokenRow.valor) } catch { token = tokenRow.valor }
+    }
+    
+    // Si no está en DB, buscar en env como fallback
     if (!token) {
-        const tokenRow = await db.get("SELECT valor FROM configuracion WHERE clave = 'mercadopago_access_token'")
-        if (tokenRow && tokenRow.valor) {
-            try { token = JSON.parse(tokenRow.valor) } catch { token = tokenRow.valor }
-        }
+        token = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
     }
 
     if (!token) {

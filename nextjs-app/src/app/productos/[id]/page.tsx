@@ -75,6 +75,8 @@ export default function ProductDetailPage() {
   useEffect(() => { 
     window.scrollTo(0, 0)
     cargarProducto() 
+    setSelectedImage(0)
+    setIsImageLoading(true)
   }, [productSlug, cargarProducto])
 
   const variantes = producto?.variantes || []
@@ -133,27 +135,32 @@ export default function ProductDetailPage() {
   const imagenes = useMemo(() => {
     const imgs: string[] = []
     
-    // Prioridad 1: Array de imágenes
-    if (Array.isArray(producto?.imagenes) && producto.imagenes.length > 0) {
-      imgs.push(...producto.imagenes)
+    const addImg = (img: any) => {
+      if (!img) return
+      let url = ''
+      if (typeof img === 'string') url = img
+      else if (typeof img === 'object' && img.url && typeof img.url === 'string') url = img.url
+      
+      if (url && url.trim().length > 0 && !imgs.includes(url)) {
+        imgs.push(url)
+      }
     }
     
-    // Prioridad 2: imagen_url principal (si no está ya en el array)
-    if (producto?.imagen_url && !imgs.includes(producto.imagen_url)) {
-      imgs.unshift(producto.imagen_url)
+    // Prioridad 1: Array de imágenes
+    if (Array.isArray(producto?.imagenes)) {
+      producto.imagenes.forEach(addImg)
     }
+    
+    // Prioridad 2: imagen_url principal
+    addImg(producto?.imagen_url)
 
     // Prioridad 3: Imágenes de variantes
-    if (producto?.variantes) {
-      producto.variantes.forEach((v: any) => {
-        if (v.imagen_url && !imgs.includes(v.imagen_url)) {
-          imgs.push(v.imagen_url)
-        }
-      })
+    if (Array.isArray(producto?.variantes)) {
+      producto.variantes.forEach((v: any) => addImg(v.imagen_url))
     }
     
-    // Fallback: Imagen de proximamente
-    return imgs.length > 0 ? imgs : ['/proximamente.png']
+    // Fallback: Imagen de proximamente/urban
+    return imgs.length > 0 ? imgs : ['/urban.png']
   }, [producto?.imagenes, producto?.imagen_url, producto?.variantes])
 
   // Cambiar imagen al seleccionar variante
@@ -222,13 +229,15 @@ export default function ProductDetailPage() {
                     <div className="w-10 h-10 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                  </div>
                )}
-               <Image 
+               <img 
                  src={imagenes[selectedImage]} 
                  alt={producto.nombre} 
-                 fill 
-                 className={`object-cover group-hover:scale-105 transition-all duration-700 ease-out ${isImageLoading ? 'scale-110 blur-lg grayscale' : 'scale-100 blur-0 grayscale-0'}`}
-                 priority 
+                 className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ease-out ${isImageLoading ? 'scale-110 blur-lg grayscale' : 'scale-100 blur-0 grayscale-0'}`}
                  onLoad={() => setIsImageLoading(false)}
+                 onError={(e) => {
+                    setIsImageLoading(false)
+                    e.currentTarget.src = '/urban.png'
+                 }}
                />
                <div className="absolute inset-x-0 bottom-4 px-4 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity z-20">
                  <button onClick={(e) => { e.stopPropagation(); setIsImageLoading(true); setSelectedImage(prev => (prev - 1 + imagenes.length) % imagenes.length) }} className="w-10 h-10 bg-white text-black rounded-xl flex items-center justify-center shadow-2xl hover:scale-110 transition-transform"><ChevronLeft className="w-5 h-5" /></button>
@@ -239,7 +248,7 @@ export default function ProductDetailPage() {
                <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
                   {imagenes.map((img, i) => (
                     <button key={i} onClick={() => { if(selectedImage !== i) { setIsImageLoading(true); setSelectedImage(i); } }} className={`w-14 h-18 rounded-xl overflow-hidden border transition-all shrink-0 ${selectedImage === i ? 'border-white' : 'border-white/5 opacity-30 hover:opacity-100'}`}>
-                      <Image src={img} alt="" width={60} height={80} className="w-full h-full object-cover" />
+                      <img src={img} alt="" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = '/urban.png' }} />
                     </button>
                   ))}
                </div>
