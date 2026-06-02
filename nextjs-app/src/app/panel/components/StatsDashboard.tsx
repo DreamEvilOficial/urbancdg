@@ -40,22 +40,23 @@ export default function StatsDashboard() {
     if (!data) return
     
     // Flatten data for CSV
+    const fin = data.financials || {}
     const rows = [
       ['Reporte de Estadísticas', `Rango: ${range}`],
       [''],
       ['Finanzas'],
-      ['Ingresos Totales', data.financials.revenue],
-      ['Ingresos Periodo Anterior', data.financials.prevRevenue],
-      ['Crecimiento', `${data.financials.growth.toFixed(2)}%`],
-      ['Ticket Promedio', data.financials.averageTicket],
+      ['Ingresos Totales', fin.revenue ?? 0],
+      ['Ingresos Periodo Anterior', fin.prevRevenue ?? 0],
+      ['Crecimiento', `${(fin.growth ?? 0).toFixed(2)}%`],
+      ['Ticket Promedio', fin.averageTicket ?? 0],
       [''],
       ['Top Productos'],
       ['Producto', 'Cantidad', 'Ingresos', 'Categoría'],
-      ...data.products.top.map((p: any) => [p.name, p.quantity, p.revenue, p.category]),
+      ...(Array.isArray(data.products?.top) ? data.products.top : []).map((p: any) => [p.name, p.quantity, p.revenue, p.category]),
       [''],
       ['Desglose por Categoría'],
       ['Categoría', 'Ingresos'],
-      ...data.financials.categoryData.map((c: any) => [c.name, c.value])
+      ...(Array.isArray(fin.categoryData) ? fin.categoryData : []).map((c: any) => [c.name, c.value])
     ]
 
     const csvContent = "data:text/csv;charset=utf-8," 
@@ -73,6 +74,29 @@ export default function StatsDashboard() {
   if (loading && !data) return <div className="p-10 text-center text-white/50 animate-pulse">Cargando estadísticas...</div>
 
   if (!data) return <div className="p-10 text-center text-white/50">No hay datos disponibles</div>
+
+  // Safe accessors to prevent crashes from null/undefined API fields
+  const financials = data.financials || {}
+  const orders = data.orders || {}
+  const products = data.products || {}
+  const shipping = data.shipping || {}
+  const charts = data.charts || {}
+  const revenue = financials.revenue ?? 0
+  const prevRevenue = financials.prevRevenue ?? 0
+  const growth = financials.growth ?? 0
+  const averageTicket = financials.averageTicket ?? 0
+  const avgProcessingTime = financials.averageProcessingTime ?? 0
+  const categoryData = Array.isArray(financials.categoryData) ? financials.categoryData : []
+  const ordersTotal = orders.total ?? 0
+  const ordersCompleted = orders.completed ?? 0
+  const ordersCanceled = orders.canceled ?? 0
+  const statusData = Array.isArray(orders.statusData) ? orders.statusData : []
+  const topProducts = Array.isArray(products.top) ? products.top : []
+  const totalShipped = shipping.totalShipped ?? 0
+  const shippingPct = shipping.shippingPercentage ?? 0
+  const onTimePct = shipping.onTimePercentage ?? 0
+  const geoData = Array.isArray(shipping.geoData) ? shipping.geoData : []
+  const revenueChart = Array.isArray(charts.revenue) ? charts.revenue : []
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
@@ -165,7 +189,7 @@ export default function StatsDashboard() {
             </div>
             <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-1">Ticket Promedio</p>
             <p className="text-2xl font-black text-white tracking-tighter">
-                ${formatPrice(data.financials.averageTicket)}
+                ${formatPrice(averageTicket)}
             </p>
             <p className="text-[9px] text-white/20 mt-2 font-mono">por orden completada</p>
         </div>
@@ -177,9 +201,9 @@ export default function StatsDashboard() {
             </div>
             <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-1">Tiempo Proceso</p>
             <p className="text-2xl font-black text-white tracking-tighter">
-                {data.financials.averageProcessingTime < 24 
-                    ? `${data.financials.averageProcessingTime.toFixed(1)}h`
-                    : `${(data.financials.averageProcessingTime / 24).toFixed(1)}d`
+                {avgProcessingTime < 24 
+                    ? `${avgProcessingTime.toFixed(1)}h`
+                    : `${(avgProcessingTime / 24).toFixed(1)}d`
                 }
             </p>
             <p className="text-[9px] text-white/20 mt-2 font-mono">promedio hasta envío</p>
@@ -218,7 +242,7 @@ export default function StatsDashboard() {
             </div>
             <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={data.charts.revenue}>
+                    <AreaChart data={revenueChart}>
                         <defs>
                             <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="#b7ff2a" stopOpacity={0.3}/>
@@ -271,7 +295,7 @@ export default function StatsDashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
-                            data={data.financials.categoryData}
+                            data={categoryData}
                             cx="50%"
                             cy="50%"
                             innerRadius={60}
@@ -279,7 +303,7 @@ export default function StatsDashboard() {
                             paddingAngle={5}
                             dataKey="value"
                         >
-                            {data.financials.categoryData.map((entry: any, index: number) => (
+                            {categoryData.map((entry: any, index: number) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="rgba(0,0,0,0)" />
                             ))}
                         </Pie>
@@ -296,7 +320,7 @@ export default function StatsDashboard() {
                         />
                     </PieChart>
                 </ResponsiveContainer>
-                {data.financials.categoryData.length === 0 && (
+                {categoryData.length === 0 && (
                     <div className="absolute inset-0 flex items-center justify-center text-white/20 text-xs">Sin datos</div>
                 )}
             </div>
@@ -312,7 +336,7 @@ export default function StatsDashboard() {
                 <h3 className="text-xs font-black text-white/60 uppercase tracking-[0.2em]">Top 10 Productos Más Vendidos</h3>
             </div>
             <div className="space-y-3">
-                {data.products.top.map((product: any, i: number) => (
+                {topProducts.map((product: any, i: number) => (
                     <div key={i} className="flex items-center gap-4 group hover:bg-white/5 p-2 rounded-xl transition-colors">
                         <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center font-black text-xs text-white/30 group-hover:bg-accent group-hover:text-black transition-colors shrink-0">
                             {i + 1}
@@ -320,13 +344,13 @@ export default function StatsDashboard() {
                         <div className="flex-1 min-w-0">
                             <div className="flex justify-between mb-1">
                                 <p className="text-xs font-bold text-white truncate max-w-[70%]">{product.name}</p>
-                                <p className="text-xs font-black text-accent">${formatPrice(product.revenue)}</p>
+                                <p className="text-xs font-black text-accent">${formatPrice(product.revenue ?? 0)}</p>
                             </div>
                             <div className="flex items-center gap-3">
                                 <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
                                     <div 
                                         className="h-full bg-accent transition-all duration-500" 
-                                        style={{ width: `${product.percentage}%` }}
+                                        style={{ width: `${product.percentage ?? 0}%` }}
                                     />
                                 </div>
                                 <span className="text-[9px] text-white/40 font-mono shrink-0">
@@ -336,7 +360,7 @@ export default function StatsDashboard() {
                         </div>
                     </div>
                 ))}
-                {data.products.top.length === 0 && (
+                {topProducts.length === 0 && (
                     <p className="text-center text-xs text-white/20 py-10">Sin datos aún</p>
                 )}
             </div>
@@ -352,7 +376,7 @@ export default function StatsDashboard() {
                 </div>
                 <div className="h-[200px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={data.orders.statusData} layout="vertical" margin={{ left: 20 }}>
+                        <BarChart data={statusData} layout="vertical" margin={{ left: 20 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" horizontal={false} />
                             <XAxis type="number" stroke="#ffffff40" fontSize={10} />
                             <YAxis 
@@ -381,7 +405,7 @@ export default function StatsDashboard() {
                     <h3 className="text-xs font-black text-white/60 uppercase tracking-[0.2em]">Distribución Geográfica (Top 5)</h3>
                 </div>
                 <div className="space-y-3">
-                    {data.shipping.geoData.map((geo: any, i: number) => (
+                    {geoData.map((geo: any, i: number) => (
                         <div key={i} className="flex items-center justify-between text-xs">
                             <span className="text-white/60 font-medium flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
@@ -390,7 +414,7 @@ export default function StatsDashboard() {
                             <span className="font-bold text-white">{geo.count} envíos</span>
                         </div>
                     ))}
-                    {data.shipping.geoData.length === 0 && (
+                    {geoData.length === 0 && (
                         <p className="text-center text-xs text-white/20">Sin datos de envío</p>
                     )}
                 </div>

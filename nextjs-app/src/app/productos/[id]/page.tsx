@@ -81,17 +81,9 @@ export default function ProductDetailPage() {
 
   const variantes = producto?.variantes || []
   const hasVariants = variantes.length > 0
-  
-  // Helper para verificar stock
-  const checkStock = (talle: string, colorHex: string) => {
-    const v = variantes.find(v => v.talle === talle && v.color === colorHex)
-    return (v?.stock || 0) > 0
-  }
 
   const availableSizes = useMemo(() => {
-    // Obtener todos los talles únicos
     const sizes = Array.from(new Set(variantes.map(v => v.talle))).filter(Boolean)
-    // Mapear a objetos con info de stock
     return sizes.map(t => ({
       name: t,
       hasStock: variantes.some(v => v.talle === t && v.stock > 0)
@@ -103,25 +95,23 @@ export default function ProductDetailPage() {
     if (selectedTalle) {
       filtered = variantes.filter(v => v.talle === selectedTalle)
     }
-    
     const uniqueColors = new Map()
     filtered.forEach(v => {
       if (v.color && !uniqueColors.has(v.color)) {
         uniqueColors.set(v.color, {
           hex: v.color,
-          name: v.color_nombre || v.color, // Fallback a hex si no hay nombre
+          name: v.color_nombre || v.color,
           stock: v.stock
         })
       }
     })
-    
     return Array.from(uniqueColors.values())
   }, [variantes, selectedTalle])
 
   const stockDisponible = useMemo(() => {
     if (!hasVariants) return producto?.stock_actual || 0
     if (selectedTalle && selectedColor) return variantes.find(v => v.talle === selectedTalle && v.color === selectedColor)?.stock || 0
-    return 0 // Si no hay selección completa, asumimos 0 para seguridad en botón, aunque mostremos info diferente
+    return 0
   }, [hasVariants, producto, variantes, selectedTalle, selectedColor])
 
   // Reset color si cambiamos talle y el color no existe en ese talle
@@ -130,36 +120,26 @@ export default function ProductDetailPage() {
       const exists = variantes.some(v => v.talle === selectedTalle && v.color === selectedColor)
       if (!exists) setSelectedColor('')
     }
-  }, [selectedTalle, variantes]) // Remove selectedColor from dependency to avoid loop
+  }, [selectedTalle, variantes])
 
   const imagenes = useMemo(() => {
     const imgs: string[] = []
-    
     const addImg = (img: any) => {
       if (!img) return
       let url = ''
       if (typeof img === 'string') url = img
       else if (typeof img === 'object' && img.url && typeof img.url === 'string') url = img.url
-      
       if (url && url.trim().length > 0 && !imgs.includes(url)) {
         imgs.push(url)
       }
     }
-    
-    // Prioridad 1: Array de imágenes
     if (Array.isArray(producto?.imagenes)) {
       producto.imagenes.forEach(addImg)
     }
-    
-    // Prioridad 2: imagen_url principal
     addImg(producto?.imagen_url)
-
-    // Prioridad 3: Imágenes de variantes
     if (Array.isArray(producto?.variantes)) {
       producto.variantes.forEach((v: any) => addImg(v.imagen_url))
     }
-    
-    // Fallback: Imagen de proximamente/urban
     return imgs.length > 0 ? imgs : ['/urban.png']
   }, [producto?.imagenes, producto?.imagen_url, producto?.variantes])
 
@@ -179,31 +159,38 @@ export default function ProductDetailPage() {
     precioCuotas: producto ? Math.round(producto.precio / 6) : 0
   }), [producto?.precio])
 
-  const discountPercent = producto ? (producto.descuento_porcentaje || (producto.precio_original && producto.precio_original > producto.precio ? Math.round(((producto.precio_original - producto.precio) / producto.precio_original) * 100) : 0)) : 0
-  
+  const discountPercent = useMemo(() => {
+    if (!producto) return 0
+    return producto.descuento_porcentaje || (
+      producto.precio_original && producto.precio_original > producto.precio
+        ? Math.round(((producto.precio_original - producto.precio) / producto.precio_original) * 100)
+        : 0
+    )
+  }, [producto])
+
+  // ── isProximo hooks (must be BEFORE any return) ──
+  const isOriginallyProximo = !!(producto as any)?.proximo_lanzamiento || !!(producto as any)?.proximamente
+
+  const isTimeExpired = useMemo(() => {
+    if (!isOriginallyProximo) return false
+    const dateStr = (producto as any)?.fecha_lanzamiento
+    if (!dateStr) return false
+    const target = new Date(dateStr).getTime()
+    if (isNaN(target)) return false
+    return target <= Date.now()
+  }, [isOriginallyProximo, producto])
+
+  const [isUnlocked, setIsUnlocked] = useState(false)
+
+  useEffect(() => {
+    setIsUnlocked(isTimeExpired)
+  }, [isTimeExpired])
+
+  // ── Early returns AFTER all hooks ──
   if (loading) return <div className="min-h-screen bg-transparent flex items-center justify-center"><div className="w-8 h-8 border-2 border-white/10 border-t-white rounded-full animate-spin" /></div>
   if (!producto) return <div className="min-h-screen bg-transparent flex items-center justify-center text-xs font-black uppercase tracking-widest text-white/60">Producto no hallado</div>
 
-  const isOriginallyProximo = (producto as any).proximo_lanzamiento || (producto as any).proximamente || false;
-  const isTimeExpired = useMemo(() => {
-      if (!isOriginallyProximo) return false;
-      const dateStr = (producto as any).fecha_lanzamiento;
-      if (!dateStr) return false;
-      const target = new Date(dateStr).getTime();
-      if (isNaN(target)) return false;
-      return target <= Date.now();
-  }, [isOriginallyProximo, producto]);
-
-  const [isUnlocked, setIsUnlocked] = useState(false);
-
-  // Sync state when product loads
-  useEffect(() => {
-    if (producto) {
-      setIsUnlocked(isTimeExpired);
-    }
-  }, [producto, isTimeExpired]);
-
-  const isProximoLanzamiento = !isUnlocked && isOriginallyProximo;
+  const isProximoLanzamiento = !isUnlocked && isOriginallyProximo
 
   const primaryDrop = Array.isArray((producto as any).drops) && (producto as any).drops.length > 0
     ? (producto as any).drops[0]
