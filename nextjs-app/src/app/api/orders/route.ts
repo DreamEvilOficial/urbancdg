@@ -304,18 +304,6 @@ export async function POST(req: Request) {
                             throw new Error(`Stock insuficiente para "${product.nombre}". Solicitado: ${cantidad}, Disponible: ${product.stock_actual}`);
                         }
                     } else {
-                        // Validar stock de variante
-                        if (variante.stock < cantidad) {
-                            throw new Error(`Stock insuficiente para "${product.nombre} (${varianteInfo.talle} ${varianteInfo.color})". Solicitado: ${cantidad}, Disponible: ${variante.stock}`);
-                        }
-
-                        // Descontar stock de variante
-                        await client.query(
-                            'UPDATE variantes SET stock = stock - $1, updated_at = NOW() WHERE id = $2',
-                            [cantidad, variante.id]
-                        );
-                    }
-                } else {
                     // Validar stock global si no es variante
                     if (product.stock_actual < cantidad) {
                         throw new Error(`Stock insuficiente para "${product.nombre}". Solicitado: ${cantidad}, Disponible: ${product.stock_actual}`);
@@ -334,13 +322,6 @@ export async function POST(req: Request) {
                     item.precio_unitario || item.precio || 0, 
                     JSON.stringify(varianteInfo)
                 ]);
-
-                // Actualizar stock global del producto (siempre se descuenta del total)
-                await client.query(`
-                    UPDATE productos 
-                    SET stock_actual = stock_actual - $1 
-                    WHERE id = $2
-                `, [cantidad, productId]);
             }
 
             return { orderId, numeroOrden };
@@ -375,6 +356,14 @@ export async function PUT(req: Request) {
         }
 
         if (estado) {
+            // If changing to 'completado', deduct stock
+            if (estado === 'completado') {
+                const order = await db.get('SELECT estado FROM ordenes WHERE id = ?', [id]);
+                if (order && order.estado !== 'completado') {
+                    const { deductStockForOrder } = await import('@/lib/inventory');
+                    await deductStockForOrder(id);
+                }
+            }
             await db.run('UPDATE ordenes SET estado = ? WHERE id = ?', [estado, id]);
         }
 

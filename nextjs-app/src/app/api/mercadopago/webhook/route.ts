@@ -58,6 +58,15 @@ export async function POST(request: NextRequest) {
            throw new Error('Supabase Admin client not enabled');
         }
 
+        // Check current status and deduct stock if not already completed
+        const db = (await import('@/lib/db')).default;
+        const order = await db.get('SELECT estado FROM ordenes WHERE id = ?', [orderId]);
+        
+        if (order && order.estado !== 'completado') {
+            const { deductStockForOrder } = await import('@/lib/inventory');
+            await deductStockForOrder(orderId);
+        }
+
         const { error } = await supabaseAdmin
             .from('ordenes')
             .update({
