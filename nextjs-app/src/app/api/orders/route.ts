@@ -304,6 +304,12 @@ export async function POST(req: Request) {
                             throw new Error(`Stock insuficiente para "${product.nombre}". Solicitado: ${cantidad}, Disponible: ${product.stock_actual}`);
                         }
                     } else {
+                        // Validar stock de variante (sin descontar aquí)
+                        if (variante.stock < cantidad) {
+                            throw new Error(`Stock insuficiente para "${product.nombre} (${varianteInfo.talle} ${varianteInfo.color})". Solicitado: ${cantidad}, Disponible: ${variante.stock}`);
+                        }
+                    }
+                } else {
                     // Validar stock global si no es variante
                     if (product.stock_actual < cantidad) {
                         throw new Error(`Stock insuficiente para "${product.nombre}". Solicitado: ${cantidad}, Disponible: ${product.stock_actual}`);
