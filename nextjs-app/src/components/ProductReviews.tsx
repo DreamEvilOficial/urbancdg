@@ -142,7 +142,15 @@ export default function ProductReviews({ productId, productName }: { productId: 
                        </div>
                        <div>
                           <p className="text-[10px] font-black uppercase tracking-widest">{r.usuario_nombre}</p>
-                          <p className="text-[8px] font-black text-gray-600 uppercase tracking-tighter">{new Date(r.created_at).toLocaleDateString()}</p>
+                          <p className="text-[8px] font-black text-gray-600 uppercase tracking-tighter">
+                            {(() => {
+                              try {
+                                return new Date(r.created_at).toLocaleDateString()
+                              } catch {
+                                return ''
+                              }
+                            })()}
+                          </p>
                        </div>
                     </div>
                     <div className="flex items-center gap-0.5">

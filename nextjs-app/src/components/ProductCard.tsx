@@ -34,10 +34,15 @@ function ProductCard({ producto }: ProductCardProps) {
 
   // Verificar si está guardado en localStorage al montar
   React.useEffect(() => {
-    const saved = localStorage.getItem('savedProducts')
-    if (saved) {
-      const parsed = JSON.parse(saved)
-      if (parsed.includes(producto.id)) setIsSaved(true)
+    try {
+      const saved = localStorage.getItem('savedProducts')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed) && parsed.includes(String(producto.id))) setIsSaved(true)
+      }
+    } catch (error) {
+      console.warn('Error reading savedProducts:', error)
+      localStorage.removeItem('savedProducts')
     }
   }, [producto.id])
 
@@ -46,10 +51,16 @@ function ProductCard({ producto }: ProductCardProps) {
     e.stopPropagation()
     
     const saved = localStorage.getItem('savedProducts')
-    let parsed: string[] = saved ? JSON.parse(saved) : []
+    let parsed: string[] = []
+    try {
+      parsed = saved ? JSON.parse(saved) : []
+      if (!Array.isArray(parsed)) parsed = []
+    } catch {
+      parsed = []
+    }
     
     if (isSaved) {
-      parsed = parsed.filter(id => id !== producto.id)
+      parsed = parsed.filter(id => id !== String(producto.id))
       toast.success('Producto removido de guardados', { icon: '🗑️' })
     } else {
       parsed.push(String(producto.id))
@@ -416,37 +427,31 @@ function ProductCard({ producto }: ProductCardProps) {
       {/* Imagen */}
       {isProximoLanzamiento ? (
         <div className="relative block w-full aspect-[4/5] bg-black overflow-hidden">
-          <Image
+          <img
             src={imgSrc}
             alt={productName}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className={`object-cover transition-all duration-700 ${
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
               isProximoLanzamiento 
                 ? 'group-hover:scale-105' 
                 : 'group-hover:scale-110 group-hover:brightness-110'
             }`}
-            onError={() => {
-              console.warn(`Error loading image for ${productName}: ${imgSrc}`)
-              setImgSrc('/urban.png')
+            onError={(e) => {
+              e.currentTarget.src = '/urban.png'
             }}
           />
         </div>
       ) : (
         <Link href={productHref} className="relative block w-full aspect-[4/5] bg-black overflow-hidden">
-          <Image
+          <img
             src={imgSrc}
             alt={productName}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className={`object-cover transition-all duration-700 ${
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
               isProximoLanzamiento 
                 ? 'group-hover:scale-105' 
                 : 'group-hover:scale-110 group-hover:brightness-110'
             }`}
-            onError={() => {
-              console.warn(`Error loading image for ${productName}: ${imgSrc}`)
-              setImgSrc('/urban.png')
+            onError={(e) => {
+              e.currentTarget.src = '/urban.png'
             }}
           />
         </Link>
