@@ -155,8 +155,10 @@ export async function POST(request: NextRequest) {
       throw new Error(data.message || data.error || `Error MP ${mpResponse.status}`)
     }
 
+    const isTestToken = trimmedToken.startsWith('TEST-')
+    
     return NextResponse.json({
-      init_point: data.init_point,
+      init_point: isTestToken ? (data.sandbox_init_point || data.init_point) : data.init_point,
       id: data.id
     })
   } catch (error: any) {
