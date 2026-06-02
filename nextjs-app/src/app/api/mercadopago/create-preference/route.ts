@@ -5,92 +5,84 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { items, ordenId, payer, shippingCost } = body
 
-    // Obtener Access Token: Primero intentamos desde la DB, luego desde ENV
+    // Obtener Access Token: Primero desde la DB, luego ENV como fallback
     const db = (await import('@/lib/db')).default
-    let token = '';
-    
+    let token = ''
+
     const tokenRow = await db.get("SELECT valor FROM configuracion WHERE clave = 'mercadopago_access_token'")
     if (tokenRow && tokenRow.valor) {
-        try { token = JSON.parse(tokenRow.valor) } catch { token = tokenRow.valor }
+      try { token = JSON.parse(tokenRow.valor) } catch { token = tokenRow.valor }
     }
-    
-    // Si no está en DB, buscar en env como fallback
+
     if (!token) {
-        token = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
+      token = process.env.MERCADOPAGO_ACCESS_TOKEN || ''
     }
 
     if (!token) {
       return NextResponse.json(
-        { error: 'MercadoPago no configurado. Falta Access Token.' },
+        { error: 'MercadoPago no configurado. Ve al Panel → Configuración y completá el Access Token.' },
         { status: 400 }
       )
     }
 
-    // Obtener la URL base del sitio
+    // Validar formato básico del token
+    const trimmedToken = token.trim()
+    if (!trimmedToken.startsWith('APP_USR-') && !trimmedToken.startsWith('TEST-')) {
+      return NextResponse.json(
+        { error: 'El Access Token tiene un formato inválido. Debe comenzar con APP_USR- (producción) o TEST- (pruebas). Copiálo exactamente desde tu cuenta de MercadoPago.' },
+        { status: 400 }
+      )
+    }
+
+    // Obtener URL base
     const origin = new URL(request.url).origin
-    // Preferir envs (para forzar https) y usar el origen como fallback
     const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || origin
-    // Normalizar URLs con la API URL para evitar dobles barras o relativas
     const base = rawSiteUrl.endsWith('/') ? rawSiteUrl : `${rawSiteUrl}/`
     const successUrlObj = new URL('success', base)
     if (ordenId) successUrlObj.searchParams.set('orden', String(ordenId))
     const failureUrlObj = new URL('checkout', base)
     const pendingUrlObj = new URL('checkout', base)
     const notificationUrlObj = new URL('api/mercadopago/webhook', base)
-    
-    // Validar precios contra la base de datos
+
+    // Validar items contra la DB
     const validatedItems = []
-    
+
     for (const item of items) {
-      if (!item.id) continue // Skip invalid items
+      if (!item.id) continue
 
       const product = await db.get(
-        'SELECT id, nombre, precio, activo FROM productos WHERE id = ?',
+        'SELECT id, nombre, precio, stock_actual, activo FROM productos WHERE id = ?',
         [item.id]
       )
-        
+
       if (!product || !product.activo) {
         throw new Error(`Producto no disponible: ${item.title}`)
       }
 
-      // Validar Stock
       const quantity = Number(item.quantity)
+
       if (item.talle && item.color) {
-         // Validar stock de variante
-         const variant = await db.get(
-           'SELECT stock FROM variantes WHERE producto_id = ? AND talle = ? AND (color = ? OR color_hex = ?)',
-           [product.id, item.talle, item.color, item.color]
-         )
-         
-         if (!variant) {
-            // Si no existe la variante, fallback a stock global (legacy) o error
-            // Asumimos error para ser estrictos
-            throw new Error(`Variante no encontrada: ${product.nombre} ${item.talle} ${item.color}`)
-         }
-         
-         if (variant.stock < quantity) {
-            throw new Error(`Stock insuficiente para ${product.nombre} (${item.talle} ${item.color}). Disponible: ${variant.stock}`)
-         }
+        const variant = await db.get(
+          'SELECT stock FROM variantes WHERE producto_id = ? AND talle = ? AND (color = ? OR color_hex = ?)',
+          [product.id, item.talle, item.color, item.color]
+        )
+        if (!variant) {
+          throw new Error(`Variante no encontrada: ${product.nombre} ${item.talle} ${item.color}`)
+        }
+        if (variant.stock < quantity) {
+          throw new Error(`Stock insuficiente para ${product.nombre} (${item.talle} ${item.color}). Disponible: ${variant.stock}`)
+        }
       } else {
-         // Validar stock global
-         if ((product.stock_actual || 0) < quantity) {
-            throw new Error(`Stock insuficiente para ${product.nombre}. Disponible: ${product.stock_actual}`)
-         }
+        if ((product.stock_actual || 0) < quantity) {
+          throw new Error(`Stock insuficiente para ${product.nombre}. Disponible: ${product.stock_actual}`)
+        }
       }
 
-      // Calcular precio real (aplicando descuento transferencia si corresponde, 
-      // aunque MP generalmente se usa para tarjetas, si el usuario eligió MP 
-      // asumimos precio de lista o lo que corresponda según lógica de negocio.
-      // Aquí usamos el precio de lista base para tarjeta/MP).
       const realPrice = Number(product.precio)
-
-      // Verificar discrepancia mayor a $10 (tolerancia pequeña)
       if (Math.abs(realPrice - Number(item.unit_price)) > 10) {
         console.warn(`Price mismatch for ${product.nombre}. Client: ${item.unit_price}, Server: ${realPrice}`)
-        // Force server price
       }
 
-      // Construir título con variante si existe
       let title = product.nombre
       if (item.talle || item.color) {
         const parts = []
@@ -100,22 +92,19 @@ export async function POST(request: NextRequest) {
       }
 
       validatedItems.push({
-        title: title, // Usar nombre real de la BD + Variante
+        title,
         unit_price: realPrice,
-        quantity: quantity,
+        quantity,
         currency_id: 'ARS'
       })
     }
-    
-    // Crear preferencia con items validados
+
     const preference: any = {
       items: validatedItems,
       payer: {
         email: payer.email,
         name: payer.name
       },
-      // No excluir medios de pago para evitar errores como
-      // "account money cannot be excluded" en algunas cuentas/regiones
       back_urls: {
         success: successUrlObj.toString(),
         failure: failureUrlObj.toString(),
@@ -133,20 +122,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log('MP preference URLs:', {
-      base,
-      success: preference.back_urls.success,
-      failure: preference.back_urls.failure,
-      pending: preference.back_urls.pending,
-      notification: preference.notification_url
-    })
+    console.log('[MP] Creating preference with token prefix:', trimmedToken.substring(0, 12) + '...')
 
-    console.log('MP preference payload:', JSON.stringify(preference))
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${trimmedToken}`
       },
       body: JSON.stringify(preference)
     })
@@ -154,16 +136,31 @@ export async function POST(request: NextRequest) {
     const data = await mpResponse.json()
 
     if (!mpResponse.ok) {
-      console.error('Error de MercadoPago:', data)
-      throw new Error(data.message || 'Error al crear preferencia')
+      console.error('[MP] Error response:', mpResponse.status, JSON.stringify(data))
+
+      if (mpResponse.status === 401) {
+        return NextResponse.json(
+          { error: 'Access Token de MercadoPago inválido. Verificá que el token en Panel → Configuración sea correcto y no esté vencido. Si cambiaste de cuenta, actualizá también la Public Key.' },
+          { status: 401 }
+        )
+      }
+
+      if (mpResponse.status === 400) {
+        return NextResponse.json(
+          { error: `Error en los datos enviados a MercadoPago: ${data.message || JSON.stringify(data.cause || data)}` },
+          { status: 400 }
+        )
+      }
+
+      throw new Error(data.message || data.error || `Error MP ${mpResponse.status}`)
     }
-    
+
     return NextResponse.json({
       init_point: data.init_point,
       id: data.id
     })
   } catch (error: any) {
-    console.error('Error creando preferencia:', error)
+    console.error('[MP] Error creando preferencia:', error)
     return NextResponse.json(
       { error: error.message || 'Error al crear preferencia de pago' },
       { status: 500 }
