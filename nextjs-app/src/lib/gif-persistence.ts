@@ -5,7 +5,7 @@
  * or network is unavailable.
  */
 
-const DB_NAME = 'UrbanGifCache';
+const DB_NAME = 'LevitGifCache';
 const STORE_NAME = 'gifs';
 const DB_VERSION = 1;
 

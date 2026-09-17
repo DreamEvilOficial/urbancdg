@@ -46,7 +46,7 @@ export const andreaniService = {
 
     return {
       sender: {
-        name: 'Urban CDG',
+        name: 'Levit',
         address: 'Av. Corrientes 1234', // Example store address
         city: 'CABA',
         zip: '1000'
@@ -60,7 +60,7 @@ export const andreaniService = {
         phone: data.cliente_telefono
       },
       package: {
-        description: 'Indumentaria - Urban CDG',
+        description: 'Indumentaria - Levit',
         weight: 1.5 // Default weight
       },
       trackingNumber,

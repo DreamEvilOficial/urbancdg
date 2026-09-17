@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 
 interface Props { title?: string }
 export default function DynamicTitle({ title: override }: Props) {
-  const [title, setTitle] = useState(override || 'URBAN')
+  const [title, setTitle] = useState(override || 'Levit')
   const pathname = usePathname()
 
   useEffect(() => {
@@ -19,7 +19,7 @@ export default function DynamicTitle({ title: override }: Props) {
         const res = await fetch('/api/config')
         const data = await res.json()
         const raw = String(data.nombre_tienda || '').trim()
-        const storeName = raw && !/berta/i.test(raw) ? raw : 'URBAN'
+        const storeName = raw && !/berta/i.test(raw) ? raw : 'Levit'
         setTitle(storeName)
         document.title = storeName
       } catch (error) {

@@ -1,9 +1,9 @@
 {
-  "name": "urban",
+  "name": "levit",
   "version": "2.0.0",
-  "description": "Tienda online URBAN con Next.js y Supabase",
+  "description": "Tienda online Levit con Next.js y Supabase",
   "private": true,
-  "author": "Urban Indumentaria",
+  "author": "Levit",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -12,8 +12,8 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "dev:mobile": "next dev -H 0.0.0.0 -p 3000",
-    "dev:force": "./start-server.sh",
-    "dev:clean": "./start-server.sh clean",
+    "dev:force": "node scripts/start-server.js",
+    "dev:clean": "node scripts/start-server.js clean",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

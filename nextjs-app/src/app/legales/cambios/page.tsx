@@ -19,7 +19,7 @@ export default function CambiosPage() {
           <section className="space-y-4">
             <h3 className="text-white font-black uppercase tracking-widest text-[11px]">1. Plazos para Cambios</h3>
             <p>
-              En Urban Indumentaria, los cambios pueden realizarse dentro de los 30 días corridos posteriores a la recepción del pedido. Las prendas deben estar en las mismas condiciones en que fueron entregadas: con su etiqueta original, sin señales de uso, perfume o lavado.
+              En Levit, los cambios pueden realizarse dentro de los 30 días corridos posteriores a la recepción del pedido. Las prendas deben estar en las mismas condiciones en que fueron entregadas: con su etiqueta original, sin señales de uso, perfume o lavado.
             </p>
           </section>
 

@@ -27,7 +27,7 @@ export default function ArrepentimientoPage() {
         <div className="space-y-8 text-sm leading-relaxed text-gray-400 font-medium">
           <section className="space-y-4">
             <p>
-              Cumpliendo con la Resolución 424/2020 de la Secretaría de Comercio Interior, en Urban Indumentaria facilitamos el proceso de revocación de compra.
+              Cumpliendo con la Resolución 424/2020 de la Secretaría de Comercio Interior, en Levit facilitamos el proceso de revocación de compra.
             </p>
             <p className="border-l-2 border-pink-500 pl-6 py-2 bg-white/5 italic">
               &ldquo;El consumidor tiene derecho a revocar la aceptación de la compra dentro de los diez (10) días corridos computados a partir de la entrega del producto o de la celebración del contrato, lo último que ocurra, sin responsabilidad alguna.&rdquo; 
@@ -76,7 +76,7 @@ export default function ArrepentimientoPage() {
             <h3 className="text-white font-black uppercase tracking-widest text-[11px]">Consideraciones Importantes</h3>
             <ul className="list-disc pl-5 space-y-2">
               <li>El producto debe ser devuelto en las mismas condiciones en que fue recibido.</li>
-              <li>Una vez recibida la solicitud, Urban Indumentaria te enviará el código de rastreo para el envío postal gratuito de devolución.</li>
+              <li>Una vez recibida la solicitud, Levit te enviará el código de rastreo para el envío postal gratuito de devolución.</li>
               <li>El reintegro del dinero se realizará por el mismo medio que utilizaste para abonar.</li>
             </ul>
           </section>

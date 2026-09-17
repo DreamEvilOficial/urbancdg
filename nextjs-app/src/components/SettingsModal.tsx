@@ -24,11 +24,11 @@ export default function SettingsModal({ onClose, onSave }: SettingsModalProps) {
       const res = await fetch('/api/config')
       const config = await res.json()
       const raw = String(config.nombre_tienda || '').trim()
-      setStoreName(raw && !/berta/i.test(raw) ? raw : 'URBAN')
+      setStoreName(raw && !/berta/i.test(raw) ? raw : 'Levit')
       setFaviconUrl(String(config.favicon_url || '/favicon.svg'))
     } catch (error) {
       console.error('Error loading config:', error)
-      setStoreName('URBAN')
+      setStoreName('Levit')
       setFaviconUrl('/favicon.svg')
     }
   }

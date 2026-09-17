@@ -245,7 +245,7 @@ export default function DebtManagement() {
     }
 
     const timing = getDebtTiming(client)
-    const message = `Hola ${client.cliente_nombre}, te recordamos que tenés un saldo pendiente de $${formatPrice(client.total_deuda)} en tu cuenta de Urban CDG. Próximo vencimiento: ${timing.nextDueDate.toLocaleDateString()}.`
+    const message = `Hola ${client.cliente_nombre}, te recordamos que tenés un saldo pendiente de $${formatPrice(client.total_deuda)} en tu cuenta de Levit. Próximo vencimiento: ${timing.nextDueDate.toLocaleDateString()}.`
 
     const phone = client.cliente_celular.replace(/[^0-9]/g, '')
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`

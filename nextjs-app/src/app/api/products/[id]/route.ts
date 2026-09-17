@@ -120,7 +120,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
                     console.log(`[NOTIFICATIONS] Sending launch emails for product ${id} to ${notifications.length} users.`);
                     
                     const productName = currentProduct.nombre;
-                    const subject = `¡Ya está disponible! ${productName} llegó a Urban`;
+                    const subject = `¡Ya está disponible! ${productName} llegó a Levit`;
                     
                     // Basic HTML Template
                     const html = `

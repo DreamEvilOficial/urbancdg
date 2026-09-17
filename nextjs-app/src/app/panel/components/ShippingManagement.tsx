@@ -14,7 +14,7 @@ export default function ShippingManagement() {
   const [senders, setSenders] = useState<any[]>([])
   const [selectedOrder, setSelectedOrder] = useState<any>(null)
   const [selectedSender, setSelectedSender] = useState<any>({
-      nombre: 'Urban CDG Official',
+      nombre: 'Levit Official',
       calle: 'Av. Corrientes',
       numero: '1234',
       localidad: 'CABA',

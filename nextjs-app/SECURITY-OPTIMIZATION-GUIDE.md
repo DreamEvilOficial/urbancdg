@@ -48,7 +48,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 WEBHOOK_SECRET=tu-clave-generada-aqui
 REVALIDATE_SECRET=tu-otra-clave-generada-aqui
 ENCRYPTION_PASSWORD=tu-password-super-seguro-aqui
-NEXT_PUBLIC_DOMAIN_LOCK=urbancdg.vercel.app,www.urbancdg.com
+NEXT_PUBLIC_DOMAIN_LOCK=levit.vercel.app,www.levit.com
 NODE_ENV=production
 ```
 

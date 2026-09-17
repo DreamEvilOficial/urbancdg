@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Administración | URBAN',
+  title: 'Administración | Levit',
   description: 'Panel de administración',
 }
 

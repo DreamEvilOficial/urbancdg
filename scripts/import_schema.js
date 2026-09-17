@@ -2,7 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const crypto = require('crypto');
 
-const dbPath = path.join(__dirname, '..', 'sql', 'urbancdg.db');
+const dbPath = path.join(__dirname, '..', 'sql', 'levit.db');
 const db = new sqlite3.Database(dbPath);
 
 console.log('Migrating schema to match RECREATE-ALL.sql at:', dbPath);
@@ -301,7 +301,7 @@ const migrate = async () => {
 
     await run(`
         INSERT INTO usuarios (id, nombre, usuario, contrasena, email, password_hash, rol, admin, activo)
-        VALUES (?, 'Marcos Peiti', 'marcospeiti', 'Omega10', 'marcos@urbancdg.com', ?, 'admin', 1, 1)
+        VALUES (?, 'Marcos Peiti', 'marcospeiti', 'Omega10', 'marcos@levit.com', ?, 'admin', 1, 1)
     `, [uuidv4(), marcosHash]);
 
     // Admin default (email based) as well for redundancy
@@ -310,7 +310,7 @@ const migrate = async () => {
     
     await run(`
         INSERT INTO usuarios (id, nombre, usuario, contrasena, email, password_hash, rol, admin, activo)
-        VALUES (?, 'Admin Default', 'admin', 'admin123', 'admin@urbancdg.com', ?, 'admin', 1, 1)
+        VALUES (?, 'Admin Default', 'admin', 'admin123', 'admin@levit.com', ?, 'admin', 1, 1)
     `, [uuidv4(), adminHash]);
 
 

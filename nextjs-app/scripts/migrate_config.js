@@ -5,7 +5,7 @@ const sqlite3 = require('sqlite3').verbose();
 // Correct Paths relative to nextjs-app/scripts (assuming script is run from nextjs-app root or via node scripts/...)
 // but we use __dirname so it's safer.
 const sqlPath = path.join(__dirname, '..', '..', 'configurar_database.sql');
-const dbPath = path.join(__dirname, '..', '..', 'sql', 'urbancdg.db');
+const dbPath = path.join(__dirname, '..', '..', 'sql', 'levit.db');
 
 const uuidDefault = "(lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6))))";
 

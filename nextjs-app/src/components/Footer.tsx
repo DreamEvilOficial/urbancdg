@@ -9,7 +9,7 @@ import { sanitizeURL } from '@/lib/security'
 export default function Footer() {
   const [mounted, setMounted] = useState(false)
   const [config, setConfig] = useState({
-    nombre_tienda: 'URBAN',
+    nombre_tienda: 'Levit',
     direccion: 'Mitre 692, Cañada de Gomez',
     telefono: '+54 9 3471598691',
     email: 'urbanindumentaria@hotmail.com',

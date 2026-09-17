@@ -43,7 +43,7 @@ export default function ClientLayout({
   // Efecto para actualizar título según la ruta
   useEffect(() => {
     if (pathname === '/') {
-      document.title = 'URBAN'
+      document.title = 'Levit'
     }
   }, [pathname])
 

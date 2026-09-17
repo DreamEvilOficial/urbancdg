@@ -92,7 +92,7 @@ export default function ProductReviews({ productId, productName }: { productId: 
         <div>
           <h3 className="text-3xl font-black tracking-tighter uppercase italic flex items-center gap-3">
              <MessageSquare className="w-6 h-6 text-accent3" />
-             Experiencias <span className="text-white/50">Urban Indumentaria</span>
+             Experiencias <span className="text-white/50">Levit</span>
           </h3>
           <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mt-2">La voz de nuestra comunidad</p>
         </div>

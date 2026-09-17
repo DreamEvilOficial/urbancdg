@@ -246,7 +246,7 @@ export default function CategoryManagement() {
                 value={categoryForm.titulo_navegador}
                 onChange={e => setCategoryForm({ ...categoryForm, titulo_navegador: e.target.value })}
                 className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl text-sm font-bold focus:border-accent/40 transition outline-none"
-                placeholder="Ej: Remerotas / Urban Indumentaria"
+                placeholder="Ej: Remerotas / Levit"
               />
               <p className="text-xs text-white/40 mt-2 font-bold">Se mostrará al entrar a la categoría (lado del favicon).</p>
             </div>

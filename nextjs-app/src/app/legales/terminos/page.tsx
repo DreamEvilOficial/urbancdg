@@ -20,14 +20,14 @@ export default function TerminosPage() {
           <section className="space-y-4">
             <h3 className="text-white font-black uppercase tracking-widest text-[11px]">1. Identidad y Alcance</h3>
             <p>
-              El presente sitio web es propiedad de Urban Indumentaria. Al acceder y navegar en este sitio, el usuario acepta de manera íntegra y sin reservas los términos y condiciones aquí expuestos, los cuales se rigen por las leyes de la República Argentina (Ley 24.240 de Defensa del Consumidor y sus modificatorias).
+              El presente sitio web es propiedad de Levit. Al acceder y navegar en este sitio, el usuario acepta de manera íntegra y sin reservas los términos y condiciones aquí expuestos, los cuales se rigen por las leyes de la República Argentina (Ley 24.240 de Defensa del Consumidor y sus modificatorias).
             </p>
           </section>
 
           <section className="space-y-4">
             <h3 className="text-white font-black uppercase tracking-widest text-[11px]">2. Disponibilidad de Stock y Precios</h3>
             <p>
-              Todos los productos exhibidos están sujetos a disponibilidad al momento de procesar la orden. En caso de quiebre de stock posterior a la compra, Urban Indumentaria se contactará con el cliente para ofrecer un cambio o proceder al reembolso total de la operación. Los precios están expresados en pesos argentinos e incluyen IVA.
+              Todos los productos exhibidos están sujetos a disponibilidad al momento de procesar la orden. En caso de quiebre de stock posterior a la compra, Levit se contactará con el cliente para ofrecer un cambio o proceder al reembolso total de la operación. Los precios están expresados en pesos argentinos e incluyen IVA.
             </p>
           </section>
 
@@ -41,7 +41,7 @@ export default function TerminosPage() {
           <section className="space-y-4">
             <h3 className="text-white font-black uppercase tracking-widest text-[11px]">4. Marcas y Propiedad Intelectual</h3>
             <p>
-              Todo el material fotográfico, logotipos, textos y diseños exclusivos de Urban Indumentaria están protegidos por la Ley de Propiedad Intelectual N° 11.723. Queda terminantemente prohibida su reproducción o uso comercial sin autorización expresa de la firma.
+              Todo el material fotográfico, logotipos, textos y diseños exclusivos de Levit están protegidos por la Ley de Propiedad Intelectual N° 11.723. Queda terminantemente prohibida su reproducción o uso comercial sin autorización expresa de la firma.
             </p>
           </section>
 

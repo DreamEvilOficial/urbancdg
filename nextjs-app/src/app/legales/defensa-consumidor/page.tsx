@@ -20,7 +20,7 @@ export default function DefensaConsumidorPage() {
           <section className="space-y-4">
             <h3 className="text-white font-black uppercase tracking-widest text-[11px]">1. Instituciones y Reclamos</h3>
             <p>
-              En Urban Indumentaria trabajamos para brindarte la mejor atención. Sin embargo, si considerás que tus derechos como consumidor han sido vulnerados, tenés derecho a realizar un reclamo ante las autoridades correspondientes.
+              En Levit trabajamos para brindarte la mejor atención. Sin embargo, si considerás que tus derechos como consumidor han sido vulnerados, tenés derecho a realizar un reclamo ante las autoridades correspondientes.
             </p>
           </section>
 
@@ -53,7 +53,7 @@ export default function DefensaConsumidorPage() {
 
           <section className="space-y-4 pt-10 border-t border-white/5">
             <p className="text-[10px] font-black uppercase tracking-widest text-center text-gray-600">
-              Urban Indumentaria — Compromiso con la honestidad y transparencia.
+              Levit — Compromiso con la honestidad y transparencia.
             </p>
           </section>
         </div>

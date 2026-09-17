@@ -22,7 +22,7 @@ const bebasNeue = Bebas_Neue({
 })
 
 export async function generateMetadata(): Promise<Metadata> {
-  let title = 'URBAN'
+  let title = 'Levit'
   let description = 'Redefiniendo el Streetwear. Tu estilo, sin límites.'
   let shareDescription = 'Redefiniendo el Streetwear. Tu estilo, sin límites. Descubrí los últimos drops y armá tu fit.'
   let logoUrl = '/urban.png'
@@ -58,7 +58,7 @@ export async function generateMetadata(): Promise<Metadata> {
     console.error('Error fetching metadata:', e)
   }
 
-  const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'https://urbancdg.vercel.app'
+  const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'https://levit.vercel.app'
   const siteUrl = rawSiteUrl.endsWith('/') ? rawSiteUrl.slice(0, -1) : rawSiteUrl
 
   const normalizedSharePath = shareImagePath || '/publicsite.png'

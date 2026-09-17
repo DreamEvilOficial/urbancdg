@@ -1,7 +1,7 @@
 #!/bin/bash
 # Script robusto para mantener Next.js corriendo en puerto 3000
 
-echo "🚀 Iniciando servidor Next.js de forma robusta..."
+echo "🚀 Iniciando servidor Next.js de Levit de forma robusta..."
 
 # Terminar cualquier proceso en el puerto 3000
 echo "🔧 Liberando puerto 3000..."
@@ -20,7 +20,7 @@ if [ ! -f "package.json" ]; then
     exit 1
 fi
 
-echo "✅ Iniciando Next.js en puerto 3000..."
+echo "✅ Iniciando Next.js (Levit) en puerto 3000..."
 
 # Usar nohup para mantener el proceso corriendo
 nohup npm run dev > server.log 2>&1 &

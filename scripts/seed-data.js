@@ -2,7 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const crypto = require('crypto');
 
-const dbPath = path.join(__dirname, '..', 'sql', 'urbancdg.db');
+const dbPath = path.join(__dirname, '..', 'sql', 'levit.db');
 const db = new sqlite3.Database(dbPath);
 
 console.log('Seeding database at:', dbPath);

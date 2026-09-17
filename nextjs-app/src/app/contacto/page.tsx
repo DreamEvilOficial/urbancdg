@@ -11,7 +11,7 @@ export default function ContactoPage() {
     email: '',
     instagram: '',
     direccion: '',
-    nombre_tienda: 'URBAN'
+    nombre_tienda: 'Levit'
   })
 
   useEffect(() => {
@@ -20,7 +20,7 @@ export default function ContactoPage() {
         const res = await fetch('/api/config')
         const parsed = await res.json()
         const raw = String(parsed.nombre_tienda || '').trim()
-        const safeName = raw && !/berta/i.test(raw) ? raw : 'URBAN'
+        const safeName = raw && !/berta/i.test(raw) ? raw : 'Levit'
         setConfig({
           whatsapp: parsed.whatsapp || parsed.telefono || '',
           telefono: parsed.telefono || '',

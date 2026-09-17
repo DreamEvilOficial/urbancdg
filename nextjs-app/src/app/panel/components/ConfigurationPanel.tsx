@@ -33,7 +33,7 @@ export default function ConfigurationPanel() {
 
   const [config, setConfig] = useState<ConfigData>({
     logo_url: '',
-    nombre_tienda: 'Urban Indumentaria',
+    nombre_tienda: 'Levit',
     lema_tienda: 'Streetwear — drops — fits',
     brand_tagline:
       'Streetwear sin filtro. Drops reales, fits pesados y calidad para bancarla en la calle. No rules, solo estilo.',
@@ -91,7 +91,7 @@ export default function ConfigurationPanel() {
 
       setConfig({
         logo_url: data.logo_url || '',
-        nombre_tienda: data.nombre_tienda || 'Urban Indumentaria',
+        nombre_tienda: data.nombre_tienda || 'Levit',
         lema_tienda: data.lema_tienda || 'Streetwear — drops — fits',
         brand_tagline:
           data.brand_tagline ||
@@ -375,7 +375,7 @@ export default function ConfigurationPanel() {
               type="text"
               value={config.nombre_tienda}
               onChange={e => setConfig({ ...config, nombre_tienda: e.target.value })}
-              placeholder="Urban Indumentaria"
+              placeholder="Levit"
               className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl text-sm font-bold focus:border-accent/40 transition outline-none"
             />
           </div>
@@ -459,13 +459,13 @@ export default function ConfigurationPanel() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-white/60 mb-1 truncate">
-                  {config.nombre_tienda || 'URBAN'}
+                  {config.nombre_tienda || 'Levit'}
                 </p>
                 <p className="text-[11px] text-white/80 font-semibold leading-snug line-clamp-2">
                   {config.share_description || DEFAULT_SHARE_DESCRIPTION}
                 </p>
                 <p className="mt-2 text-[10px] text-white/35 font-bold uppercase tracking-[0.22em]">
-                  {process.env.NEXT_PUBLIC_SITE_URL || 'urbancdg.vercel.app'}
+                  {process.env.NEXT_PUBLIC_SITE_URL || 'levit.vercel.app'}
                 </p>
               </div>
             </div>

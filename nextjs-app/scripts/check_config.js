@@ -1,7 +1,7 @@
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 
-const dbPath = path.join(__dirname, '..', '..', 'sql', 'urbancdg.db');
+const dbPath = path.join(__dirname, '..', '..', 'sql', 'levit.db');
 const db = new sqlite3.Database(dbPath);
 
 console.log('=== Checking Configuration Data ===\n');

@@ -20,7 +20,7 @@ export default function BannerSlider({ initialConfig }: BannerSliderProps) {
     nombre:
       (initialConfig as any)?.nombre_tienda ||
       (initialConfig as any)?.tienda_nombre ||
-      "URBAN",
+      "Levit",
     lema:
       (initialConfig as any)?.lema_tienda ||
       (initialConfig as any)?.tienda_lema ||
@@ -42,7 +42,7 @@ export default function BannerSlider({ initialConfig }: BannerSliderProps) {
       const data = await res.json();
 
       setTienda({
-        nombre: data.nombre_tienda || "URBAN",
+        nombre: data.nombre_tienda || "Levit",
         lema: data.lema_tienda || "Streetwear — drops — fits",
       });
 

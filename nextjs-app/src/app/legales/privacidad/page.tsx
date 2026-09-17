@@ -19,7 +19,7 @@ export default function PrivacidadPage() {
           <section className="space-y-4">
             <h3 className="text-white font-black uppercase tracking-widest text-[11px]">1. Protección de Datos Personales</h3>
             <p>
-              Urban Indumentaria cumple estrictamente con la Ley N° 25.326 de Protección de Datos Personales. La información recolectada (nombre, dirección, teléfono) tiene como única finalidad la correcta gestión de los pedidos y la mejora de la experiencia de compra.
+              Levit cumple estrictamente con la Ley N° 25.326 de Protección de Datos Personales. La información recolectada (nombre, dirección, teléfono) tiene como única finalidad la correcta gestión de los pedidos y la mejora de la experiencia de compra.
             </p>
           </section>
 

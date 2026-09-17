@@ -19,7 +19,7 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false)
   const [showCart, setShowCart] = useState(false)
   const [logoUrl, setLogoUrl] = useState('/urban.png')
-  const [nombreTienda, setNombreTienda] = useState('Urban Indumentaria')
+  const [nombreTienda, setNombreTienda] = useState('Levit')
   const [categorias, setCategorias] = useState<Array<{ id: string, nombre: string, slug: string, icono?: string, subcategorias?: Array<{ id: string, nombre: string, slug: string }> }>>([])
   const [showProductsMenu, setShowProductsMenu] = useState(false)
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null)

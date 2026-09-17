@@ -67,7 +67,7 @@ export default function AdminPage() {
   const [editingProduct, setEditingProduct] = useState<Producto | null>(null)
   
   // Config State
-  const [storeName, setStoreName] = useState('URBAN')
+  const [storeName, setStoreName] = useState('Levit')
 
   useEffect(() => {
     setMounted(true)
@@ -316,7 +316,7 @@ export default function AdminPage() {
                 <Menu className="w-7 h-7" />
               </div>
               <h1 className="text-2xl font-bold text-white tracking-tight">Acceso Privado</h1>
-              <p className="text-gray-500 text-sm mt-2">URBAN • Gestión de Tienda</p>
+              <p className="text-gray-500 text-sm mt-2">Levit • Gestión de Tienda</p>
             </div>
             <form
               onSubmit={async (e) => {

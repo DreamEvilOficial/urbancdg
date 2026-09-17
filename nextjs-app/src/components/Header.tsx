@@ -51,7 +51,7 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
 
   // Estados de Datos
   const [config, setConfig] = useState<any>({
-    nombre_tienda: initialConfig?.nombre_tienda || 'URBAN',
+    nombre_tienda: initialConfig?.nombre_tienda || 'Levit',
     logo_url: initialConfig?.logo_url || '',
     lema_tienda: initialConfig?.lema_tienda || initialConfig?.subtitulo_lema || ''
   })
@@ -234,7 +234,7 @@ export default function Header({ theme, toggleTheme, initialConfig }: HeaderProp
                   </div>
                 )}
                 <div className="hidden md:block text-[8px] font-bold text-white/40 uppercase tracking-[0.3em] group-hover:text-accent transition-colors">
-                  {config.lema_tienda || 'Streetwear • Urban • Fits'}
+                  {config.lema_tienda || 'Streetwear • Levit • Fits'}
                 </div>
               </Link>
 

@@ -57,7 +57,7 @@ export default function PageLoader() {
             <div className="flex items-center justify-center">
               <Image
                 src="/urban.png"
-                alt="Urban Indumentaria"
+                alt="Levit"
                 width={260}
                 height={72}
                 priority

@@ -85,13 +85,13 @@ export const paqarService = {
 
     // Determine sender data (override or default)
     const sender = senderOverride || {
-      nombre: 'Urban CDG Official',
+      nombre: 'Levit Official',
       calle: 'Av. Corrientes',
       numero: '1234',
       localidad: 'CABA',
       provincia: 'CABA',
       cp: '1000',
-      email: 'contacto@urbancdg.com',
+      email: 'contacto@levit.com',
       telefono: '11-1234-5678'
     }
 
@@ -329,7 +329,7 @@ export const paqarService = {
             </div>
 
             <div class="footer">
-              Generado por Urban CDG System - ${new Date().toLocaleDateString()}
+              Generado por Levit System - ${new Date().toLocaleDateString()}
             </div>
           </div>
           <script>

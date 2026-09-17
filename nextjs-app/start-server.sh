@@ -1,7 +1,7 @@
 #!/bin/bash
 # Script para asegurar que el servidor siempre se ejecute en el puerto 3000
 
-echo "🚀 Iniciando servidor en puerto 3000..."
+echo "🚀 Iniciando servidor Levit en puerto 3000..."
 
 # Terminar cualquier proceso en el puerto 3000
 echo "🔧 Liberando puerto 3000..."
@@ -15,5 +15,5 @@ if [ "$1" == "clean" ]; then
 fi
 
 # Iniciar el servidor
-echo "✅ Iniciando Next.js en puerto 3000..."
+echo "✅ Iniciando Next.js (Levit) en puerto 3000..."
 npm run dev

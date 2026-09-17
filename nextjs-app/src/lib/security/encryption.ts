@@ -185,7 +185,7 @@ export function containsSuspiciousContent(input: string): boolean {
  * Genera una clave de API segura
  */
 export function generateAPIKey(): string {
-  const prefix = 'urbancdg';
+  const prefix = 'levit';
   const token = generateSecureToken(32);
   return `${prefix}_${token}`;
 }

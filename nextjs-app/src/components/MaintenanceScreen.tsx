@@ -138,7 +138,7 @@ export default function MaintenanceScreen({ onUnlock }: MaintenanceScreenProps) 
       
       <div className="absolute bottom-8 left-0 right-0 text-center">
         <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20">
-          Urban Indumentaria
+          Levit
         </p>
       </div>
     </div>
